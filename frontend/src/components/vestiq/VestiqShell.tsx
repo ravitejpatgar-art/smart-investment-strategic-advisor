@@ -216,11 +216,12 @@ export const VestiqShell: React.FC = () => {
   };
 
   // 8. Send message with backend persistence and advisory AI execution
-  const handleSendMessage = async (userText: string) => {
-    if (!userText.trim() || loading || isCreatingRef.current) return;
+  const handleSendMessage = async (userText: string, isRetry: boolean = false) => {
+    const trimmedText = userText.trim();
+    if (!trimmedText || loading || isCreatingRef.current) return;
 
     setError(null);
-    setLastQuery(userText);
+    setLastQuery(trimmedText);
     const reqId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     latestRequestIdRef.current = reqId;
 
@@ -228,13 +229,18 @@ export const VestiqShell: React.FC = () => {
     const userMsg: VestiqChatMessage = {
       id: tempUserMsgId,
       sender: 'user',
-      text: userText,
+      text: trimmedText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    // Optimistically update messages in UI
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    // If retrying, check if user message is already the last message to avoid duplicates
+    let updatedMessages: VestiqChatMessage[];
+    if (isRetry && messages.length > 0 && messages[messages.length - 1].sender === 'user') {
+      updatedMessages = [...messages];
+    } else {
+      updatedMessages = [...messages, userMsg];
+      setMessages(updatedMessages);
+    }
     setLoading(true);
 
     let currentConvId = activeSessionId;
@@ -245,15 +251,26 @@ export const VestiqShell: React.FC = () => {
       // 1. If no active conversation, create one on backend
       let validConvId: string = currentConvId || '';
       if (!validConvId) {
-        const newConv = await authApi.createConversation();
-        validConvId = newConv.id;
-        setActiveSessionId(validConvId);
-        updateUrlForConversation(validConvId);
+        try {
+          const newConv = await authApi.createConversation();
+          if (newConv && newConv.id) {
+            validConvId = newConv.id;
+            setActiveSessionId(validConvId);
+            updateUrlForConversation(validConvId);
+          }
+        } catch (convErr) {
+          console.warn('[VestIQ] Conversation create notice:', convErr);
+        }
       }
 
-      // 2. Persist user message to backend (auto-titles the conversation on backend)
-      await authApi.addConversationMessage(validConvId, 'user', userText, tempUserMsgId);
-
+      // 2. Persist user message to backend
+      if (validConvId && !isRetry) {
+        try {
+          await authApi.addConversationMessage(validConvId, 'user', trimmedText, tempUserMsgId);
+        } catch (msgErr) {
+          console.warn('[VestIQ] User message persist notice:', msgErr);
+        }
+      }
 
       // 3. Build context & call existing AI Reasoning Engine
       const userContext = buildUserContext(user, expenses, goals, strategy);
@@ -263,8 +280,8 @@ export const VestiqShell: React.FC = () => {
       }));
 
       const res = await authApi.askAssistant({
-        question: userText,
-        message: userText,
+        question: trimmedText,
+        message: trimmedText,
         requestId: reqId,
         user_context: userContext,
         history: chatHistory,
@@ -279,7 +296,7 @@ export const VestiqShell: React.FC = () => {
       let followUps = res?.followUps || [];
 
       if (!answerText) {
-        answerText = `I have analyzed your query regarding "${userText}". Let me know if you would like me to simulate additional wealth scenarios.`;
+        answerText = `I have analyzed your query regarding "${trimmedText}". Let me know if you would like me to simulate additional wealth scenarios.`;
       }
 
       const tempAiMsgId = `ai_${Date.now()}`;
@@ -295,16 +312,36 @@ export const VestiqShell: React.FC = () => {
       };
 
       // 4. Persist assistant message to backend
-      await authApi.addConversationMessage(validConvId, 'assistant', answerText, tempAiMsgId);
+      if (validConvId) {
+        try {
+          await authApi.addConversationMessage(validConvId, 'assistant', answerText, tempAiMsgId);
+        } catch (aiMsgErr) {
+          console.warn('[VestIQ] Assistant message persist notice:', aiMsgErr);
+        }
+      }
 
-      // 5. Update messages and refresh conversation list (to update title/ordering)
+      // 5. Update messages and refresh conversation list
       setMessages((prev) => [...prev, assistantMsg]);
       await fetchConversations();
 
-    } catch (err) {
-
-      console.error('Error during message exchange:', err);
-      setError("VestIQ couldn't complete that request.");
+    } catch (err: any) {
+      console.error('[VestIQ] Error during message exchange:', err);
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      
+      if (status === 401 || status === 403) {
+        setError("Session expired or authentication required. Please sign in.");
+      } else if (status === 404) {
+        setError("AI advisory endpoint not found on backend.");
+      } else if (status === 429) {
+        setError("Rate limit reached. Please wait a moment before retrying.");
+      } else if (status === 500) {
+        setError(detail || "Backend processing error. Please retry.");
+      } else if (!err?.response) {
+        setError("Unable to connect to SmartVest backend. Please check network connection and retry.");
+      } else {
+        setError(detail || "VestIQ couldn't complete that request.");
+      }
     } finally {
       isCreatingRef.current = false;
       setLoading(false);
@@ -313,7 +350,7 @@ export const VestiqShell: React.FC = () => {
 
   const handleRetry = () => {
     if (lastQuery) {
-      handleSendMessage(lastQuery);
+      handleSendMessage(lastQuery, true);
     }
   };
 
