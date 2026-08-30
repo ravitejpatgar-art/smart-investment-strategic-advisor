@@ -1,0 +1,330 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-base: #F6F7FB;
+    --bg-surface: #FFFFFF;
+    --bg-surface-secondary: #F8F9FC;
+    --bg-surface-elevated: #FFFFFF;
+    --border-subtle: #E7E9F0;
+    --border-hover: #D1D5DB;
+    --accent-teal: #14B8A6;
+    --accent-indigo: #6366F1;
+    --accent-cyan: #06B6D4;
+    --text-primary: #172033;
+    --text-secondary: #667085;
+    --text-muted: #98A2B3;
+    --color-positive: #16A66A;
+    --color-warning: #D97706;
+    --color-critical: #E5484D;
+  }
+
+  .dark {
+    --bg-base: #090D16;
+    --bg-surface: #0F172A;
+    --bg-surface-secondary: #162032;
+    --bg-surface-elevated: #1E293B;
+    --border-subtle: #1E293B;
+    --border-hover: #334155;
+    --accent-teal: #14B8A6;
+    --accent-indigo: #818CF8;
+    --accent-cyan: #22D3EE;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --color-positive: #10B981;
+    --color-warning: #F59E0B;
+    --color-critical: #F43F5E;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* =========================================================================
+   COMPREHENSIVE DARK THEME SYSTEM
+========================================================================= */
+
+.dark body {
+  background-color: #090D16 !important;
+  color: #F8FAFC !important;
+}
+
+/* Layout Surfaces & Containers */
+.dark .bg-\[\#F6F7FB\] {
+  background-color: #090D16 !important;
+}
+
+.dark .bg-white {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+.dark .bg-\[\#F8F9FC\],
+.dark .bg-slate-50,
+.dark .bg-gray-50 {
+  background-color: #162032 !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1E293B !important;
+}
+
+/* Borders & Dividers */
+.dark .border-\[\#E7E9F0\],
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .border-gray-200,
+.dark .border-gray-100 {
+  border-color: #1E293B !important;
+}
+
+.dark .divide-\[\#E7E9F0\] > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1E293B !important;
+}
+
+/* Typography Overrides */
+.dark .text-\[\#172033\],
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #F8FAFC !important;
+}
+
+.dark .text-\[\#344054\],
+.dark .text-slate-700 {
+  color: #E2E8F0 !important;
+}
+
+.dark .text-\[\#667085\],
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+.dark .text-\[\#98A2B3\],
+.dark .text-slate-400 {
+  color: #64748B !important;
+}
+
+/* Gradients in Dark Mode */
+.dark .bg-gradient-to-r.from-white,
+.dark .bg-gradient-to-r[class*="from-white"] {
+  background-image: linear-gradient(to right, #0F172A, #162032, rgba(20, 184, 166, 0.12)) !important;
+}
+
+.dark .bg-gradient-to-br.from-teal-50\/90,
+.dark .bg-gradient-to-br[class*="from-teal-50"] {
+  background-image: linear-gradient(to bottom right, rgba(20, 184, 166, 0.15), rgba(99, 102, 241, 0.15)) !important;
+}
+
+/* Brand & Teal Accent Elements in Dark Mode */
+.dark .bg-teal-50 {
+  background-color: rgba(20, 184, 166, 0.12) !important;
+}
+
+.dark .bg-teal-50\/50,
+.dark .bg-teal-50\/80,
+.dark .bg-teal-50\/90 {
+  background-color: rgba(20, 184, 166, 0.10) !important;
+}
+
+.dark .bg-indigo-50\/90 {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+}
+
+.dark .border-teal-200,
+.dark .border-teal-300 {
+  border-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+.dark .text-teal-800,
+.dark .text-teal-700,
+.dark .text-teal-600 {
+  color: #2DD4BF !important;
+}
+
+.dark .text-teal-900 {
+  color: #5EEAD4 !important;
+}
+
+.dark .bg-teal-100 {
+  background-color: rgba(20, 184, 166, 0.2) !important;
+}
+
+/* Form Inputs, Dropdowns & Modals */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #162032 !important;
+  border-color: #1E293B !important;
+  color: #F8FAFC !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #14B8A6 !important;
+  outline: none;
+  box-shadow: 0 0 0 1px #14B8A6 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Interactive States & Hover */
+.dark .hover\:bg-\[\#F8F9FC\]:hover,
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: #1E293B !important;
+}
+
+.dark .hover\:text-\[\#172033\]:hover {
+  color: #FFFFFF !important;
+}
+
+/* Secondary Button Dark Mode */
+.dark .glow-btn-secondary {
+  background: #162032 !important;
+  border-color: #1E293B !important;
+  color: #F8FAFC !important;
+}
+
+.dark .glow-btn-secondary:hover {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+  color: #FFFFFF !important;
+}
+
+/* Shadows & Elevations */
+.dark .shadow-xs,
+.dark .shadow-2xs,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Modals & Drawers Backdrop */
+.dark .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Recharts Dark Theme Tuning */
+.dark .recharts-cartesian-grid line {
+  stroke: #1E293B !important;
+}
+
+.dark .recharts-text {
+  fill: #94A3B8 !important;
+}
+
+.dark .recharts-default-tooltip {
+  background-color: #0F172A !important;
+  border-color: #1E293B !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Scrollbar Customization for Light/Dark Themes */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F6F7FB;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #090D16;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #1E293B;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Button & Surface Styles */
+.glow-btn-primary {
+  background: #14B8A6;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.glow-btn-primary:hover {
+  background: #0D9488;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+}
+
+.glow-btn-secondary {
+  background: #FFFFFF;
+  border: 1px solid #E7E9F0;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.glow-btn-secondary:hover {
+  background: #F8F9FC;
+  border-color: #D1D5DB;
+  color: #0F172A;
+}
+
+/* Tabular numbers */
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom hide scrollbar */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
