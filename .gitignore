@@ -26,11 +26,14 @@ smartvest.db
 backend/smartvest.db
 
 # Environment Variables & Secrets
-.env
-.env.*
-!.env.example
+# .env and .env.production are committed (contain only public Firebase client config + Render URL)
+# .env.local is gitignored — contains local developer overrides only
+# Backend env files are always ignored — may contain real secrets
+*.env.local
+frontend/.env.local
 backend/.env
 backend/.env.*
+backend/.env.local
 
 # Logs & Temp
 *.log

@@ -54,8 +54,15 @@ export const VestiqShell: React.FC = () => {
       }
       setSessions([]);
       return [];
-    } catch (err) {
-      console.error('Failed to load conversations from backend:', err);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const errorDetail = err?.response?.data?.detail || err?.message || 'Network / Connection Error';
+      const reqUrl = err?.config?.url || '/conversations';
+      console.warn('[VestIQ Diagnostic]', {
+        requestUrl: reqUrl,
+        status: status ?? 'CONNECTION_REFUSED',
+        error: errorDetail,
+      });
       setConversationsLoadError('Unable to load your conversations.');
       return [];
     }
@@ -370,22 +377,21 @@ export const VestiqShell: React.FC = () => {
 
         {/* Center: AI Workspace */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col justify-between">
-          {conversationsLoadError ? (
-            <div className="max-w-md mx-auto my-auto p-6 rounded-2xl bg-white border border-rose-200 shadow-sm text-center space-y-4">
-              <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
-              <div>
-                <h3 className="font-bold text-[#172033] text-base">Unable to load your conversations.</h3>
-                <p className="text-xs text-[#667085] mt-1">Please check your network connection and retry.</p>
-              </div>
+          {/* Non-blocking banner when conversation history fails to load */}
+          {conversationsLoadError && (
+            <div className="mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-500" />
+              <span className="flex-1">Chat history unavailable — backend connecting. You can still send messages.</span>
               <button
                 onClick={() => fetchConversations()}
-                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all flex items-center gap-2 mx-auto cursor-pointer"
+                className="ml-2 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold transition-all cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Retry</span>
+                <RefreshCw className="w-3 h-3" />
+                Retry
               </button>
             </div>
-          ) : messages.length === 0 ? (
+          )}
+          {messages.length === 0 ? (
             <VestiqEmptyState
               onSend={handleSendMessage}
               loading={loading}

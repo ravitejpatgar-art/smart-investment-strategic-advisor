@@ -3,26 +3,27 @@ services:
   - type: web
     name: smartvest-backend
     env: python
+    plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    startCommand: "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     rootDir: backend
+    healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: "3.12.0"
       - key: SECRET_KEY
         generateValue: true
       - key: ENVIRONMENT
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smartvest-db
+          property: connectionString
       - key: BACKEND_CORS_ORIGINS
-        value: '["*"]'
+        value: '["https://smart-investment-strategic-advisor.vercel.app","http://localhost:5173","http://127.0.0.1:5173"]'
 
-  # React Frontend Static Site
-  - type: web
-    name: smartvest-frontend
-    env: static
-    buildCommand: "npm install && npm run build"
-    staticPublishPath: ./dist
-    rootDir: frontend
-    envVars:
-      - key: VITE_API_URL
-        value: https://smartvest-backend.onrender.com/api/v1
+databases:
+  - name: smartvest-db
+    plan: free
+    databaseName: smartvest
+    user: smartvest

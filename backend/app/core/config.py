@@ -1,4 +1,5 @@
 import os
+import json
 from typing import List
 from pydantic_settings import BaseSettings
 
@@ -12,7 +13,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
-    # Database
+    # Database — defaults to local SQLite for dev; Render injects DATABASE_URL for production
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./smartvest.db")
     
     # AI Keys (Optional - has fallback intelligent engine)
@@ -38,25 +39,29 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     REDIS_URL: str = os.getenv("REDIS_URL", "")
 
-    # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "https://smartvest-ai.onrender.com",
-        "https://smartvest-frontend.onrender.com"
-    ] if os.getenv("ENVIRONMENT") == "production" else [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "*"
-    ]
+    # CORS — always include local dev + Vercel production origin
+    # BACKEND_CORS_ORIGINS env var can override as a JSON array string
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+        env_val = os.getenv("BACKEND_CORS_ORIGINS", "")
+        if env_val:
+            try:
+                parsed = json.loads(env_val)
+                if isinstance(parsed, list):
+                    return parsed
+            except Exception:
+                pass
+        # Default origins — always safe to include both dev and prod
+        return [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+            "https://smart-investment-strategic-advisor.vercel.app",
+            "https://smartvest-backend.onrender.com",
+        ]
 
     class Config:
         case_sensitive = True
