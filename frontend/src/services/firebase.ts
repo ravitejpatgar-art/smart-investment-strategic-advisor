@@ -23,42 +23,56 @@ import {
   type Firestore 
 } from 'firebase/firestore';
 
+// Authoritative SmartVest Firebase Web App Configuration
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAhYS6boi5mvLZpv_Dxa2eeFaObttnYkag',
+  authDomain: 'smart-investment-advisor-863f5.firebaseapp.com',
+  projectId: 'smart-investment-advisor-863f5',
+  storageBucket: 'smart-investment-advisor-863f5.firebasestorage.app',
+  messagingSenderId: '86273308363',
+  appId: '1:86273308363:web:badc8a352795cdc8298d4e'
+};
+
+function getCleanEnv(val: unknown, fallback: string = ''): string {
+  if (typeof val !== 'string' || !val.trim()) return fallback;
+  return val.trim().replace(/^["']|["']$/g, '');
+}
+
 // Helper to check if authentication is enabled via feature flag or configured Firebase env
 export function isAuthEnabled(): boolean {
-  const envVal = import.meta.env.VITE_ENABLE_AUTH;
+  const envVal = getCleanEnv(import.meta.env.VITE_ENABLE_AUTH, 'true');
   if (envVal === 'false') return false;
-  if (envVal === 'true') return true;
-  return isFirebaseConfigured();
+  return true;
 }
 
 // Helper to verify if real Firebase environment variables are configured
 export function isFirebaseConfigured(): boolean {
-  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
-  const useEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+  const apiKey = getCleanEnv(import.meta.env.VITE_FIREBASE_API_KEY, DEFAULT_FIREBASE_CONFIG.apiKey);
+  const projectId = getCleanEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, DEFAULT_FIREBASE_CONFIG.projectId);
+  const authDomain = getCleanEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, DEFAULT_FIREBASE_CONFIG.authDomain);
+  const useEmulator = getCleanEnv(import.meta.env.VITE_USE_FIREBASE_EMULATOR) === 'true';
 
   if (useEmulator) return true;
 
   return Boolean(
     apiKey && 
-    apiKey.trim().length > 0 &&
+    apiKey.length > 0 &&
     projectId && 
-    projectId.trim().length > 0 &&
+    projectId.length > 0 &&
     authDomain && 
-    authDomain.trim().length > 0 &&
+    authDomain.length > 0 &&
     !apiKey.includes('your_firebase_api_key')
   );
 }
 
-// Firebase configuration strictly from environment variables
+// Firebase configuration strictly prioritized: Environment Variables -> Authoritative Web App Config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
+  apiKey: getCleanEnv(import.meta.env.VITE_FIREBASE_API_KEY, DEFAULT_FIREBASE_CONFIG.apiKey),
+  authDomain: getCleanEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, DEFAULT_FIREBASE_CONFIG.authDomain),
+  projectId: getCleanEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, DEFAULT_FIREBASE_CONFIG.projectId),
+  storageBucket: getCleanEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, DEFAULT_FIREBASE_CONFIG.storageBucket),
+  messagingSenderId: getCleanEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, DEFAULT_FIREBASE_CONFIG.messagingSenderId),
+  appId: getCleanEnv(import.meta.env.VITE_FIREBASE_APP_ID, DEFAULT_FIREBASE_CONFIG.appId)
 };
 
 // Initialize Firebase App safely and exactly once
@@ -237,10 +251,12 @@ export function mapFirebaseError(error: any): string {
   if (
     code.includes('api-key') || 
     message.includes('api-key') || 
-    message.includes('api key') ||
-    message.includes('configuration is missing')
+    message.includes('api key')
   ) {
-    return 'Firebase configuration is missing or invalid in frontend/.env. Please configure your Firebase Web App credentials.';
+    return 'Invalid Firebase API Key. Please verify your Firebase Web App credentials in Firebase Console.';
+  }
+  if (message.includes('configuration is missing')) {
+    return 'Firebase configuration is missing or incomplete. Please verify your environment variables.';
   }
   if (code.includes('invalid-email') || message.includes('invalid-email')) {
     return 'The email address is formatted incorrectly.';
