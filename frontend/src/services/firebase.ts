@@ -2,7 +2,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  GithubAuthProvider, 
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -16,15 +15,24 @@ import {
   type Auth,
   type User as FirebaseUser
 } from 'firebase/auth';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  serverTimestamp, 
+  type Firestore 
+} from 'firebase/firestore';
 
-// Helper to check if authentication is enabled via feature flag
+// Helper to check if authentication is enabled via feature flag or configured Firebase env
 export function isAuthEnabled(): boolean {
-  return import.meta.env.VITE_ENABLE_AUTH === 'true';
+  const envVal = import.meta.env.VITE_ENABLE_AUTH;
+  if (envVal === 'false') return false;
+  if (envVal === 'true') return true;
+  return isFirebaseConfigured();
 }
 
 // Helper to verify if real Firebase environment variables are configured
 export function isFirebaseConfigured(): boolean {
-
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
   const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
   const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
@@ -39,16 +47,15 @@ export function isFirebaseConfigured(): boolean {
     projectId.trim().length > 0 &&
     authDomain && 
     authDomain.trim().length > 0 &&
-    !apiKey.includes('DemoKey') && 
     !apiKey.includes('your_firebase_api_key')
   );
 }
 
 // Firebase configuration strictly from environment variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'emulator-api-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'localhost',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'emerald-codex-wc9s2',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
   appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
@@ -57,6 +64,7 @@ const firebaseConfig = {
 // Initialize Firebase App safely and exactly once
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let db: Firestore | null = null;
 let emulatorConnected = false;
 
 function setupEmulatorIfRequested(authInstance: Auth) {
@@ -78,6 +86,7 @@ if (isFirebaseConfigured()) {
   try {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
+    db = getFirestore(app);
     setPersistence(auth, browserLocalPersistence).catch((err) => {
       console.warn('Firebase persistence warning:', err);
     });
@@ -87,13 +96,11 @@ if (isFirebaseConfigured()) {
   }
 }
 
-export { app, app as firebaseApp, auth, browserLocalPersistence, setPersistence };
+export { app, app as firebaseApp, auth, db, browserLocalPersistence, setPersistence };
 
-// Auth Providers
+// Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-export const githubProvider = new GithubAuthProvider();
 
 function getActiveAuth(): Auth {
   if (!auth) {
@@ -102,6 +109,7 @@ function getActiveAuth(): Auth {
     }
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
+    db = getFirestore(app);
     setPersistence(auth, browserLocalPersistence).catch((err) => {
       console.warn('Firebase persistence warning:', err);
     });
@@ -110,39 +118,88 @@ function getActiveAuth(): Auth {
   return auth;
 }
 
+function getActiveFirestore(): Firestore | null {
+  if (!db && app) {
+    try {
+      db = getFirestore(app);
+    } catch {
+      // Non-blocking
+    }
+  }
+  return db;
+}
+
+/**
+ * Creates/Updates user document structure in Firestore collection:
+ * users/{uid}
+ * {
+ *   uid,
+ *   name,
+ *   email,
+ *   createdAt,
+ *   lastLogin
+ * }
+ */
+export async function syncUserDocument(uid: string, name: string, email: string, isNewUser: boolean = false): Promise<void> {
+  const firestoreDb = getActiveFirestore();
+  if (!firestoreDb || !uid) return;
+
+  try {
+    const userDocRef = doc(firestoreDb, 'users', uid);
+    const data: Record<string, any> = {
+      uid,
+      name: name || (email ? email.split('@')[0] : 'Investor'),
+      email: email || '',
+      lastLogin: serverTimestamp()
+    };
+    if (isNewUser) {
+      data.createdAt = serverTimestamp();
+    }
+    await setDoc(userDocRef, data, { merge: true });
+  } catch (err) {
+    // Non-blocking for offline / restricted security rules
+    console.warn('Firestore user document sync notice:', err);
+  }
+}
+
 // Google OAuth Login
 export async function loginWithGoogle(): Promise<FirebaseUser> {
   const activeAuth = getActiveAuth();
   const result = await signInWithPopup(activeAuth, googleProvider);
-  return result.user;
-}
-
-// GitHub OAuth Login
-export async function loginWithGitHub(): Promise<FirebaseUser> {
-  const activeAuth = getActiveAuth();
-  const result = await signInWithPopup(activeAuth, githubProvider);
-  return result.user;
+  const user = result.user;
+  if (user) {
+    await syncUserDocument(user.uid, user.displayName || '', user.email || '', false);
+  }
+  return user;
 }
 
 // Email + Password Login
 export async function loginWithEmail(email: string, password: string): Promise<FirebaseUser> {
   const activeAuth = getActiveAuth();
   const result = await signInWithEmailAndPassword(activeAuth, email, password);
-  return result.user;
+  const user = result.user;
+  if (user) {
+    await syncUserDocument(user.uid, user.displayName || '', user.email || '', false);
+  }
+  return user;
 }
 
 // Email Registration
 export async function registerWithEmail(email: string, password: string, fullName: string): Promise<FirebaseUser> {
   const activeAuth = getActiveAuth();
   const result = await createUserWithEmailAndPassword(activeAuth, email, password);
-  if (fullName.trim() && result.user) {
-    try {
-      await updateProfile(result.user, { displayName: fullName.trim() });
-    } catch {
-      // Non-blocking
+  const user = result.user;
+  if (user) {
+    if (fullName.trim()) {
+      try {
+        await updateProfile(user, { displayName: fullName.trim() });
+      } catch {
+        // Non-blocking
+      }
     }
+    await syncUserDocument(user.uid, fullName.trim() || user.displayName || '', user.email || '', true);
   }
-  return result.user;
+  return user;
 }
 
 // Password Reset Email
@@ -170,7 +227,7 @@ export function subscribeToAuthState(callback: (user: FirebaseUser | null) => vo
 export { onAuthStateChanged };
 export type { FirebaseUser };
 
-// Human-friendly Firebase Error Mapping (Step 14 & Step 19)
+// Human-friendly Firebase Error Mapping
 export function mapFirebaseError(error: any): string {
   if (!error) return 'An unexpected error occurred. Please try again.';
   
@@ -209,13 +266,13 @@ export function mapFirebaseError(error: any): string {
     return 'The password is too weak. Please use at least 6 characters.';
   }
   if (code.includes('popup-closed-by-user') || message.includes('popup-closed-by-user')) {
-    return 'Sign-in was cancelled.';
+    return 'Sign-in popup was closed before completing.';
   }
   if (code.includes('cancelled-popup-request') || message.includes('cancelled-popup-request')) {
     return 'Authentication request cancelled due to multiple popups.';
   }
   if (code.includes('popup-blocked') || message.includes('popup-blocked')) {
-    return 'Your browser blocked the sign-in popup.';
+    return 'Your browser blocked the sign-in popup. Please allow popups for this site.';
   }
   if (code.includes('account-exists-with-different-credential')) {
     return 'An account already exists with the same email using a different sign-in method.';
@@ -224,13 +281,13 @@ export function mapFirebaseError(error: any): string {
     return 'This sign-in provider is not enabled in your Firebase Console. Go to Authentication > Sign-in method to enable it.';
   }
   if (code.includes('network-request-failed') || message.includes('network')) {
-    return 'Network error. Please try again.';
+    return 'Network connection error. Please check your internet connection.';
   }
   if (code.includes('too-many-requests')) {
     return 'Too many unsuccessful attempts. Please wait a few minutes before retrying.';
   }
   if (code.includes('unauthorized-domain') || message.includes('unauthorized-domain')) {
-    return 'This domain is not authorized in Firebase.';
+    return 'This domain is not authorized in Firebase Console (Authentication > Settings > Authorized Domains).';
   }
   
   return error.message || 'Authentication failed. Please try again.';

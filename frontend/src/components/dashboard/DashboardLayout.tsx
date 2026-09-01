@@ -8,15 +8,18 @@ import {
   User, 
   FileText, 
   RefreshCw,
-  TrendingUp,
+  BarChart3,
   Menu,
   X,
-  Sun,
-  Moon
+  Layers,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { isAuthEnabled } from '../../services/firebase';
 import { AIAssistantDrawer } from '../assistant/AIAssistantDrawer';
 import { FloatingAIAssistantButton } from '../assistant/FloatingAIAssistantButton';
 import { generateAdvisoryPdfReport } from '../../services/pdfReportGenerator';
+import { BrandLogo } from '../common/BrandLogo';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -32,300 +35,224 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     goals,
     currency, 
     setCurrency, 
-    theme,
-    toggleTheme,
     isAdvisorOpen, 
     setAdvisorOpen,
     runAiAnalysis
   } = useFintechStore();
 
+  const { signOut } = useAuth();
+  const authActive = isAuthEnabled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
 
-  // Exact 6 Primary Navigation Areas
-  const navItems: { id: ActiveNavTab; label: string; icon: React.ElementType }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'market', label: 'Market', icon: TrendingUp },
-    { id: 'expenses', label: 'Expense Tracker', icon: Receipt },
-    { id: 'recommendations', label: 'Recommendations', icon: Sparkles },
-    { id: 'goals', label: 'Goals', icon: Target },
-    { id: 'profile', label: 'Profile', icon: User },
+  const navItems: { id: ActiveNavTab; label: string; icon: React.ElementType; desc: string }[] = [
+    { id: 'dashboard',       label: 'Wealth Overview',  icon: LayoutDashboard, desc: 'Portfolio & KPIs' },
+    { id: 'market',          label: 'Market Terminal',  icon: BarChart3,        desc: 'Global Quotes'   },
+    { id: 'recommendations', label: 'Asset Allocation', icon: Layers,           desc: 'Strategy Blueprint' },
+    { id: 'goals',           label: 'Goal Roadmaps',    icon: Target,           desc: 'Milestones'      },
+    { id: 'expenses',        label: 'Cash Flow & Surplus', icon: Receipt,       desc: 'Inflow & Expenses' },
+    { id: 'profile',         label: 'Investor Mandate', icon: User,             desc: 'Risk & Profile'  },
   ];
 
   const handleExportPdf = () => {
     try {
       setIsExportingPdf(true);
-      generateAdvisoryPdfReport({
-        user,
-        strategy,
-        expenses,
-        goals,
-        currency,
-        currencySymbol: currency === 'USD' ? '$' : '₹'
-      });
-    } catch {
-      // Ignore
-    } finally {
-      setIsExportingPdf(false);
-    }
+      generateAdvisoryPdfReport({ user, strategy, expenses, goals, currency, currencySymbol: currency === 'USD' ? '$' : '₹' });
+    } catch { /* Ignore */ }
+    finally { setIsExportingPdf(false); }
   };
 
   const handleReanalyze = async () => {
     try {
       setIsReanalyzing(true);
       await runAiAnalysis();
-    } finally {
-      setIsReanalyzing(false);
-    }
+    } finally { setIsReanalyzing(false); }
   };
 
   const pageTitleMap: Partial<Record<ActiveNavTab, { title: string; subtitle: string }>> = {
-    dashboard: { title: 'Strategic Wealth Overview', subtitle: 'Real-time asset allocation & financial runway analytics' },
-    market: { title: 'Global Market Terminal', subtitle: 'Real-time equity quotes, global benchmarks, mutual funds & asset discovery' },
-    expenses: { title: 'Expense Tracker & Cashflow', subtitle: 'Track outflows and unlock investable surplus' },
-    recommendations: { title: 'Investment Blueprint', subtitle: 'Fiduciary multi-asset portfolio calibrated for compound growth' },
-    goals: { title: 'Milestone Goal Planner', subtitle: 'Calculate required SIPs and probability roadmaps' },
-    profile: { title: 'Investor Profile & Settings', subtitle: 'Manage financial parameters and risk tolerance' },
-    onboarding: { title: 'Investor Onboarding', subtitle: 'Complete your profile to generate your strategy blueprint' }
+    dashboard:       { title: 'Portfolio Overview',     subtitle: 'Institutional capital analytics & real-time financial health' },
+    market:          { title: 'Global Market Terminal', subtitle: 'NSE · NASDAQ · Global ETFs · Commodities & NAV Feeds' },
+    recommendations: { title: 'Asset Allocation Blueprint', subtitle: 'Quantitative multi-asset strategy & direct execution guide' },
+    goals:           { title: 'Goal Roadmaps & Milestones', subtitle: 'Target probability modeling & inflation-adjusted SIP plans' },
+    expenses:        { title: 'Cash Flow & Capital Surplus', subtitle: 'Income allocation, fixed expenditure, and investable surplus' },
+    profile:         { title: 'Investor Mandate & Governance', subtitle: 'Risk capacity scores, lifecycle parameters, and demographic settings' },
+    onboarding:      { title: 'Wealth Discovery',       subtitle: 'Complete your investment profile' },
   };
 
   const currentMeta = pageTitleMap[activeView] || pageTitleMap.dashboard!;
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
-    <div className="h-screen bg-[#F6F7FB] text-[#172033] flex overflow-hidden font-sans selection:bg-teal-500/20 selection:text-teal-900">
+    <div className="h-screen flex overflow-hidden bg-[#050816] text-[#FFFFFF] font-sans">
       
-      {/* =========================================================================
-          NARROW PERSISTENT LIGHT SIDEBAR (224px Fixed Width)
-      ========================================================================= */}
-      <aside className="hidden lg:flex w-[224px] flex-col shrink-0 bg-white border-r border-[#E7E9F0] select-none h-full justify-between">
-        
-        {/* Upper Portion: Logo + Navigation */}
-        <div>
-          {/* Brand Header */}
-          <div className="px-5 py-4 border-b border-[#E7E9F0]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600 shadow-xs">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-[19px] font-bold text-[#172033] tracking-tight flex items-center gap-1.5 leading-tight">
-                  <span>SmartVest</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-100 text-teal-800">AI</span>
-                </div>
-                <div className="text-[11px] text-[#667085] font-semibold tracking-wider uppercase">
-                  STRATEGIC ADVISOR
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 5 Navigation Rows */}
-          <nav className="p-3 space-y-1">
-            <div className="text-[11.5px] font-bold text-[#98A2B3] px-3 py-1.5 uppercase tracking-wider">
-              Menu
-            </div>
-
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeView === item.id;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveView(item.id)}
-                  className={`w-full h-[44px] flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14.5px] font-medium transition-colors cursor-pointer group relative ${
-                    isActive 
-                      ? 'bg-teal-50 text-teal-800 font-semibold border-r-2 border-teal-600' 
-                      : 'text-[#667085] hover:text-[#172033] hover:bg-[#F8F9FC]'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 shrink-0 ${
-                    isActive ? 'text-teal-600' : 'text-[#667085]'
-                  }`} />
-                  <span className="truncate">{item.label}</span>
-                </button>
-              );
-            })}
-
-            {/* VestIQ Co-pilot Card */}
-            <div className="pt-2 px-1">
-              <div 
-                onClick={() => setActiveView('ai')}
-                className="p-3 rounded-xl bg-gradient-to-br from-teal-50/90 to-indigo-50/90 border border-teal-200 hover:border-teal-400 transition-all cursor-pointer group shadow-2xs space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-[#172033] text-[13px]">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-600 group-hover:rotate-12 transition-transform" />
-                    <span>VestIQ AI</span>
-                  </div>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-600 text-white shadow-2xs">
-                    NEW
-                  </span>
-                </div>
-                <p className="text-[11.5px] text-[#667085] leading-tight">
-                  Financial research & intelligence workspace
-                </p>
-                <div className="text-[11.5px] font-bold text-teal-700 flex items-center gap-1 pt-0.5 group-hover:translate-x-0.5 transition-transform">
-                  <span>Launch Workspace</span>
-                  <span>→</span>
-                </div>
-              </div>
-            </div>
-          </nav>
+      {/* ================================================================
+          INSTITUTIONAL SIDEBAR — Desktop
+      ================================================================ */}
+      <aside
+        className="hidden lg:flex flex-col w-[240px] shrink-0 h-full bg-[#0A1022] border-r border-white/[0.08]"
+      >
+        {/* Brand Header */}
+        <div className="px-5 py-5 border-b border-white/[0.06]">
+          <BrandLogo size="md" subtitleText="CAPITAL ADVISORY" />
         </div>
 
-        {/* Bottom Portion: Currency Selector & User Profile */}
-        <div className="p-3 border-t border-[#E7E9F0] space-y-2.5 bg-[#F8F9FC]">
-          {/* Theme & Currency Controls */}
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[12px] text-[#667085] font-semibold uppercase">Theme</span>
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#E7E9F0] text-[12px] font-bold text-[#667085] hover:text-[#172033] shadow-xs cursor-pointer transition-all"
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Dark</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-slate-700" />
-                  <span>Light</span>
-                </>
-              )}
-            </button>
+        {/* Navigation Items */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-none">
+          <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[#5A667A]">
+            PORTFOLIO MODULES
           </div>
 
-          {/* Currency Selector */}
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[12px] text-[#667085] font-semibold uppercase">Currency</span>
-            <div className="flex bg-white rounded-lg p-0.5 border border-[#E7E9F0] shadow-xs">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+                  isActive 
+                    ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]' 
+                    : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#00D4AA]' : 'text-[#8A94A6]'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate">{item.label}</div>
+                </div>
+                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]" />}
+              </button>
+            );
+          })}
+
+          {/* AI Intelligence Workspace Link */}
+          <div className="pt-4 mt-4 border-t border-white/[0.06]">
+            <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[#5A667A]">
+              INTELLIGENCE
+            </div>
+            <button
+              onClick={() => setActiveView('ai')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+                activeView === 'ai' || activeView === 'vestiq'
+                  ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]'
+                  : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-[#00D4AA]" />
+              <span>VestIQ Strategic AI</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Sidebar Footer — Client Account Card */}
+        <div className="p-3 border-t border-white/[0.06] bg-[#050816]/60 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#101827] border border-white/[0.06] min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-md bg-[#00D4AA]/15 text-[#00D4AA] border border-[#00D4AA]/30 flex items-center justify-center font-bold text-xs shrink-0">
+              {userInitial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-white truncate">{user?.name || 'Investor'}</div>
+              <div className="text-[10px] text-[#8A94A6] truncate">{user?.riskTolerance ? `${user.riskTolerance} Mandate` : 'Moderate Mandate'}</div>
+            </div>
+          </div>
+          {authActive && (
+            <button
+              onClick={async () => {
+                await signOut();
+                setActiveView('landing');
+              }}
+              title="Sign Out"
+              className="p-2 rounded-lg bg-[#101827] hover:bg-[#1f293d] border border-white/[0.08] text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </aside>
+
+      {/* ================================================================
+          MAIN CONTENT AREA & TOPBAR
+      ================================================================ */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        {/* Institutional TopBar */}
+        <header className="h-14 shrink-0 bg-[#0A1022] border-b border-white/[0.08] px-4 lg:px-8 flex items-center justify-between gap-4 z-20">
+          {/* Mobile Menu Toggle & Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-bold text-white tracking-tight truncate leading-none">
+                {currentMeta.title}
+              </h1>
+              <p className="text-[11px] text-[#8A94A6] hidden sm:block truncate mt-0.5">
+                {currentMeta.subtitle}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Action Tools */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Currency Selector */}
+            <div className="flex items-center bg-[#101827] border border-white/[0.08] rounded-md p-0.5 text-xs">
               <button
                 onClick={() => setCurrency('INR')}
-                className={`px-2.5 py-1 rounded text-[12px] font-bold transition-all cursor-pointer ${
-                  currency === 'INR' ? 'bg-teal-600 text-white shadow-xs' : 'text-[#667085] hover:text-[#172033]'
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                  currency === 'INR' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
                 ₹ INR
               </button>
               <button
                 onClick={() => setCurrency('USD')}
-                className={`px-2.5 py-1 rounded text-[12px] font-bold transition-all cursor-pointer ${
-                  currency === 'USD' ? 'bg-teal-600 text-white shadow-xs' : 'text-[#667085] hover:text-[#172033]'
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                  currency === 'USD' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
                 $ USD
               </button>
             </div>
-          </div>
 
-          {/* User Profile Card */}
-          <div 
-            onClick={() => setActiveView('profile')}
-            className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-[#E7E9F0] hover:border-teal-400 transition-all cursor-pointer group shadow-xs"
-          >
-            <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center font-bold text-xs shrink-0">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <div className="truncate text-left flex-1 min-w-0">
-              <div className="text-[13.5px] font-semibold text-[#172033] truncate group-hover:text-teal-700 transition-colors">
-                {user?.name || 'Investor'}
-              </div>
-              <div className="text-[11.5px] text-[#667085] truncate">
-                {user?.riskTolerance || 'Moderate'} Risk
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </aside>
-
-      {/* =========================================================================
-          MAIN APPLICATION AREA (Header + Centered Wide Content 1400px)
-      ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#F6F7FB]">
-        
-        {/* Top Header */}
-        <header className="h-[64px] min-h-[64px] border-b border-[#E7E9F0] bg-white px-5 sm:px-8 flex items-center justify-between shrink-0 z-30 shadow-xs">
-          
-          {/* Left: Title & Subtitle */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 text-[#667085] hover:text-[#172033] rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] cursor-pointer"
-              title="Toggle Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-            <div>
-              <h1 className="text-lg sm:text-[22px] lg:text-[26px] font-bold text-[#172033] tracking-tight flex items-center gap-2 leading-tight">
-                <span>{currentMeta.title}</span>
-              </h1>
-              <p className="hidden sm:block text-[13px] text-[#667085] font-normal leading-normal">
-                {currentMeta.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-2.5">
-            <span className="hidden xl:inline text-[13px] text-[#667085] pr-1">
-              Last analyzed: <strong className="text-[#172033] font-medium font-mono">Today</strong>
-            </span>
-
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#667085] hover:text-[#172033] hover:bg-slate-100 transition-all cursor-pointer shadow-xs"
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400 animate-fade-in" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-700 animate-fade-in" />
-              )}
-            </button>
-
+            {/* Recalculate Button */}
             <button
               onClick={handleReanalyze}
               disabled={isReanalyzing}
-              className="px-3 py-2 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] hover:bg-slate-100 text-[13.5px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
-              title="Recalculate Strategy"
+              title="Recalculate Multi-Asset Blueprint"
+              className="p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white transition-colors cursor-pointer text-xs flex items-center gap-1.5"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-teal-600 ${isReanalyzing ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">Re-analyze</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-[#00D4AA]' : ''}`} />
+              <span className="hidden sm:inline text-[11px] font-semibold">Recalculate</span>
             </button>
 
+            {/* PDF Export Button */}
             <button
               onClick={handleExportPdf}
               disabled={isExportingPdf}
-              className="glow-btn-secondary px-3 py-2 rounded-lg text-[13.5px] font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
-              title="Download Comprehensive Strategy Report"
+              className="px-3 py-1.5 rounded-md bg-[#101827] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <FileText className="w-3.5 h-3.5 text-teal-600" />
-              <span className="hidden sm:inline">{isExportingPdf ? 'Exporting...' : 'Export PDF'}</span>
+              <FileText className="w-3.5 h-3.5 text-[#00D4AA]" />
+              <span className="hidden sm:inline">Export PDF</span>
             </button>
 
+            {/* VestIQ Assistant Trigger */}
             <button
               onClick={() => setActiveView('ai')}
-              className="glow-btn-primary px-3.5 py-2 rounded-lg text-white font-bold text-[14px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-              title="Open VestIQ AI Financial Workspace"
+              className="px-3 py-1.5 rounded-md bg-[#00D4AA] text-[#050816] text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <Sparkles className="w-4 h-4 stroke-[2.5]" />
-              <span>Ask VestIQ</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>VestIQ AI</span>
             </button>
           </div>
-
         </header>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-b border-[#E7E9F0] p-3 space-y-1 animate-fade-in z-20 shadow-md">
+          <div className="lg:hidden bg-[#0A1022] border-b border-white/[0.08] p-4 space-y-1 z-30">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -336,51 +263,35 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                     setActiveView(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-[14.5px] font-semibold cursor-pointer ${
-                    isActive ? 'bg-teal-50 text-teal-800' : 'text-[#667085] hover:bg-slate-50'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold ${
+                    isActive ? 'bg-[#101827] text-[#00D4AA]' : 'text-[#8A94A6]'
                   }`}
                 >
-                  <Icon className="w-4 h-4 text-teal-600" />
+                  <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                 </button>
               );
             })}
-
-            <div className="pt-2 border-t border-[#E7E9F0] flex items-center justify-between px-3">
-              <span className="text-[13px] font-medium text-[#667085]">Theme</span>
-              <button
-                onClick={toggleTheme}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[13px] font-bold text-[#172033]"
-              >
-                {theme === 'dark' ? (
-                  <>
-                    <Sun className="w-4 h-4 text-amber-400" />
-                    <span>Dark</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-4 h-4 text-slate-700" />
-                    <span>Light</span>
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         )}
 
-        {/* Main Content Area (Centered Wide Content Max Width 1400px) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 w-full max-w-[1400px] mx-auto space-y-5">
-          {children}
+        {/* Dynamic View Scroll Container */}
+        <main className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 bg-[#050816]">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
 
       </div>
 
-      {/* Slide-Over AI Assistant Drawer */}
+      {/* Slide-over Assistant Drawer */}
       {isAdvisorOpen && (
-        <AIAssistantDrawer onClose={() => setAdvisorOpen(false)} />
+        <AIAssistantDrawer
+          onClose={() => setAdvisorOpen(false)}
+        />
       )}
 
-      {/* Floating Assistant Trigger Button */}
+      {/* Floating Assistant Trigger */}
       <FloatingAIAssistantButton />
 
     </div>

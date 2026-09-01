@@ -7,12 +7,12 @@ import type {
   InvestmentStrategy
 } from '../types';
 import { calculateInvestmentStrategy } from '../services/strategyEngine';
-import { subscribeToAuthState, logoutFirebase, isAuthEnabled, type FirebaseUser } from '../services/firebase';
 import { authApi } from '../services/api';
+import { userProfileRepo } from '../services/userProfileRepository';
+import { subscribeToAuthState, isAuthEnabled } from '../services/firebase';
 
 export type ActiveNavTab = 
   | 'landing' 
-  | 'auth' 
   | 'onboarding' 
   | 'analysis' 
   | 'dashboard' 
@@ -32,7 +32,7 @@ interface FintechState {
   setCurrency: (currency: Currency) => void;
   formatCurrency: (amount: number) => string;
   
-  // Auth & User Profile (Single authoritative user profile)
+  // User Profile
   user: UserProfile | null;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
@@ -40,7 +40,6 @@ interface FintechState {
   setUser: (user: UserProfile | null, token?: string) => void;
   updateUserProfile: (data: Partial<UserProfile>) => void;
   initAuthListener: () => () => void;
-  logout: () => Promise<void>;
   resetProfile: () => void;
   
   // Navigation
@@ -75,14 +74,13 @@ interface FintechState {
   deleteGoal: (id: string) => void;
 }
 
-import { userProfileRepo } from '../services/userProfileRepository';
-
 // Load authoritative session data from UserProfileRepository
+const authActive = isAuthEnabled();
 const storedToken = localStorage.getItem('smartvest_token');
 const storedTheme = (localStorage.getItem('smartvest_theme') as 'light' | 'dark') || 'dark';
-const initialUser = userProfileRepo.getProfile();
-const initialExpenses = userProfileRepo.getExpenses();
-const initialGoals = userProfileRepo.getGoals();
+const initialUser = authActive ? null : userProfileRepo.getProfile();
+const initialExpenses = authActive ? [] : userProfileRepo.getExpenses();
+const initialGoals = authActive ? [] : userProfileRepo.getGoals();
 
 // Ensure DOM has correct theme class on startup
 if (typeof document !== 'undefined') {
@@ -101,8 +99,6 @@ if (initialUser && initialUser.onboardingCompleted) {
     //
   }
 }
-
-const authEnabled = isAuthEnabled();
 
 export const useFintechStore = create<FintechState>((set, get) => ({
   theme: storedTheme,
@@ -161,86 +157,58 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     }
   },
 
-  // Auth & Profile
+  // Auth state synced with Firebase
   user: initialUser,
-  isAuthenticated: !authEnabled || !!initialUser,
-  isAuthLoading: authEnabled,
+  isAuthenticated: !isAuthEnabled(),
+  isAuthLoading: isAuthEnabled(),
   token: storedToken || null,
   
   initAuthListener: () => {
-    // When Auth is disabled via feature flag, bypass Firebase Auth listener
     if (!isAuthEnabled()) {
-      const currentUser = get().user;
-      set({
-        isAuthenticated: true,
-        isAuthLoading: false,
-        activeView: currentUser?.onboardingCompleted ? 'dashboard' : 'landing'
-      });
+      set({ isAuthLoading: false, isAuthenticated: true });
       return () => {};
     }
 
-    const unsubscribe = subscribeToAuthState(async (firebaseUser: FirebaseUser | null) => {
+    set({ isAuthLoading: true });
+    const unsubscribe = subscribeToAuthState((firebaseUser) => {
       if (firebaseUser) {
-        let token = '';
-        try {
-          token = await firebaseUser.getIdToken();
-          localStorage.setItem('smartvest_token', token);
-        } catch {
-          //
-        }
-
-        const userStorageKey = `smartvest_user_${firebaseUser.uid}`;
-        const userProfileRaw = localStorage.getItem('smartvest_profile') || localStorage.getItem(userStorageKey) || localStorage.getItem('smartvest_user');
-        let profileData: UserProfile;
-
-        if (userProfileRaw) {
-          try {
-            profileData = JSON.parse(userProfileRaw);
-            profileData.id = firebaseUser.uid;
-            profileData.email = firebaseUser.email || profileData.email || '';
-            if (firebaseUser.displayName && !profileData.name) {
-              profileData.name = firebaseUser.displayName;
-            }
-          } catch {
-            profileData = {
+        const localProf = userProfileRepo.getProfile();
+        const userObj: UserProfile = (localProf && (!localProf.id || localProf.id === firebaseUser.uid))
+          ? { ...localProf, id: firebaseUser.uid, email: firebaseUser.email || localProf.email || '' }
+          : {
               id: firebaseUser.uid,
+              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
               email: firebaseUser.email || '',
-              name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
-              onboardingCompleted: false
+              onboardingCompleted: false,
+              riskTolerance: 'Moderate',
+              investmentHorizon: '5 to 10 years',
+              investmentExperience: 'Intermediate'
             };
-          }
-        } else {
-          profileData = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
-            onboardingCompleted: false
-          };
-        }
-
-        localStorage.setItem('smartvest_profile', JSON.stringify(profileData));
-        localStorage.setItem('smartvest_user', JSON.stringify(profileData));
-        localStorage.setItem(userStorageKey, JSON.stringify(profileData));
-
-        const computedStrategy = calculateInvestmentStrategy(profileData, get().expenses, get().goals);
-        localStorage.setItem('smartvest_recommendations', JSON.stringify(computedStrategy));
-        
+        const loadedExpenses = userProfileRepo.getExpenses();
+        const loadedGoals = userProfileRepo.getGoals();
+        const computedStrategy = calculateInvestmentStrategy(userObj, loadedExpenses, loadedGoals);
         set({
-          user: profileData,
+          user: userObj,
+          expenses: loadedExpenses,
+          goals: loadedGoals,
           isAuthenticated: true,
           isAuthLoading: false,
-          token,
           strategy: computedStrategy,
-          activeView: profileData.onboardingCompleted ? 'dashboard' : 'onboarding'
+          activeView: userObj.onboardingCompleted ? 'dashboard' : 'onboarding'
         });
       } else {
-        // Unauthenticated or Logged out
+        userProfileRepo.clearProfile();
+        localStorage.removeItem('smartvest_token');
+        const emptyStrategy = calculateInvestmentStrategy(null, [], []);
         set({
           user: null,
+          expenses: [],
+          goals: [],
           isAuthenticated: false,
           isAuthLoading: false,
           token: null,
-          activeView: get().activeView === 'auth' ? 'auth' : 'landing'
+          strategy: emptyStrategy,
+          activeView: 'landing'
         });
       }
     });
@@ -264,12 +232,13 @@ export const useFintechStore = create<FintechState>((set, get) => ({
       });
     } else {
       userProfileRepo.clearProfile();
+      localStorage.removeItem('smartvest_token');
       set({ 
         user: null, 
         isAuthenticated: !isAuthEnabled(), 
         isAuthLoading: false, 
         token: null, 
-        activeView: isAuthEnabled() ? 'auth' : 'onboarding' 
+        activeView: 'landing' 
       });
     }
   },
@@ -312,6 +281,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
 
   resetProfile: () => {
     userProfileRepo.clearProfile();
+    localStorage.removeItem('smartvest_token');
     const emptyStrategy = calculateInvestmentStrategy(null, [], []);
     set({
       user: null,
@@ -321,32 +291,11 @@ export const useFintechStore = create<FintechState>((set, get) => ({
       expenses: [],
       goals: [],
       strategy: emptyStrategy,
-      activeView: 'onboarding'
+      activeView: 'landing'
     });
   },
 
-  logout: async () => {
-    if (isAuthEnabled()) {
-      try {
-        await logoutFirebase();
-      } catch {
-        //
-      }
-    }
-    userProfileRepo.clearProfile();
-    
-    set({ 
-      user: null, 
-      isAuthenticated: !isAuthEnabled(), 
-      isAuthLoading: false, 
-      token: null, 
-      expenses: [], 
-      goals: [], 
-      activeView: isAuthEnabled() ? 'auth' : 'onboarding' 
-    });
-  },
-
-  activeView: initialUser && initialUser.onboardingCompleted ? 'dashboard' : 'landing',
+  activeView: !authActive && initialUser && initialUser.onboardingCompleted ? 'dashboard' : 'landing',
   setActiveView: (view) => set({ activeView: view }),
 
   isAdvisorOpen: false,
@@ -354,7 +303,13 @@ export const useFintechStore = create<FintechState>((set, get) => ({
 
   isAnalyzing: false,
   runAiAnalysis: (callback) => {
-    set({ isAnalyzing: true, activeView: 'analysis' });
+    const updatedStrategy = calculateInvestmentStrategy(get().user, get().expenses, get().goals);
+    try {
+      localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    } catch {
+      //
+    }
+    set({ isAnalyzing: true, strategy: updatedStrategy, activeView: 'analysis' });
     setTimeout(() => {
       set({ isAnalyzing: false, activeView: 'dashboard' });
       if (callback) callback();

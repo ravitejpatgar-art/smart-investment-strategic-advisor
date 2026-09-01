@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { marketApi, type MarketQuote } from '../services/marketApi';
 
-export function useMarketQuotes(symbols: string[], refreshIntervalMs: number = 30000) {
+export function useMarketQuotes(symbols: string[], refreshIntervalMs: number = 60000) {
   const [quotes, setQuotes] = useState<Record<string, MarketQuote>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

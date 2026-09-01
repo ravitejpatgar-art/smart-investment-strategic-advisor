@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
-from app.services.market_data.base import BaseMarketDataProvider, ProviderCapabilities
+from app.services.market_data.base import BaseMarketDataProvider
 from app.services.market_data.freshness import DataFreshness
 from app.services.market_data.normalizer import create_unavailable_quote
 from app.services.market_data.indian_equities import IndianEquitiesProvider
@@ -8,14 +8,16 @@ from app.services.market_data.us_equities import USEquitiesProvider
 from app.services.market_data.etfs import ETFProvider
 from app.services.market_data.mutual_funds import MutualFundsProvider
 from app.services.market_data.gold import GoldProvider
-from app.services.market_data.fundamentals import get_instrument_fundamentals
+from app.services.market_data.fundamentals import get_instrument_fundamentals, get_enhanced_fundamentals
 from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.cache import market_cache
+from app.services.market_data.router import provider_router
 
 class MarketDataProviderRegistry:
     """
-    Unified registry and router for SmartVest market data services.
-    Routes queries to specialized adapters based on canonical asset classification.
+    Unified registry and router for SmartVest global market data services.
+    Leverages ProviderRouter with automatic multi-provider failover:
+    Polygon.io -> TwelveData -> Yahoo Finance -> Alpha Vantage -> AMFI.
     """
     def __init__(self):
         self.india_provider = IndianEquitiesProvider()
@@ -23,42 +25,53 @@ class MarketDataProviderRegistry:
         self.etf_provider = ETFProvider()
         self.mf_provider = MutualFundsProvider()
         self.gold_provider = GoldProvider()
+        self.router = provider_router
 
     def get_capability_matrix(self) -> List[Dict[str, Any]]:
         """Returns provider capabilities and entitlement status."""
         return [
             {
-                "provider": self.india_provider.name,
-                "market": "India Equities & Indices (NSE/BSE)",
-                "realtime": self.india_provider.capabilities.realtime,
-                "delayed": self.india_provider.capabilities.delayed,
-                "historical": self.india_provider.capabilities.historical,
-                "apiKeyPresent": bool(settings.INDIA_MARKET_DATA_API_KEY),
-                "entitlementVerified": self.india_provider.capabilities.entitlement_verified,
-                "status": "ACTIVE"
+                "provider": "Polygon.io",
+                "market": "US Equities, ETFs & Aggregates",
+                "realtime": self.router.polygon.capabilities.realtime,
+                "delayed": True,
+                "historical": True,
+                "apiKeyPresent": bool(self.router.polygon.api_key),
+                "entitlementVerified": self.router.polygon.capabilities.entitlement_verified,
+                "status": "ACTIVE" if self.router.polygon.capabilities.is_configured else "STANDBY"
             },
             {
-                "provider": self.us_provider.name,
-                "market": "US Equities & Indices (NASDAQ/NYSE)",
-                "realtime": self.us_provider.capabilities.realtime,
-                "delayed": self.us_provider.capabilities.delayed,
-                "historical": self.us_provider.capabilities.historical,
-                "apiKeyPresent": bool(settings.US_MARKET_DATA_API_KEY),
-                "entitlementVerified": self.us_provider.capabilities.entitlement_verified,
-                "status": "ACTIVE"
+                "provider": "TwelveData",
+                "market": "Global Stocks, ETFs & Forex",
+                "realtime": self.router.twelvedata.capabilities.realtime,
+                "delayed": True,
+                "historical": True,
+                "apiKeyPresent": bool(self.router.twelvedata.api_key),
+                "entitlementVerified": self.router.twelvedata.capabilities.entitlement_verified,
+                "status": "ACTIVE" if self.router.twelvedata.capabilities.is_configured else "STANDBY"
             },
             {
-                "provider": self.etf_provider.name,
-                "market": "ETFs (NiftyBeES, GoldBeES, MON100)",
-                "realtime": self.etf_provider.capabilities.realtime,
-                "delayed": self.etf_provider.capabilities.delayed,
-                "historical": self.etf_provider.capabilities.historical,
+                "provider": "YahooFinance",
+                "market": "Universal Global Equities, ADRs, Indices, Commodities",
+                "realtime": False,
+                "delayed": True,
+                "historical": True,
                 "apiKeyPresent": True,
-                "entitlementVerified": False,
+                "entitlementVerified": True,
                 "status": "ACTIVE"
             },
             {
-                "provider": self.mf_provider.name,
+                "provider": "AlphaVantage",
+                "market": "Global Equities & Fundamentals",
+                "realtime": False,
+                "delayed": True,
+                "historical": True,
+                "apiKeyPresent": bool(self.router.alphavantage.api_key),
+                "entitlementVerified": self.router.alphavantage.capabilities.entitlement_verified,
+                "status": "ACTIVE" if self.router.alphavantage.capabilities.is_configured else "STANDBY"
+            },
+            {
+                "provider": "AMFI",
                 "market": "Mutual Funds (AMFI Daily NAV)",
                 "realtime": False,
                 "delayed": False,
@@ -66,16 +79,6 @@ class MarketDataProviderRegistry:
                 "navPublished": True,
                 "apiKeyPresent": True,
                 "entitlementVerified": True,
-                "status": "ACTIVE"
-            },
-            {
-                "provider": self.gold_provider.name,
-                "market": "Gold Spot, Gold ETFs & SGB",
-                "realtime": False,
-                "delayed": True,
-                "historical": True,
-                "apiKeyPresent": True,
-                "entitlementVerified": False,
                 "status": "ACTIVE"
             }
         ]
@@ -100,35 +103,33 @@ class MarketDataProviderRegistry:
             return self.gold_provider
 
         # 4. Direct Mutual Fund Candidates
-        if s in ["NIFTY50_INDEX", "FLEXICAP_FUND", "LIQUID_FUND", "SHORT_DEBT_FUND", "SMALLCAP_FUND", "CONSERVATIVE_HYBRID", "120716", "122639", "120586", "119062", "125354", "120616", "PPFCF", "PPFAS", "ICICILIQ", "HDFCSHORT", "NIPPSMALL", "NIFTY50", "ICICISAVE", "REGULAR_SAVINGS"]:
+        if s.isdigit() or s in ["NIFTY50_INDEX", "FLEXICAP_FUND", "LIQUID_FUND", "SHORT_DEBT_FUND", "SMALLCAP_FUND", "CONSERVATIVE_HYBRID", "120716", "122639", "120586", "119062", "125354", "120616", "PPFCF", "PPFAS", "ICICILIQ", "HDFCSHORT", "NIPPSMALL", "NIFTY50", "ICICISAVE", "REGULAR_SAVINGS"]:
             return self.mf_provider
 
-        # 5. Check if Mutual Funds Scheme Resolver recognizes this fund
         if any(w in s for w in ["UTI", "PARAG", "FLEXI", "LIQUID", "FUND", "DIRECT", "GROWTH", "MF", "INDEX FUND", "SMALLCAP", "DEBT", "HYBRID", "SAVINGS", "SAVE"]):
             if self.mf_provider.resolve_scheme(symbol) is not None:
                 return self.mf_provider
 
-        # 6. US Indices and Equities
-        if s in ["NASDAQ", "NASDAQ 100", "S&P 500", "DOW JONES", "RUSSELL 2000", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "V", "AMD", "NFLX", "QQQ", "SPY", "VTI", "^IXIC", "^NDX", "^GSPC", "^DJI"]:
-            return self.us_provider
-
-        # 7. Check if general scheme resolver recognizes it
-        if self.mf_provider.resolve_scheme(symbol) is not None:
-            return self.mf_provider
-
-        # 8. Default to India Equities & Indices
+        # 5. Default to Provider Router
         return self.india_provider
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
-        """Fetches quote from the appropriate provider."""
+        """Fetches quote through ProviderRouter with automatic failover."""
         if not symbol or not symbol.strip():
             return create_unavailable_quote("UNKNOWN", "Symbol cannot be empty.")
             
+        # First try specialized adapter if it's MF or Gold
         provider = self.resolve_provider(symbol)
-        try:
-            return provider.get_quote(symbol)
-        except Exception:
-            return create_unavailable_quote(symbol, f"Failed to retrieve market quote from {provider.name}.")
+        if provider.name in ["MutualFunds", "MutualFundsProvider", "Gold", "GoldProvider"]:
+            try:
+                q = provider.get_quote(symbol)
+                if q and q.get("price") is not None:
+                    return q
+            except Exception:
+                pass
+
+        # Use global multi-provider router
+        return self.router.get_quote(symbol)
 
     def get_quotes(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
         """Batch quotes fetch."""
@@ -139,20 +140,18 @@ class MarketDataProviderRegistry:
         return results
 
     def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo") -> Dict[str, Any]:
-        """Fetches historical observations."""
+        """Fetches historical observations using multi-provider router."""
+        # For Mutual Funds, try MF provider first
         provider = self.resolve_provider(symbol)
-        try:
-            return provider.get_candles(symbol, interval=interval, range_period=range_period)
-        except Exception:
-            return {
-                "symbol": symbol,
-                "range": range_period,
-                "interval": interval,
-                "source": provider.name,
-                "freshness": DataFreshness.UNAVAILABLE.value,
-                "observations": [],
-                "message": "Historical series unavailable."
-            }
+        if provider.name == "MutualFundsProvider":
+            try:
+                c = provider.get_candles(symbol, interval=interval, range_period=range_period)
+                if c and c.get("observations"):
+                    return c
+            except Exception:
+                pass
+
+        return self.router.get_candles(symbol, interval=interval, range_period=range_period)
 
     def get_fundamentals(self, symbol: str) -> Dict[str, Any]:
         """Fetches fundamental data."""
@@ -167,21 +166,18 @@ class MarketDataProviderRegistry:
         if cached:
             return cached
 
-        # Real index quotes
         india_symbols = ["NIFTY 50", "SENSEX", "BANKNIFTY", "NIFTY IT", "NIFTY AUTO"]
         us_symbols = ["NASDAQ", "S&P 500", "DOW JONES", "RUSSELL 2000"]
-        stock_symbols = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "TATAMOTORS", "NVDA", "AAPL", "TSLA"]
+        stock_symbols = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "TATAMOTORS", "NVDA", "AAPL", "TSLA", "TSM", "ASML"]
 
         india_quotes = [self.get_quote(s) for s in india_symbols]
         us_quotes = [self.get_quote(s) for s in us_symbols]
         gold_quote = self.get_quote("GOLD (10g)")
         goldbees_quote = self.get_quote("GOLDBEES")
 
-        # Top gainers / movers from real quotes
         stock_quotes = [self.get_quote(s) for s in stock_symbols]
         valid_stocks = [q for q in stock_quotes if q.get("price") is not None]
         
-        # Sort by changePct
         sorted_stocks = sorted(valid_stocks, key=lambda x: x.get("changePct") or 0.0, reverse=True)
         top_gainers = sorted_stocks[:4]
         top_losers = list(reversed(sorted_stocks[-4:]))
@@ -210,18 +206,13 @@ class MarketDataProviderRegistry:
         return overview
 
     def get_health_status(self) -> Dict[str, Any]:
-        """Health check and observability telemetry."""
+        """Health check and observability telemetry from router."""
+        router_health = self.router.get_health_status()
         return {
             "status": "HEALTHY",
             "market_data_mode": settings.MARKET_DATA_MODE,
             "cache_entries": market_cache.size(),
-            "providers": {
-                "india_equities": "ACTIVE",
-                "us_equities": "ACTIVE",
-                "etfs": "ACTIVE",
-                "mutual_funds": "ACTIVE",
-                "gold": "ACTIVE"
-            },
+            "providers": router_health.get("providers", []),
             "market_hours": {
                 "india": get_indian_market_status().get("status"),
                 "us": get_us_market_status().get("status")

@@ -248,9 +248,9 @@ export function buildUserContext(
 
   return {
     userId: user?.id || null,
-    name: user?.name?.trim() || 'Investor',
+    name: user?.name?.trim() || "",
     age: user?.age ? Number(user.age) : null,
-    occupation: user?.occupation?.trim() || null,
+    occupation: user?.occupation?.trim() || "",
     monthlyIncome: totalIncome,
     salaryIncome: salary,
     otherIncome: otherInc,

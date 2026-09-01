@@ -9,6 +9,7 @@ from app.services.market_data.registry import market_registry
 from app.services.market_data.instrument_master import instrument_master
 from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.fundamentals import get_enhanced_fundamentals
+from app.services.market_data.technical_analysis import calculate_technical_indicators
 
 router = APIRouter(prefix="/market", tags=["Production Market Data Engine"])
 
@@ -123,7 +124,16 @@ def get_instrument_research(
     etf_data     = research_data.get("etfData")
     mf_data      = research_data.get("mfData")
 
-    # ── 4. Build capabilities from actual data (not hardcoded true) ──
+    # ── 4. Get technical indicators from 1Y candles ──
+    technicals = None
+    try:
+        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y")
+        if candles_res and candles_res.get("observations"):
+            technicals = calculate_technical_indicators(candles_res["observations"])
+    except Exception:
+        technicals = None
+
+    # ── 5. Build capabilities from actual data (not hardcoded true) ──
     has_exp_ratio = (
         bool(instrument_data and instrument_data.get("expenseRatio"))
         or bool(etf_data and etf_data.get("expenseRatio"))
@@ -146,7 +156,7 @@ def get_instrument_research(
         "hasHoldings":        False,
         "hasSectorBreakdown": False,
         "hasCountryBreakdown":False,
-        "hasTechnicals":      False,   # calculated client-side from historical series
+        "hasTechnicals":      bool(technicals and technicals.get("available")),
         "hasPerformance":     bool(etf_data and (
             etf_data.get("ytdReturn") is not None
             or etf_data.get("threeYearReturn") is not None
@@ -160,6 +170,7 @@ def get_instrument_research(
         "valuation":   valuation,
         "dividends":   dividends,
         "risk":        risk,
+        "technicals":  technicals,
         "etfData":     etf_data,
         "mfData":      mf_data,
         "capabilities":capabilities,

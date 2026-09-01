@@ -1,246 +1,303 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { 
-  Sparkles, 
   ArrowRight, 
-  Play, 
-  ShieldCheck, 
+  Shield, 
   TrendingUp, 
-  Activity, 
-  Zap, 
   CheckCircle2, 
-  Bot
+  Layers,
+  ChevronRight,
+  PieChart as PieIcon,
+  Activity
 } from 'lucide-react';
-
-import { isAuthEnabled } from '../../services/firebase';
-
 export const HeroSection: React.FC = () => {
-  const { setActiveView, user } = useFintechStore();
-  const authEnabled = isAuthEnabled();
+  const { setActiveView, user, currency } = useFintechStore();
+
+  // Interactive Tab for Right-Hand Financial Visualizer
+  const [activeTab, setActiveTab] = useState<'allocation' | 'projection' | 'mandate'>('allocation');
+
+  const allocationData = [
+    { label: 'Core Large-Cap & Index', pct: 35, color: '#00D4AA', amount: currency === 'INR' ? '₹17,500' : '$350' },
+    { label: 'Flexi-Cap & Alpha Equities', pct: 25, color: '#1E88E5', amount: currency === 'INR' ? '₹12,500' : '$250' },
+    { label: 'US Tech & Global Equities', pct: 15, color: '#8B5CF6', amount: currency === 'INR' ? '₹7,500' : '$150' },
+    { label: 'High-Yield Debt & Liquid', pct: 15, color: '#F59E0B', amount: currency === 'INR' ? '₹7,500' : '$150' },
+    { label: 'Gold & Macro Commodity Hedge', pct: 10, color: '#10B981', amount: currency === 'INR' ? '₹5,000' : '$100' },
+  ];
 
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-mesh-dark">
-      {/* Background ambient glow orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-emerald-500/15 via-cyan-500/10 to-indigo-500/10 rounded-full blur-[130px] pointer-events-none" />
-      
+    <section className="relative pt-28 pb-20 md:pt-36 md:pb-24 overflow-hidden bg-[#050816]">
+      {/* Subtle Structural Grid Background */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-20"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+          backgroundSize: '48px 48px'
+        }}
+      />
+
       <div className="max-w-7xl mx-auto px-4 lg:px-12 relative z-10">
-        
-        {/* Top Badge */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-emerald-500/30 text-emerald-300 text-xs md:text-sm font-medium shadow-xl shadow-emerald-950/50 backdrop-blur-md animate-pulse">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400"></span>
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI-Powered Financial Planning & Advisory Platform</span>
-          </div>
-        </div>
-
-        {/* Main Headline */}
-        <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.15] mb-6">
-            Take Control of Your <br className="hidden sm:inline" />
-            <span className="gradient-text-emerald">Financial Future</span> with AI
-          </h1>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10 font-normal">
-            SmartVest AI analyzes your finances, evaluates risk, and provides personalized investment recommendations with institutional-grade intelligence.
-          </p>
+          {/* ============================================================
+              LEFT COLUMN: Institutional Value Proposition & CTAs
+          ============================================================ */}
+          <div className="lg:col-span-6 space-y-7">
+            
+            {/* Regulatory / Fiduciary Label */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] text-xs font-semibold tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-[#00D4AA]" />
+              <span className="text-[#FFFFFF]">INSTITUTIONAL WEALTH PLATFORM</span>
+              <span className="text-[#5A667A]">|</span>
+              <span>FIDUCIARY STRATEGY</span>
+            </div>
 
-          {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
-            {user?.onboardingCompleted ? (
-              <>
-                <button
-                  onClick={() => setActiveView('dashboard')}
-                  className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 text-slate-950 font-extrabold text-base shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer"
-                >
-                  <span>Enter Dashboard</span>
-                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                </button>
-                <button
-                  onClick={() => setActiveView('onboarding')}
-                  className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 font-semibold text-base backdrop-blur-xl transition-all flex items-center justify-center gap-2.5 hover:border-slate-500 cursor-pointer shadow-lg"
-                >
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <span>Update Profile & Strategy</span>
-                </button>
-              </>
-            ) : authEnabled ? (
-              <>
-                <button
-                  onClick={() => setActiveView('onboarding')}
-                  className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 text-slate-950 font-extrabold text-base shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer"
-                >
-                  <span>Begin Financial Onboarding</span>
-                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                </button>
-                <button
-                  onClick={() => setActiveView('auth')}
-                  className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 font-semibold text-base backdrop-blur-xl transition-all flex items-center justify-center gap-2.5 hover:border-slate-500 cursor-pointer shadow-lg"
-                >
-                  <Play className="w-4 h-4 fill-current text-cyan-400" />
-                  <span>Sign In / Register</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setActiveView('onboarding')}
-                  className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 text-slate-950 font-extrabold text-base shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer"
-                >
-                  <span>Start Financial Analysis</span>
-                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                </button>
-                <a
-                  href="#calculator"
-                  className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 font-semibold text-base backdrop-blur-xl transition-all flex items-center justify-center gap-2.5 hover:border-slate-500 cursor-pointer shadow-lg"
-                >
-                  <Play className="w-4 h-4 fill-current text-cyan-400" />
-                  <span>Try SIP Simulator</span>
-                </a>
-              </>
-            )}
+            {/* Authoritative Main Headline */}
+            <h1 
+              className="text-3xl sm:text-5xl lg:text-[52px] font-black tracking-[-0.03em] text-white leading-[1.12]"
+              style={{ fontFamily: "'Inter Tight', 'Inter', sans-serif" }}
+            >
+              Professional Investment Planning <br className="hidden sm:inline" />
+              <span className="text-[#00D4AA]">For Long-Term Wealth Creation</span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="text-base sm:text-lg text-[#A0AEC0] leading-relaxed max-w-xl font-normal">
+              Personalized wealth strategies powered by institutional-grade analytics and disciplined portfolio construction.
+            </p>
+
+            {/* Key Institutional Benefits */}
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center gap-3 text-sm text-[#FFFFFF]">
+                <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+                <span><strong>Fiduciary Direct Architecture:</strong> 0% commissions, zero distributor bias.</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-[#FFFFFF]">
+                <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+                <span><strong>Modern Portfolio Theory (MPT):</strong> Multi-asset risk-adjusted diversification.</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-[#FFFFFF]">
+                <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+                <span><strong>Lifecycle Goal Projections:</strong> Inflation-adjusted milestone roadmaps.</span>
+              </div>
+            </div>
+
+            {/* Action CTAs */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-3">
+              <button
+                onClick={() => setActiveView(user?.onboardingCompleted ? 'dashboard' : 'onboarding')}
+                className="px-6 py-3.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-sm hover:bg-[#00D4AA]/90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <span>{user?.onboardingCompleted ? 'Open Portfolio Dashboard' : 'Start Analysis'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setActiveView('market')}
+                className="px-5 py-3.5 rounded-lg bg-[#0A1022] hover:bg-[#101827] text-white border border-white/[0.08] font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Explore Markets</span>
+              </button>
+            </div>
+
+            {/* Trust Badges */}
+            <div className="flex items-center gap-6 pt-4 text-xs text-[#8A94A6] border-t border-white/[0.06]">
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-[#00D4AA]" />
+                <span>Non-Custodial Advisory</span>
+              </div>
+              <span>•</span>
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-[#1E88E5]" />
+                <span>SEBI & Global Benchmarks</span>
+              </div>
+              <span>•</span>
+              <div className="flex items-center gap-1.5">
+                <span>256-Bit Encrypted</span>
+              </div>
+            </div>
+
           </div>
 
-          {/* Trust badges */}
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm text-slate-400 font-medium pb-8 border-b border-slate-800/80 max-w-3xl mx-auto">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Not a Broker • No Trade Execution</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-              <span>SEBI & SEC Aligned Advisory Principles</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>100% Zero-Commission Direct Strategy</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Advisory Preview Dashboard Mockup */}
-        <div className="mt-14 max-w-5xl mx-auto">
-          <div className="relative rounded-3xl p-1 bg-gradient-to-b from-emerald-500/30 via-slate-700/40 to-cyan-500/20 shadow-2xl shadow-emerald-950/80">
-            <div className="bg-slate-950/90 rounded-[22px] p-5 sm:p-8 backdrop-blur-2xl border border-white/10">
+          {/* ============================================================
+              RIGHT COLUMN: Interactive Institutional Financial Dashboard
+          ============================================================ */}
+          <div className="lg:col-span-6">
+            <div className="bg-[#101827] border border-white/[0.08] rounded-xl p-5 sm:p-6 shadow-2xl relative">
               
-              {/* Preview Dashboard Top Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-800">
+              {/* Dashboard Terminal Header */}
+              <div className="flex items-center justify-between pb-4 mb-5 border-b border-white/[0.06]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-emerald-400" />
+                  <div className="w-8 h-8 rounded-lg bg-[#0A1022] border border-white/[0.08] flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-[#00D4AA]" />
                   </div>
                   <div>
-                    <h2 className="text-white font-bold text-base sm:text-lg">SmartVest AI Strategy Architecture</h2>
-                    <p className="text-xs text-slate-400">Institutional Multi-Asset Strategic Allocation</p>
+                    <div className="text-sm font-bold text-white tracking-tight">Institutional Portfolio Mandate</div>
+                    <div className="text-[11px] text-[#8A94A6]">Client Portfolio #SV-9482 · Balanced Growth</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    AI Advisory Engine Active
-                  </span>
+
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#00D4AA]/10 border border-[#00D4AA]/20 text-[#00D4AA] text-[11px] font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]" />
+                  <span>ACTIVE BLUEPRINT</span>
                 </div>
               </div>
 
-              {/* Grid of advisory preview widgets */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                
-                {/* Widget 1: Health Score */}
-                <div className="glass-panel rounded-2xl p-5 border border-emerald-500/20 relative overflow-hidden">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Financial Health</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">GRADE A</span>
-                  </div>
-                  <div className="flex items-baseline gap-3 my-2">
-                    <span className="text-4xl font-extrabold text-white">88</span>
-                    <span className="text-sm font-medium text-emerald-400">/ 100 · Optimal</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
-                    <div className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full rounded-full w-[88%]" />
-                  </div>
-                  <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 6 Months Emergency Runway Protected
-                  </p>
-                </div>
-
-                {/* Widget 2: Cashflow & Surplus */}
-                <div className="glass-panel rounded-2xl p-5 border border-slate-800">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Investable Surplus</span>
-                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-0.5">
-                      <TrendingUp className="w-3.5 h-3.5" /> 45% Savings Rate
-                    </span>
-                  </div>
-                  <div className="text-3xl font-extrabold text-emerald-400 my-2 font-mono">
-                    ₹55,000<span className="text-xs text-slate-400 font-normal">/month</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-slate-400 mt-4 pt-3 border-t border-slate-800/80">
-                    <span>Inflow: ₹1,20,000</span>
-                    <span className="text-rose-400 font-semibold">Living Costs: ₹65,000</span>
+              {/* Top Quick Metrics Strip */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className="bg-[#0A1022] border border-white/[0.06] rounded-lg p-3">
+                  <span className="text-[10.5px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-0.5">Wealth Score</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-white font-mono">88</span>
+                    <span className="text-[11px] text-[#00D4AA] font-bold">Grade A</span>
                   </div>
                 </div>
 
-                {/* Widget 3: AI Recommended Allocation Mix */}
-                <div className="glass-panel rounded-2xl p-5 border border-cyan-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Asset Allocation</span>
-                    <span className="text-[10px] text-cyan-400 font-medium">Balanced Alpha</span>
-                  </div>
-                  <div className="space-y-2 mt-2">
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-300 font-medium mb-1">
-                        <span>UTI Nifty 50 Index Fund</span>
-                        <span className="text-emerald-400 font-semibold">35%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-emerald-500 h-full w-[35%]" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-300 font-medium mb-1">
-                        <span>Parag Parikh Flexi Cap Fund</span>
-                        <span className="text-cyan-400 font-semibold">25%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-cyan-400 h-full w-[25%]" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-300 font-medium mb-1">
-                        <span>Sovereign Gold Bonds & SGB</span>
-                        <span className="text-amber-400 font-semibold">15%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-amber-400 h-full w-[15%]" />
-                      </div>
-                    </div>
+                <div className="bg-[#0A1022] border border-white/[0.06] rounded-lg p-3">
+                  <span className="text-[10.5px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-0.5">Target Allocation</span>
+                  <div className="text-xl font-bold text-[#00D4AA] font-mono">
+                    {currency === 'INR' ? '₹50,000' : '$1,000'}<span className="text-xs text-[#8A94A6] font-normal">/mo</span>
                   </div>
                 </div>
 
+                <div className="bg-[#0A1022] border border-white/[0.06] rounded-lg p-3">
+                  <span className="text-[10.5px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-0.5">Risk Mandate</span>
+                  <div className="text-xl font-bold text-white font-mono">
+                    68<span className="text-xs text-[#8A94A6] font-normal">/100 · Mod</span>
+                  </div>
+                </div>
               </div>
 
-              {/* AI Strategic Advisory Strip */}
-              <div className="mt-5 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
+              {/* View Switcher Tabs */}
+              <div className="flex items-center gap-1 bg-[#0A1022] p-1 rounded-lg border border-white/[0.06] mb-4 text-xs font-semibold">
+                <button
+                  onClick={() => setActiveTab('allocation')}
+                  className={`flex-1 py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    activeTab === 'allocation' ? 'bg-[#101827] text-[#00D4AA] shadow-xs' : 'text-[#8A94A6] hover:text-white'
+                  }`}
+                >
+                  <PieIcon className="w-3.5 h-3.5" />
+                  <span>Asset Allocation</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('projection')}
+                  className={`flex-1 py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    activeTab === 'projection' ? 'bg-[#101827] text-[#00D4AA] shadow-xs' : 'text-[#8A94A6] hover:text-white'
+                  }`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Compounding Growth</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('mandate')}
+                  className={`flex-1 py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    activeTab === 'mandate' ? 'bg-[#101827] text-[#00D4AA] shadow-xs' : 'text-[#8A94A6] hover:text-white'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Risk Profile</span>
+                </button>
+              </div>
+
+              {/* Tab 1: Asset Allocation Breakdown */}
+              {activeTab === 'allocation' && (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    {allocationData.map((item, idx) => (
+                      <div key={idx} className="bg-[#0A1022] rounded-lg p-2.5 border border-white/[0.04] flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="font-semibold text-[#FFFFFF] truncate">{item.label}</span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 font-mono">
+                          <span className="text-[#8A94A6]">{item.amount}/mo</span>
+                          <span className="font-bold text-[#00D4AA] w-10 text-right">{item.pct}%</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <span className="text-xs sm:text-sm text-slate-300 font-medium">
-                    <strong className="text-white">AI Advisor:</strong> "Trimming ₹2,500/mo from discretionary leaks accelerates your Retirement milestone by 3.2 years."
-                  </span>
+
+                  {/* Multi-Segment Allocation Bar */}
+                  <div className="w-full h-2 rounded-full overflow-hidden flex bg-slate-800 my-2">
+                    {allocationData.map((item, idx) => (
+                      <div 
+                        key={idx} 
+                        style={{ width: `${item.pct}%`, backgroundColor: item.color }} 
+                        title={`${item.label} (${item.pct}%)`}
+                      />
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Tab 2: Projected Compounding Simulation */}
+              {activeTab === 'projection' && (
+                <div className="bg-[#0A1022] rounded-lg p-4 border border-white/[0.04] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] text-[#8A94A6] uppercase tracking-wider block">15-Year Projected Corpus</span>
+                      <div className="text-2xl font-black text-white font-mono mt-0.5">
+                        {currency === 'INR' ? '₹3,07,45,000' : '$485,000'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[11px] text-[#00D4AA] font-bold block">+13.8% CAGR</span>
+                      <span className="text-[10.5px] text-[#8A94A6]">3.4x Capital Multiplier</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-white/[0.06] text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-[#8A94A6]">Total Invested Capital:</span>
+                      <span className="font-mono text-white">{currency === 'INR' ? '₹90,00,000' : '$180,000'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#8A94A6]">Estimated Wealth Creation:</span>
+                      <span className="font-mono text-[#00D4AA] font-bold">+{currency === 'INR' ? '₹2,17,45,000' : '$305,000'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Risk Profile & Mandate */}
+              {activeTab === 'mandate' && (
+                <div className="bg-[#0A1022] rounded-lg p-4 border border-white/[0.04] space-y-3.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#8A94A6]">Risk Capacity (Income Stability):</span>
+                    <strong className="text-[#00D4AA] font-mono">75/100 · High</strong>
+                  </div>
+                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-[#00D4AA] h-full w-[75%]" />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[#8A94A6]">Risk Tolerance (Market Volatility):</span>
+                    <strong className="text-[#1E88E5] font-mono">62/100 · Moderate</strong>
+                  </div>
+                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-[#1E88E5] h-full w-[62%]" />
+                  </div>
+
+                  <div className="p-2.5 rounded-md bg-[#101827] border border-white/[0.06] text-[#8A94A6] leading-relaxed mt-2">
+                    <strong className="text-white">Fiduciary Guardrail:</strong> Strategy capped at Balanced Growth to maintain 6-month liquidity reserve while compounding core equity indices.
+                  </div>
+                </div>
+              )}
+
+              {/* Card Footer Handoff */}
+              <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                <span className="text-[#8A94A6]">Calibrated via Quantitative Asset Allocation</span>
                 <button
                   onClick={() => setActiveView('onboarding')}
-                  className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer"
+                  className="text-[#00D4AA] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
                 >
-                  Start Your Onboarding →
+                  <span>Build Your Blueprint</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
             </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </section>
   );

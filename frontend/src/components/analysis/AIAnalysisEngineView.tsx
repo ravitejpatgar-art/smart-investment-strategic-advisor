@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
-import { Sparkles, Brain, CheckCircle2, TrendingUp, ShieldCheck, PieChart, Layers } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  TrendingUp, 
+  ShieldCheck, 
+  PieChart, 
+  Layers,
+  Cpu,
+  BarChart3
+} from 'lucide-react';
+import { BrandLogo } from '../common/BrandLogo';
 
 const ANALYSIS_STEPS = [
-  { id: 1, title: 'Analyzing monthly income & cashflow stability...', icon: TrendingUp },
-  { id: 2, title: 'Analyzing spending patterns & discretionary leaks...', icon: PieChart },
-  { id: 3, title: 'Evaluating risk profile & drawdown tolerance...', icon: ShieldCheck },
-  { id: 4, title: 'Calculating investable surplus & emergency runway...', icon: Layers },
-  { id: 5, title: 'Building custom multi-asset investment strategy...', icon: Brain },
-  { id: 6, title: 'Generating personalized instrument recommendations...', icon: Sparkles },
+  { id: 1, title: 'Analyzing cashflow stability & net investable surplus...', icon: TrendingUp },
+  { id: 2, title: 'Evaluating multi-factor drawdown limits & risk mandate...', icon: ShieldCheck },
+  { id: 3, title: 'Simulating 10,000+ stochastic Monte Carlo market pathways...', icon: Cpu },
+  { id: 4, title: 'Optimizing Modern Portfolio Theory (MPT) asset frontier...', icon: PieChart },
+  { id: 5, title: 'Calibrating multi-asset core & satellite capital allocations...', icon: Layers },
+  { id: 6, title: 'Generating customized instrument recommendations...', icon: BarChart3 },
 ];
 
 export const AIAnalysisEngineView: React.FC = () => {
@@ -49,55 +58,49 @@ export const AIAnalysisEngineView: React.FC = () => {
   }, [setActiveView]);
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#050816] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       
-      {/* Background Ambient Glows */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Background Subtle Ambient Gradients */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#00D4AA]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-[#1E88E5]/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-xl w-full text-center relative z-10 space-y-8">
+      <div className="max-w-xl w-full text-center relative z-10 space-y-7">
         
-        {/* Animated AI Brain Emblem */}
-        <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-emerald-500 to-cyan-500 opacity-20 blur-xl animate-pulse" />
-          <div className="relative w-20 h-20 rounded-2xl bg-slate-900 border border-emerald-500/40 flex items-center justify-center shadow-2xl">
-            <Brain className="w-10 h-10 text-emerald-400 animate-bounce" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
-            <Sparkles className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
-          </div>
+        {/* Institutional Monogram Centerpiece */}
+        <div className="flex flex-col items-center justify-center space-y-3">
+          <BrandLogo size="lg" subtitleText="QUANTITATIVE ADVISORY ENGINE" />
         </div>
 
-        {/* Title & User Context */}
+        {/* Title & Investor Mandate Context */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            SmartVest AI Strategic Engine v2.4
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#0A1022] border border-white/[0.08] text-[#00D4AA] text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00D4AA] animate-ping" />
+            <span>SmartVest Portfolio Strategy Engine</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Synthesizing Strategic Investment Plan
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-serif">
+            Synthesizing Strategic Investment Allocation
           </h2>
-          <p className="text-slate-400 text-sm">
-            Evaluating financial DNA for <span className="text-emerald-400 font-semibold">{user?.name || 'Investor'}</span> ({user?.age || 28}y, {user?.riskTolerance || 'Moderate'} Risk)
+          <p className="text-[#8A94A6] text-xs">
+            Evaluating financial DNA for <span className="text-white font-semibold">{user?.name || 'Investor'}</span> ({user?.age || 28}y, <span className="text-[#00D4AA] font-semibold">{user?.riskTolerance || 'Moderate'} Mandate</span>)
           </p>
         </div>
 
-        {/* Dynamic Progress Bar */}
+        {/* Dynamic Progress Indicator */}
         <div className="space-y-2">
-          <div className="flex justify-between text-xs font-medium text-slate-400">
-            <span>AI Synthesis Pipeline</span>
-            <span className="text-emerald-400 font-mono font-bold">{progress}%</span>
+          <div className="flex justify-between text-xs font-medium text-[#8A94A6]">
+            <span>Portfolio Optimization Progress</span>
+            <span className="text-[#00D4AA] font-mono font-bold">{progress}%</span>
           </div>
-          <div className="w-full h-2 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-[#0A1022] border border-white/[0.06] overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-150"
+              className="h-full bg-[#00D4AA] rounded-full transition-all duration-150"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
-        {/* Step by Step Execution Timeline */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-5 text-left space-y-3 shadow-xl backdrop-blur-md">
+        {/* Step-by-Step Execution Sequence */}
+        <div className="bg-[#101827] border border-white/[0.08] rounded-xl p-5 text-left space-y-2.5 shadow-2xl">
           {ANALYSIS_STEPS.map((stepItem, idx) => {
             const isCompleted = idx < currentStepIndex;
             const isCurrent = idx === currentStepIndex;
@@ -106,33 +109,33 @@ export const AIAnalysisEngineView: React.FC = () => {
             return (
               <div 
                 key={stepItem.id}
-                className={`flex items-center justify-between p-2.5 rounded-xl text-xs transition-all duration-300 ${
+                className={`flex items-center justify-between p-2.5 rounded-lg text-xs transition-all duration-300 ${
                   isCurrent 
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold' 
+                    ? 'bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-white font-semibold' 
                     : isCompleted 
-                    ? 'text-slate-300 opacity-90' 
-                    : 'text-slate-600'
+                    ? 'text-[#8A94A6] opacity-90' 
+                    : 'text-[#5A667A]'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isCurrent ? 'text-emerald-400 animate-spin' : isCompleted ? 'text-emerald-400' : 'text-slate-600'}`} />
+                  <Icon className={`w-4 h-4 ${isCurrent ? 'text-[#00D4AA]' : isCompleted ? 'text-[#00D4AA]' : 'text-[#5A667A]'}`} />
                   <span>{stepItem.title}</span>
                 </div>
                 {isCompleted ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
                 ) : isCurrent ? (
-                  <span className="text-[10px] text-emerald-400 font-mono animate-pulse">Running...</span>
+                  <span className="text-[10px] text-[#00D4AA] font-mono animate-pulse">Running...</span>
                 ) : (
-                  <span className="w-2 h-2 rounded-full bg-slate-800 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/[0.1] shrink-0" />
                 )}
               </div>
             );
           })}
         </div>
 
-        {/* Bottom Status Tip */}
-        <div className="text-[11px] text-slate-500">
-          SmartVest AI runs 10,000+ stochastic Monte Carlo simulations to optimize risk-adjusted CAGR for your specific horizon.
+        {/* Institutional Fiduciary Note */}
+        <div className="text-[11px] text-[#8A94A6]">
+          Stochastic simulations apply Modern Portfolio Theory (MPT) to optimize risk-adjusted alpha for your investment horizon.
         </div>
 
       </div>

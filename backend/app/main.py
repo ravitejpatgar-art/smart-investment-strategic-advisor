@@ -8,6 +8,8 @@ from app.api.v1 import (
     market, assistant, ai, education, admin, conversations
 )
 
+from app.services.market_data.scheduler import market_scheduler
+
 # Create database tables automatically
 Base.metadata.create_all(bind=engine)
 
@@ -16,6 +18,14 @@ app = FastAPI(
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+@app.on_event("startup")
+def on_startup():
+    market_scheduler.start()
+
+@app.on_event("shutdown")
+def on_shutdown():
+    market_scheduler.stop()
 
 # CORS Middleware
 app.add_middleware(

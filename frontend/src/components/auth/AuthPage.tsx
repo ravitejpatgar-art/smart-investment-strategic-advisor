@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { 
   loginWithGoogle, 
-  loginWithGitHub, 
   loginWithEmail, 
   registerWithEmail, 
   resetPassword, 
@@ -10,18 +9,17 @@ import {
   isFirebaseConfigured
 } from '../../services/firebase';
 import { 
-  TrendingUp, 
   Mail, 
   Lock, 
   User as UserIcon, 
   ArrowRight, 
-  ShieldCheck, 
   AlertCircle, 
   CheckCircle2, 
   Eye, 
   EyeOff,
   AlertTriangle
 } from 'lucide-react';
+import { BrandLogo } from '../common/BrandLogo';
 
 export const AuthPage: React.FC = () => {
   const { setActiveView } = useFintechStore();
@@ -31,11 +29,13 @@ export const AuthPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Loading & Error States
+  // Loading & Feedback States
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -51,14 +51,14 @@ export const AuthPage: React.FC = () => {
     if (/[0-9]/.test(pwd)) score += 1;
     if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
 
-    if (score <= 2) return { score: 33, label: 'Weak', color: 'bg-rose-500' };
-    if (score <= 3) return { score: 66, label: 'Good', color: 'bg-amber-500' };
-    return { score: 100, label: 'Strong', color: 'bg-emerald-500' };
+    if (score <= 2) return { score: 33, label: 'Weak', color: 'bg-[#FF5252]' };
+    if (score <= 3) return { score: 66, label: 'Good', color: 'bg-[#F59E0B]' };
+    return { score: 100, label: 'Strong', color: 'bg-[#00D4AA]' };
   };
 
   const pwdStrength = getPasswordStrength(password);
 
-  // Email / Password Handler
+  // Email / Password Form Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -70,12 +70,17 @@ export const AuthPage: React.FC = () => {
         await loginWithEmail(email.trim(), password);
       } else if (tab === 'register') {
         if (!fullName.trim()) {
-          setErrorMsg('Please provide your full name for your advisory profile.');
+          setErrorMsg('Please enter your full name.');
           setLoading(false);
           return;
         }
         if (password.length < 6) {
           setErrorMsg('Password must contain at least 6 characters.');
+          setLoading(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          setErrorMsg('Passwords do not match. Please verify both fields.');
           setLoading(false);
           return;
         }
@@ -87,7 +92,7 @@ export const AuthPage: React.FC = () => {
           return;
         }
         await resetPassword(email.trim());
-        setSuccessMsg(`Password reset link has been dispatched to ${email.trim()}.`);
+        setSuccessMsg(`Password reset instructions have been sent to ${email.trim()}.`);
       }
     } catch (err: any) {
       setErrorMsg(mapFirebaseError(err));
@@ -110,71 +115,67 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  // GitHub OAuth Handler
-  const handleGitHubAuth = async () => {
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setOauthLoading('github');
-    try {
-      await loginWithGitHub();
-    } catch (err: any) {
-      setErrorMsg(mapFirebaseError(err));
-    } finally {
-      setOauthLoading(null);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#07090e] flex items-center justify-center p-4 py-12 relative overflow-hidden font-sans">
-      {/* Background ambient lighting */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
+    <div className="min-h-screen bg-[#050816] text-white flex flex-col justify-between p-4 sm:p-8 font-sans relative overflow-hidden">
+      
+      {/* Top Header */}
+      <div className="max-w-6xl mx-auto w-full flex items-center justify-between z-10 pb-6 border-b border-white/[0.06]">
+        <BrandLogo 
+          size="md" 
+          onClick={() => setActiveView('landing')} 
+          subtitleText="CLIENT PORTAL"
+        />
 
-      <div className="w-full max-w-md relative z-10">
+        <button
+          onClick={() => setActiveView('landing')}
+          className="text-xs text-[#8A94A6] hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 font-semibold"
+        >
+          <span>← Back to Overview</span>
+        </button>
+      </div>
+
+      {/* Main Container */}
+      <div className="max-w-md mx-auto w-full my-auto z-10 py-6">
         
-        {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div 
-            onClick={() => setActiveView('landing')}
-            className="inline-flex items-center gap-3 cursor-pointer group mb-3"
-          >
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform">
-              <TrendingUp className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+        {/* Firebase unconfigured warning banner */}
+        {!firebaseReady && (
+          <div className="mb-6 p-4 rounded-xl bg-[#0A1022] border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3 shadow-md">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block mb-1 text-white">Firebase Authentication Configuration</span>
+              <p className="text-[#8A94A6] leading-relaxed">
+                Add your Firebase credentials in <code className="text-white">.env</code> to activate live cloud authentication.
+              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-2xl font-black tracking-tight text-white">SmartVest</span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                AI Advisory
-              </span>
-            </div>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-400">
-            {tab === 'login' && 'Sign in to access your personalized AI investment strategy'}
-            {tab === 'register' && 'Create your account to start your financial onboarding'}
-            {tab === 'forgot' && 'Reset your SmartVest account password'}
-          </p>
-        </div>
-
-        {/* Small non-blocking configuration notice in development only */}
-        {import.meta.env.DEV && !firebaseReady && (
-          <div className="mb-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2.5 shadow-md">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-            <span>Firebase configuration is missing in <strong>frontend/.env</strong>.</span>
           </div>
         )}
 
-        {/* Auth Glass Card */}
-        <div className="bg-slate-950/85 rounded-3xl p-7 sm:p-9 border border-slate-800/80 shadow-2xl backdrop-blur-xl">
+        <div className="bg-[#101827] border border-white/[0.08] rounded-xl p-6 sm:p-8 shadow-2xl">
           
-          {/* Sign In / Register Tabs */}
+          {/* Header Title */}
+          <div className="text-center mb-6 space-y-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              {tab === 'login' && 'Client Portal Sign In'}
+              {tab === 'register' && 'Create Investor Account'}
+              {tab === 'forgot' && 'Reset Account Password'}
+            </h2>
+            <p className="text-xs text-[#8A94A6]">
+              {tab === 'login' && 'Access your personalized investment strategy and dashboard.'}
+              {tab === 'register' && 'Begin your multi-asset wealth management journey.'}
+              {tab === 'forgot' && 'Enter your email to receive recovery instructions.'}
+            </p>
+          </div>
+
+          {/* Tab Switcher */}
           {tab !== 'forgot' && (
-            <div className="grid grid-cols-2 p-1 bg-slate-900/90 rounded-2xl border border-slate-800 mb-6">
+            <div className="grid grid-cols-2 p-1 rounded-lg bg-[#0A1022] border border-white/[0.06] mb-6 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => { setTab('login'); setErrorMsg(null); setSuccessMsg(null); }}
-                className={`py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
+                className={`py-2 rounded-md transition-all cursor-pointer ${
                   tab === 'login'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08] shadow-xs'
+                    : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
                 Sign In
@@ -182,29 +183,27 @@ export const AuthPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { setTab('register'); setErrorMsg(null); setSuccessMsg(null); }}
-                className={`py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
+                className={`py-2 rounded-md transition-all cursor-pointer ${
                   tab === 'register'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08] shadow-xs'
+                    : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
-                Create Account
+                Register
               </button>
             </div>
           )}
 
           {/* Feedback Messages */}
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5 mb-5 leading-relaxed">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <span>{errorMsg}</span>
-              </div>
+            <div className="p-3.5 rounded-lg bg-[#FF5252]/10 border border-[#FF5252]/30 text-[#FF5252] text-xs flex items-start gap-2.5 mb-5 leading-relaxed">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
             </div>
           )}
           {successMsg && (
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 mb-5">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <div className="p-3.5 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA] text-xs flex items-center gap-2 mb-5">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -215,16 +214,16 @@ export const AuthPage: React.FC = () => {
             {/* Full Name for Register */}
             {tab === 'register' && (
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Full Name</label>
+                <label className="block text-xs font-bold text-[#8A94A6] uppercase tracking-wider mb-1.5">Full Name</label>
                 <div className="relative">
-                  <UserIcon className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <UserIcon className="w-4 h-4 text-[#5A667A] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     placeholder="e.g. Aryan Sharma"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#0A1022] border border-white/[0.08] rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-[#00D4AA] transition-colors placeholder:text-[#5A667A]"
                   />
                 </div>
               </div>
@@ -232,16 +231,16 @@ export const AuthPage: React.FC = () => {
 
             {/* Email Address */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">Email Address</label>
+              <label className="block text-xs font-bold text-[#8A94A6] uppercase tracking-wider mb-1.5">Email Address</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-[#5A667A] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#0A1022] border border-white/[0.08] rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-[#00D4AA] transition-colors placeholder:text-[#5A667A]"
                 />
               </div>
             </div>
@@ -250,31 +249,31 @@ export const AuthPage: React.FC = () => {
             {tab !== 'forgot' && (
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs font-bold text-slate-300">Password</label>
+                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider">Password</label>
                   {tab === 'login' && (
                     <button
                       type="button"
-                      onClick={() => { setTab('forgot'); setErrorMsg(null); }}
-                      className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                      onClick={() => { setTab('forgot'); setErrorMsg(null); setSuccessMsg(null); }}
+                      className="text-xs text-[#00D4AA] hover:underline transition-colors cursor-pointer"
                     >
                       Forgot password?
                     </button>
                   )}
                 </div>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-[#5A667A] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600"
+                    className="w-full pl-10 pr-10 py-2.5 bg-[#0A1022] border border-white/[0.08] rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-[#00D4AA] transition-colors placeholder:text-[#5A667A]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5A667A] hover:text-white cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -283,11 +282,11 @@ export const AuthPage: React.FC = () => {
                 {/* Password Strength Visualizer for Register */}
                 {tab === 'register' && password && (
                   <div className="mt-2 space-y-1">
-                    <div className="flex justify-between text-[10px] text-slate-400">
+                    <div className="flex justify-between text-[10.5px] text-[#8A94A6]">
                       <span>Password Strength:</span>
-                      <span className="font-semibold text-slate-200">{pwdStrength.label}</span>
+                      <span className="font-semibold text-white">{pwdStrength.label}</span>
                     </div>
-                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-[#0A1022] h-1.5 rounded-full overflow-hidden">
                       <div 
                         className={`h-full ${pwdStrength.color} transition-all duration-300`} 
                         style={{ width: `${pwdStrength.score}%` }} 
@@ -298,104 +297,128 @@ export const AuthPage: React.FC = () => {
               </div>
             )}
 
-            {/* Primary Submit Button */}
+            {/* Confirm Password for Register */}
+            {tab === 'register' && (
+              <div>
+                <label className="block text-xs font-bold text-[#8A94A6] uppercase tracking-wider mb-1.5">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-[#5A667A] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2.5 bg-[#0A1022] border border-white/[0.08] rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-[#00D4AA] transition-colors placeholder:text-[#5A667A]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5A667A] hover:text-white cursor-pointer"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || !!oauthLoading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs sm:text-sm hover:bg-[#00D4AA]/90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 mt-2"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#050816] border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <span>
-                    {tab === 'login' && 'Sign In'}
-                    {tab === 'register' && 'Register & Begin Onboarding'}
-                    {tab === 'forgot' && 'Send Password Reset Email'}
+                    {tab === 'login' && 'Sign In to Portal'}
+                    {tab === 'register' && 'Register Account'}
+                    {tab === 'forgot' && 'Reset Password'}
                   </span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Social OAuth Section */}
+          {/* Social Google OAuth Button */}
           {tab !== 'forgot' && (
-            <div className="mt-6 space-y-3">
-              <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-slate-800"></div>
-                <span className="flex-shrink mx-4 text-[11px] text-slate-500 uppercase font-bold tracking-wider">
-                  Or authenticate with
+            <div className="mt-6 space-y-4">
+              <div className="relative flex items-center justify-center">
+                <div className="border-t border-white/[0.06] w-full" />
+                <span className="bg-[#101827] px-3 text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider relative">
+                  Or continue with
                 </span>
-                <div className="flex-grow border-t border-slate-800"></div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {/* Google Sign-in */}
-                <button
-                  type="button"
-                  onClick={handleGoogleAuth}
-                  disabled={loading || !!oauthLoading}
-                  className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-                >
-                  {oauthLoading === 'google' ? (
-                    <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                      </svg>
-                      <span>Google</span>
-                    </>
-                  )}
-                </button>
-
-                {/* GitHub Sign-in */}
-                <button
-                  type="button"
-                  onClick={handleGitHubAuth}
-                  disabled={loading || !!oauthLoading}
-                  className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-                >
-                  {oauthLoading === 'github' ? (
-                    <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-                      </svg>
-                      <span>GitHub</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Return to login from forgot tab */}
-          {tab === 'forgot' && (
-            <div className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => { setTab('login'); setErrorMsg(null); setSuccessMsg(null); }}
-                className="text-xs text-emerald-400 hover:text-emerald-300 font-bold cursor-pointer"
+                onClick={handleGoogleAuth}
+                disabled={oauthLoading !== null}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-xs font-semibold text-white flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-50"
               >
-                ← Return to Sign In
+                {oauthLoading === 'google' ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
+                      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/>
+                      <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/>
+                      <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.4C3.7 20.1 7.5 23 12 23z"/>
+                    </svg>
+                    <span>{tab === 'register' ? 'Google Sign Up' : 'Google Sign In'}</span>
+                  </>
+                )}
               </button>
             </div>
           )}
 
-        </div>
+          {/* Quick Links between views */}
+          <div className="text-center pt-4 border-t border-white/[0.06] mt-5">
+            {tab === 'login' && (
+              <p className="text-xs text-[#8A94A6]">
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setTab('register'); setErrorMsg(null); setSuccessMsg(null); }}
+                  className="text-[#00D4AA] hover:underline font-semibold cursor-pointer"
+                >
+                  Create one now
+                </button>
+              </p>
+            )}
+            {tab === 'register' && (
+              <p className="text-xs text-[#8A94A6]">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setTab('login'); setErrorMsg(null); setSuccessMsg(null); }}
+                  className="text-[#00D4AA] hover:underline font-semibold cursor-pointer"
+                >
+                  Sign In
+                </button>
+              </p>
+            )}
+            {tab === 'forgot' && (
+              <button
+                type="button"
+                onClick={() => { setTab('login'); setErrorMsg(null); setSuccessMsg(null); }}
+                className="text-xs text-[#00D4AA] hover:underline cursor-pointer font-semibold"
+              >
+                ← Return to Sign In
+              </button>
+            )}
+          </div>
 
-        {/* Security / Compliance Disclaimers */}
-        <div className="mt-6 text-center flex items-center justify-center gap-2 text-[11px] text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Firebase Authentication • 256-bit Encryption • Non-Broker</span>
         </div>
+      </div>
 
+      {/* Footer Disclosures */}
+      <div className="max-w-2xl mx-auto w-full text-center text-[11px] text-[#5A667A] pt-4">
+        Non-custodial advisory portal. Encrypted with 256-bit SSL security standards.
       </div>
 
     </div>

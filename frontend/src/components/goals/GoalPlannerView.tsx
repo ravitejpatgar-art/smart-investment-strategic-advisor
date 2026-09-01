@@ -9,63 +9,34 @@ import {
   Palmtree, 
   GraduationCap, 
   Plane, 
-  X,
-  TrendingUp,
+  X, 
+  TrendingUp, 
   Edit3
 } from 'lucide-react';
 import type { GoalItem } from '../../types';
 
-// Category Config
+// Category Config with Institutional Colors
 const CATEGORY_CONFIG: Record<GoalItem['category'] | string, {
   icon: React.ElementType;
   color: string;
-  badgeBg: string;
 }> = {
-  House: {
-    icon: Home,
-    color: '#0284c7',
-    badgeBg: 'bg-sky-50 text-sky-700 border border-sky-200',
-  },
-  Car: {
-    icon: Car,
-    color: '#ea580c',
-    badgeBg: 'bg-orange-50 text-orange-700 border border-orange-200',
-  },
-  Retirement: {
-    icon: Palmtree,
-    color: '#9333ea',
-    badgeBg: 'bg-purple-50 text-purple-700 border border-purple-200',
-  },
-  Education: {
-    icon: GraduationCap,
-    color: '#0891b2',
-    badgeBg: 'bg-cyan-50 text-cyan-700 border border-cyan-200',
-  },
-  Travel: {
-    icon: Plane,
-    color: '#0d9488',
-    badgeBg: 'bg-teal-50 text-teal-700 border border-teal-200',
-  },
-  'Wealth Building': {
-    icon: TrendingUp,
-    color: '#16a34a',
-    badgeBg: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  },
-  Other: {
-    icon: Target,
-    color: '#64748b',
-    badgeBg: 'bg-slate-50 text-slate-700 border border-slate-200',
-  },
+  House: { icon: Home, color: '#1E88E5' },
+  Car: { icon: Car, color: '#F59E0B' },
+  Retirement: { icon: Palmtree, color: '#8B5CF6' },
+  Education: { icon: GraduationCap, color: '#00D4AA' },
+  Travel: { icon: Plane, color: '#00C853' },
+  'Wealth Building': { icon: TrendingUp, color: '#00D4AA' },
+  Other: { icon: Target, color: '#8A94A6' },
 };
 
 // Circular Progress Component
 const CircularProgress: React.FC<{ pct: number; size?: number; color?: string; label?: string }> = ({ 
   pct, 
-  size = 64, 
-  color = '#14B8A6',
+  size = 56, 
+  color = '#00D4AA',
   label 
 }) => {
-  const strokeWidth = 5.5;
+  const strokeWidth = 5;
   const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (Math.min(100, Math.max(0, pct)) / 100) * circumference;
@@ -78,7 +49,7 @@ const CircularProgress: React.FC<{ pct: number; size?: number; color?: string; l
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#E2E8F0"
+          stroke="rgba(255, 255, 255, 0.08)"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -94,7 +65,7 @@ const CircularProgress: React.FC<{ pct: number; size?: number; color?: string; l
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-bold font-mono text-[#172033] text-[13px] leading-none">
+        <span className="font-bold font-mono text-white text-[12px] leading-none">
           {label || `${pct}%`}
         </span>
       </div>
@@ -137,8 +108,14 @@ export const GoalPlannerView: React.FC = () => {
   const totalRequiredSIP = goals.reduce((s, g) => s + (g.monthlySipRequired || 0), 0);
   const totalProgressPct = totalTargetAmount > 0 ? Math.min(100, Math.round((totalCurrentSaved / totalTargetAmount) * 100)) : 0;
   const totalRemaining = Math.max(0, totalTargetAmount - totalCurrentSaved);
-
   const isSurplusDeficit = totalRequiredSIP > surplus;
+
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  };
 
   const handleOpenAddModal = () => {
     setEditingId(null);
@@ -204,21 +181,21 @@ export const GoalPlannerView: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       
-      {/* Top Banner */}
-      <div className="bg-white border border-[#E7E9F0] rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      {/* Top Header Banner */}
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-teal-600" />
-            <h1 className="text-xl sm:text-[26px] font-bold text-[#172033] tracking-tight">Financial Milestone Goals</h1>
+            <Target className="w-5 h-5 text-[#00D4AA]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Lifecycle Milestone Roadmaps</h1>
           </div>
-          <p className="text-[14px] text-[#667085]">
-            Define target dates and wealth targets to calculate required monthly SIP allocations.
+          <p className="text-xs text-[#8A94A6]">
+            Quantify capital required for primary milestones and model monthly SIP allocations.
           </p>
         </div>
 
         <button
           onClick={handleOpenAddModal}
-          className="glow-btn-primary px-4 py-2.5 rounded-lg text-white font-bold text-[14px] flex items-center gap-2 transition-all cursor-pointer self-start sm:self-auto shadow-xs"
+          className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs hover:bg-[#00D4AA]/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Add New Goal</span>
@@ -226,60 +203,56 @@ export const GoalPlannerView: React.FC = () => {
       </div>
 
       {/* 3 Summary Metric Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-4 sm:p-5 rounded-xl bg-white border border-[#E7E9F0] space-y-1.5 shadow-xs">
-          <span className="text-[12px] text-[#667085] font-semibold uppercase tracking-wider block">Total Target</span>
-          <div className="text-[24px] sm:text-[26px] font-black text-[#172033] font-mono leading-tight">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div style={{ ...cardStyle, padding: '18px 20px' }} className="space-y-1">
+          <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">Total Milestone Target</span>
+          <div className="text-2xl font-black text-white font-mono leading-tight">
             {formatCurrency(totalTargetAmount)}
           </div>
-          <div className="flex justify-between text-[13px] text-[#667085]">
-            <span>Saved: <strong className="text-[#172033] font-mono">{formatCurrency(totalCurrentSaved)}</strong></span>
-            <span className="font-semibold text-teal-700">{totalProgressPct}% Funded</span>
+          <div className="flex justify-between text-xs text-[#8A94A6] pt-1">
+            <span>Saved: <strong className="text-white font-mono">{formatCurrency(totalCurrentSaved)}</strong></span>
+            <span className="font-semibold text-[#00D4AA]">{totalProgressPct}% Funded</span>
           </div>
         </div>
 
-        <div className={`p-4 sm:p-5 rounded-xl border space-y-1.5 shadow-xs ${
-          isSurplusDeficit ? 'bg-amber-50 border-amber-200' : 'bg-teal-50/60 border-teal-200'
-        }`}>
-          <span className={`text-[12px] font-semibold uppercase tracking-wider block ${isSurplusDeficit ? 'text-amber-800' : 'text-teal-800'}`}>
-            Required Monthly SIP
-          </span>
-          <div className={`text-[24px] sm:text-[26px] font-black font-mono leading-tight ${isSurplusDeficit ? 'text-amber-700' : 'text-teal-700'}`}>
+        <div style={{ ...cardStyle, padding: '18px 20px' }} className="space-y-1">
+          <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">Required Monthly Deployment</span>
+          <div className={`text-2xl font-black font-mono leading-tight ${isSurplusDeficit ? 'text-[#FF5252]' : 'text-[#00D4AA]'}`}>
             {formatCurrency(totalRequiredSIP)}/mo
           </div>
-          <div className="text-[13px] font-medium text-slate-700">
+          <div className="text-xs text-[#8A94A6] pt-1">
             {isSurplusDeficit ? `Exceeds monthly surplus by ${formatCurrency(totalRequiredSIP - surplus)}` : `Comfortably funded from ${formatCurrency(surplus)} surplus`}
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-xl bg-white border border-[#E7E9F0] space-y-1.5 shadow-xs">
-          <span className="text-[12px] text-[#667085] font-semibold uppercase tracking-wider block">Remaining Target Gap</span>
-          <div className="text-[24px] sm:text-[26px] font-black text-slate-700 font-mono leading-tight">
+        <div style={{ ...cardStyle, padding: '18px 20px' }} className="space-y-1">
+          <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">Remaining Funding Gap</span>
+          <div className="text-2xl font-black text-white font-mono leading-tight">
             {formatCurrency(totalRemaining)}
           </div>
-          <div className="text-[13px] text-[#667085]">
-            Across {goals.length} Milestone Goals
+          <div className="text-xs text-[#8A94A6] pt-1">
+            Across {goals.length} Defined Goals
           </div>
         </div>
       </div>
 
       {/* Goals List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-[13.5px] text-[#667085] pb-1.5 border-b border-[#E7E9F0]">
-          <span className="font-bold uppercase tracking-wider text-[#172033] text-[17px]">Active Goals</span>
-          <span>{goals.length} Defined Milestones</span>
+        <div className="flex items-center justify-between text-xs text-[#8A94A6] pb-2 border-b border-white/[0.06]">
+          <span className="font-bold uppercase tracking-wider text-white">Active Milestone Portfolios</span>
+          <span>{goals.length} Goals Registered</span>
         </div>
 
         {goals.length === 0 ? (
-          <div className="p-8 rounded-xl bg-white border border-[#E7E9F0] text-center space-y-3 shadow-xs">
-            <Target className="w-8 h-8 text-slate-400 mx-auto" />
-            <p className="text-[14px] text-[#667085]">No milestone goals defined yet.</p>
+          <div style={{ ...cardStyle, padding: '36px 20px' }} className="text-center space-y-3">
+            <Target className="w-8 h-8 text-[#5A667A] mx-auto" />
+            <p className="text-sm text-[#8A94A6]">No milestone portfolios configured yet.</p>
             <button
               onClick={handleOpenAddModal}
-              className="glow-btn-primary px-4 py-2.5 rounded-lg text-white font-bold text-[14px] cursor-pointer inline-flex items-center gap-2 shadow-xs"
+              className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Create Your First Goal</span>
+              <span>Create First Milestone</span>
             </button>
           </div>
         ) : (
@@ -294,58 +267,59 @@ export const GoalPlannerView: React.FC = () => {
               return (
                 <div 
                   key={g.id}
-                  className="bg-white border border-[#E7E9F0] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs"
+                  style={{ ...cardStyle, padding: '18px 20px' }}
+                  className="flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] flex items-center justify-center" style={{ color: cfg.color }}>
-                          <Icon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-[#0A1022] border border-white/[0.08] flex items-center justify-center" style={{ color: cfg.color }}>
+                          <Icon className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="text-[17px] font-bold text-[#172033]">{g.title}</h3>
-                          <span className="text-[13px] text-[#667085]">Target Date: {g.targetDate}</span>
+                          <h3 className="text-base font-bold text-white">{g.title}</h3>
+                          <span className="text-xs text-[#8A94A6]">Target Date: {g.targetDate}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleOpenEditModal(g)}
-                          className="p-1.5 rounded text-[#667085] hover:text-[#172033] transition-colors cursor-pointer hover:bg-slate-100"
+                          className="p-1 rounded text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => deleteGoal(g.id)}
-                          className="p-1.5 rounded text-[#667085] hover:text-rose-600 transition-colors cursor-pointer hover:bg-slate-100"
+                          className="p-1 rounded text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* Dominant Target Amount & SIP */}
-                    <div className="flex items-baseline justify-between pt-1.5 border-t border-[#F1F5F9]">
+                    <div className="flex items-baseline justify-between pt-2 border-t border-white/[0.06]">
                       <div>
-                        <span className="text-[12px] text-[#667085] font-semibold block uppercase">Target Goal</span>
-                        <span className="text-[22px] sm:text-[24px] font-black text-[#172033] font-mono leading-tight">{formatCurrency(g.targetAmount)}</span>
+                        <span className="text-[10.5px] text-[#8A94A6] font-bold block uppercase">Target Corpus</span>
+                        <span className="text-xl font-black text-white font-mono">{formatCurrency(g.targetAmount)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[12px] text-[#667085] font-semibold block uppercase">Required SIP</span>
-                        <span className="text-[15px] font-bold font-mono text-teal-700">{formatCurrency(g.monthlySipRequired || 0)}/mo</span>
+                        <span className="text-[10.5px] text-[#8A94A6] font-bold block uppercase">Required Monthly SIP</span>
+                        <span className="text-sm font-bold font-mono text-[#00D4AA]">{formatCurrency(g.monthlySipRequired || 0)}/mo</span>
                       </div>
                     </div>
 
-                    {/* Visual Progress Gauge & Breakdown */}
-                    <div className="flex items-center gap-3.5 p-3.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0]">
-                      <CircularProgress pct={progressPct} size={58} color={cfg.color} label={`${progressPct}%`} />
-                      <div className="flex-1 space-y-1.5 text-xs">
-                        <div className="flex justify-between text-[13px]">
-                          <span className="text-[#667085]">Current: <strong className="text-[#172033] font-mono">{formatCurrency(g.currentAmount)}</strong></span>
-                          <span className="text-[#667085]">Gap: <strong className="text-slate-700 font-mono">{formatCurrency(remainingAmt)}</strong></span>
+                    {/* Visual Progress Gauge */}
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1022] border border-white/[0.04]">
+                      <CircularProgress pct={progressPct} size={50} color={cfg.color} label={`${progressPct}%`} />
+                      <div className="flex-1 space-y-1 text-xs">
+                        <div className="flex justify-between text-[11.5px]">
+                          <span className="text-[#8A94A6]">Funded: <strong className="text-white font-mono">{formatCurrency(g.currentAmount)}</strong></span>
+                          <span className="text-[#8A94A6]">Gap: <strong className="text-[#8A94A6] font-mono">{formatCurrency(remainingAmt)}</strong></span>
                         </div>
-                        <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-[#101827] h-1.5 rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${progressPct}%`, backgroundColor: cfg.color }} />
                         </div>
                       </div>
@@ -353,12 +327,12 @@ export const GoalPlannerView: React.FC = () => {
                   </div>
 
                   {/* Feasibility Indicator */}
-                  <div className="pt-2.5 border-t border-[#F1F5F9] flex items-center justify-between text-[13px]">
-                    <span className="text-[#667085]">Status:</span>
-                    <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded ${
-                      isFeasible ? 'bg-teal-50 text-teal-800 border border-teal-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                    <span className="text-[#8A94A6]">Feasibility Status:</span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                      isFeasible ? 'bg-[#00C853]/10 text-[#00C853] border border-[#00C853]/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                     }`}>
-                      {isFeasible ? '✓ FEASIBLE FROM SURPLUS' : '⚠ NEEDS CASHFLOW ADJUSTMENT'}
+                      {isFeasible ? '✓ FEASIBLE FROM SURPLUS' : '⚠ ADJUST CASH FLOW'}
                     </span>
                   </div>
                 </div>
@@ -370,46 +344,46 @@ export const GoalPlannerView: React.FC = () => {
 
       {/* Add / Edit Goal Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-[#E7E9F0] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E7E9F0]">
-              <h3 className="text-[18px] font-bold text-[#172033] uppercase tracking-wider">
-                {editingId ? 'Edit Milestone Goal' : 'Create New Milestone Goal'}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-[#101827] border border-white/[0.12] rounded-xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <h3 className="text-base font-bold text-white uppercase tracking-wider">
+                {editingId ? 'Edit Milestone Portfolio' : 'Configure Milestone Portfolio'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-[#667085] hover:text-[#172033] cursor-pointer">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowModal(false)} className="text-[#8A94A6] hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitGoal} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-[13.5px] text-[#172033] font-medium">Goal Title</label>
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Milestone Name</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Dream Home Downpayment"
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[13.5px] text-[#172033] font-medium">Category</label>
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as GoalItem['category'])}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
                 >
                   {Object.keys(CATEGORY_CONFIG).map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat} className="bg-[#0A1022] text-white">{cat}</option>
                   ))}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[13.5px] text-[#172033] font-medium">Target Amount (₹)</label>
+                  <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Target Corpus (₹)</label>
                   <input
                     type="number"
                     required
@@ -417,47 +391,47 @@ export const GoalPlannerView: React.FC = () => {
                     value={targetAmount}
                     onChange={(e) => setTargetAmount(e.target.value)}
                     placeholder="e.g. 2500000"
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[13.5px] text-[#172033] font-medium">Current Saved (₹)</label>
+                  <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Current Saved (₹)</label>
                   <input
                     type="number"
                     min="0"
                     value={currentAmount}
                     onChange={(e) => setCurrentAmount(e.target.value)}
                     placeholder="0"
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[13.5px] text-[#172033] font-medium">Target Deadline Date</label>
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Target Deadline Date</label>
                 <input
                   type="date"
                   required
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3.5 border-t border-[#E7E9F0]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-lg text-[#667085] hover:text-[#172033] text-[13.5px] cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg text-[#8A94A6] hover:text-white text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="glow-btn-primary px-4 py-2.5 rounded-lg text-white font-bold text-[14px] cursor-pointer shadow-xs"
+                  className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs cursor-pointer"
                 >
-                  {editingId ? 'Update Goal' : 'Save Milestone'}
+                  {editingId ? 'Update Milestone' : 'Save Milestone'}
                 </button>
               </div>
             </form>

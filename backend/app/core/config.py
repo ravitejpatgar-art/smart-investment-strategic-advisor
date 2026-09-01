@@ -18,21 +18,39 @@ class Settings(BaseSettings):
     
     # AI Keys (Optional - has fallback intelligent engine)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_API_KEY_BACKUP: str = os.getenv("OPENAI_API_KEY_BACKUP", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_API_KEY_BACKUP: str = os.getenv("GEMINI_API_KEY_BACKUP", "")
 
     # Market Data Engine Configuration
     MARKET_DATA_MODE: str = os.getenv("MARKET_DATA_MODE", "REAL")  # REAL or MOCK
     MARKET_DATA_PROVIDER: str = os.getenv("MARKET_DATA_PROVIDER", "yfinance")
     MARKET_DATA_API_KEY: str = os.getenv("MARKET_DATA_API_KEY", "")
+    MARKET_DATA_API_KEY_BACKUP: str = os.getenv("MARKET_DATA_API_KEY_BACKUP", "")
     
     INDIA_MARKET_DATA_PROVIDER: str = os.getenv("INDIA_MARKET_DATA_PROVIDER", "yfinance")
     INDIA_MARKET_DATA_API_KEY: str = os.getenv("INDIA_MARKET_DATA_API_KEY", "")
+    INDIA_MARKET_DATA_API_KEY_BACKUP: str = os.getenv("INDIA_MARKET_DATA_API_KEY_BACKUP", "")
     
     US_MARKET_DATA_PROVIDER: str = os.getenv("US_MARKET_DATA_PROVIDER", "yfinance")
     US_MARKET_DATA_API_KEY: str = os.getenv("US_MARKET_DATA_API_KEY", "")
+    US_MARKET_DATA_API_KEY_BACKUP: str = os.getenv("US_MARKET_DATA_API_KEY_BACKUP", "")
+    
+    FINNHUB_API_KEY: str = os.getenv("FINNHUB_API_KEY", "")
+    FINNHUB_API_KEY_BACKUP: str = os.getenv("FINNHUB_API_KEY_BACKUP", "")
+    
+    TWELVEDATA_API_KEY: str = os.getenv("TWELVEDATA_API_KEY", "")
+    TWELVEDATA_API_KEY_BACKUP: str = os.getenv("TWELVEDATA_API_KEY_BACKUP", "")
+    
+    POLYGON_API_KEY: str = os.getenv("POLYGON_API_KEY", "")
+    POLYGON_API_KEY_BACKUP: str = os.getenv("POLYGON_API_KEY_BACKUP", "")
+    
+    ALPHAVANTAGE_API_KEY: str = os.getenv("ALPHAVANTAGE_API_KEY", "")
+    ALPHAVANTAGE_API_KEY_BACKUP: str = os.getenv("ALPHAVANTAGE_API_KEY_BACKUP", "")
     
     MF_DATA_PROVIDER: str = os.getenv("MF_DATA_PROVIDER", "amfi")
     MF_DATA_API_KEY: str = os.getenv("MF_DATA_API_KEY", "")
+    MF_DATA_API_KEY_BACKUP: str = os.getenv("MF_DATA_API_KEY_BACKUP", "")
     
     MARKET_DATA_CACHE_TTL_SECONDS: int = int(os.getenv("MARKET_DATA_CACHE_TTL_SECONDS", "30"))
     

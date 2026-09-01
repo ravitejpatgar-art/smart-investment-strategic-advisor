@@ -5,40 +5,44 @@ export const TestimonialsSection: React.FC = () => {
   const testimonials = [
     {
       name: 'Aditya Sharma',
-      role: 'Principal Software Architect, Bengaluru',
+      role: 'Principal Systems Architect, Bengaluru',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       rating: 5,
-      content: 'SmartVest AI completely transformed my wealth strategy. The automated asset allocation across Indian index funds and US tech equities helped me achieve a 22.4% portfolio CAGR while keeping downside risk strictly buffered.'
+      content: 'SmartVest transformed our wealth strategy. The multi-asset allocation across index funds and global equity satellites provides clear compounding visibility while keeping downside risk strictly budgeted.'
     },
     {
       name: 'Priya Narang',
-      role: 'VP Product Management, Mumbai',
+      role: 'VP Product Strategy, Mumbai',
       avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
       rating: 5,
-      content: 'The emergency fund runway analyzer and financial health score provided the exact clarity I needed before purchasing my home. The AI advisor gives institutional-level advice without any pushy sales calls.'
+      content: 'The emergency fund runway analyzer and financial health audit provided the exact quantitative rigor I needed before planning property purchases. Institutional quality without distributor bias.'
     },
     {
       name: 'Vikram Mehta',
-      role: 'Founder & Angel Investor, New Delhi',
+      role: 'Managing Partner, New Delhi',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       rating: 5,
-      content: 'The stock research dashboard with real-time RSI, MACD, and AI Buy/Sell confidence ratings rivals Bloomberg and Zerodha combined. It is an indispensable part of my morning market routine.'
+      content: 'The market research terminal with real-time exchange feeds across NSE and US equities gives exceptional transparency. It has replaced scattered spreadsheets with institutional-grade discipline.'
     }
   ];
 
   return (
-    <section id="testimonials" className="py-24 bg-slate-950 relative border-t border-slate-900">
+    <section id="testimonials" className="py-24 bg-[#050816] relative border-t border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-4 lg:px-12">
         
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-4">
-            <ShieldCheck className="w-3.5 h-3.5" /> Backed by 150,000+ Investors
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] text-xs font-semibold uppercase tracking-wider">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#00D4AA]" />
+            <span>Client Endorsements</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
-            Trusted by Leaders & <span className="gradient-text-emerald">Savvy Investors</span>
+          <h2 
+            className="text-3xl sm:text-4xl font-extrabold text-white tracking-[-0.02em]"
+            style={{ fontFamily: "'Inter Tight', 'Inter', sans-serif" }}
+          >
+            Trusted By Technology & Business Leaders
           </h2>
-          <p className="text-slate-400 text-base">
-            See how smart investors, technology professionals, and entrepreneurs rely on SmartVest AI for daily wealth intelligence.
+          <p className="text-[#8A94A6] text-base">
+            How technology executives, corporate professionals, and entrepreneurs use SmartVest for disciplined wealth governance.
           </p>
         </div>
 
@@ -47,32 +51,32 @@ export const TestimonialsSection: React.FC = () => {
           {testimonials.map((t, idx) => (
             <div 
               key={idx}
-              className="glass-panel rounded-2xl p-7 border border-slate-800/80 flex flex-col justify-between relative group hover:border-emerald-500/30 transition-all"
+              className="bg-[#101827] rounded-xl p-6 border border-white/[0.08] flex flex-col justify-between"
             >
               <div>
                 {/* Rating stars */}
-                <div className="flex items-center gap-1 mb-4 text-amber-400">
+                <div className="flex items-center gap-1 mb-3.5 text-amber-400">
                   {[...Array(t.rating)].map((_, rIdx) => (
-                    <Star key={rIdx} className="w-4 h-4 fill-current" />
+                    <Star key={rIdx} className="w-3.5 h-3.5 fill-current" />
                   ))}
                 </div>
 
-                <Quote className="w-8 h-8 text-slate-700/60 mb-2" />
+                <Quote className="w-6 h-6 text-[#5A667A] mb-2" />
 
-                <p className="text-slate-300 text-sm leading-relaxed mb-6 font-normal">
+                <p className="text-[#8A94A6] text-xs leading-relaxed mb-6 font-normal">
                   "{t.content}"
                 </p>
               </div>
 
-              <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/80">
+              <div className="flex items-center gap-3 pt-4 border-t border-white/[0.06]">
                 <img 
                   src={t.avatar} 
                   alt={t.name}
-                  className="w-11 h-11 rounded-full object-cover border border-emerald-500/30"
+                  className="w-10 h-10 rounded-full object-cover border border-white/[0.12]"
                 />
                 <div>
                   <div className="text-sm font-bold text-white">{t.name}</div>
-                  <div className="text-xs text-slate-400">{t.role}</div>
+                  <div className="text-[11px] text-[#8A94A6]">{t.role}</div>
                 </div>
               </div>
             </div>

@@ -31,22 +31,29 @@ export const ProfileView: React.FC = () => {
     expenses
   } = useFintechStore();
 
-  // Helper to extract form data from user object
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  };
+
+  // Helper to extract form data from user object (clean empty state for new users)
   const getInitialForm = (u: typeof user): ProfileFormData => ({
     fullName: u?.name || '',
     age: u?.age ? String(u.age) : '',
     occupation: u?.occupation || '',
     salaryIncome: u?.salaryIncome !== undefined && u?.salaryIncome !== null 
       ? String(u.salaryIncome) 
-      : (u?.monthlyIncome !== undefined && u?.monthlyIncome !== null ? String(u.monthlyIncome) : '50000'),
-    otherIncome: u?.otherIncome !== undefined && u?.otherIncome !== null ? String(u.otherIncome) : '0',
+      : (u?.monthlyIncome !== undefined && u?.monthlyIncome !== null ? String(u.monthlyIncome) : ''),
+    otherIncome: u?.otherIncome !== undefined && u?.otherIncome !== null ? String(u.otherIncome) : '',
     emergencyFund: u?.emergencyFund !== undefined && u?.emergencyFund !== null 
       ? String(u.emergencyFund) 
-      : (u?.existingSavings !== undefined && u?.existingSavings !== null ? String(u.existingSavings) : '150000'),
+      : (u?.existingSavings !== undefined && u?.existingSavings !== null ? String(u.existingSavings) : ''),
     existingInvestments: u?.existingInvestments !== undefined && u?.existingInvestments !== null 
       ? String(u.existingInvestments) 
-      : '0',
-    financialGoal: u?.financialGoal || 'Wealth Creation & Early Independence',
+      : '',
+    financialGoal: u?.financialGoal || '',
     investmentHorizon: u?.investmentHorizon || '5 to 10 years',
     riskTolerance: (u?.riskTolerance as any) || 'Moderate',
     investmentExperience: (u?.investmentExperience as any) || 'Intermediate',
@@ -152,7 +159,7 @@ export const ProfileView: React.FC = () => {
       setIsDirty(false);
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 4000);
-    } catch (err: any) {
+    } catch {
       setErrorMessage('Unable to save your profile changes. Please try again.');
     } finally {
       setIsSaving(false);
@@ -163,29 +170,29 @@ export const ProfileView: React.FC = () => {
     <div className="space-y-6 pb-12 font-sans">
       
       {/* Top Banner Header */}
-      <div className="bg-white border border-[#E7E9F0] rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-teal-600" />
-            <h1 className="text-xl sm:text-[26px] font-bold text-[#172033] tracking-tight">Investor Profile & Mandate</h1>
+            <User className="w-5 h-5 text-[#00D4AA]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Investor Mandate & Profile</h1>
             {isDirty && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                Unsaved Changes
+              <span className="text-[10.5px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                Unsaved Edits
               </span>
             )}
           </div>
-          <p className="text-[14px] text-[#667085]">
-            Parameters calibrate your AI risk engine, surplus allocation, and multi-asset recommendations.
+          <p className="text-xs text-[#8A94A6]">
+            Configure your capital parameters, volatility tolerances, and lifecycle horizon to recalibrate portfolio strategy.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           {isDirty && (
             <button
               type="button"
               onClick={handleReset}
               disabled={isSaving}
-              className="px-3.5 py-2.5 rounded-lg border border-[#E7E9F0] text-[#667085] hover:text-[#172033] hover:bg-slate-50 text-[13.5px] font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -196,244 +203,240 @@ export const ProfileView: React.FC = () => {
             type="button"
             onClick={handleSaveProfile}
             disabled={isSaving}
-            className="glow-btn-primary px-5 py-2.5 rounded-lg text-white font-bold text-[14px] flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} />
-            <span>{isSaving ? 'Saving & Recalibrating...' : 'Save & Recalibrate'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
+            <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate'}</span>
           </button>
         </div>
       </div>
 
       {/* Success Notification */}
       {savedSuccess && (
-        <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-[14px] font-semibold flex items-center gap-2.5 animate-fade-in shadow-xs">
-          <CheckCircle2 className="w-5 h-5 text-teal-600 shrink-0" />
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-            <span>Profile updated successfully.</span>
-            <span className="text-teal-700 font-normal hidden sm:inline">•</span>
-            <span className="text-teal-800 font-medium">Investment strategy & recommendations recalibrated.</span>
-          </div>
+        <div className="p-3.5 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA] text-xs font-semibold flex items-center gap-2.5 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+          <span>Profile parameters updated. Multi-asset investment strategy successfully recalibrated.</span>
         </div>
       )}
 
       {/* Error Notification */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-[14px] font-semibold flex items-center justify-between gap-2.5 animate-fade-in shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+        <div className="p-3.5 rounded-lg bg-[#FF5252]/10 border border-[#FF5252]/30 text-[#FF5252] text-xs font-semibold flex items-center justify-between gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#FF5252] shrink-0" />
             <span>{errorMessage}</span>
           </div>
           <button
             type="button"
             onClick={handleSaveProfile}
-            className="px-3 py-1 bg-rose-600 text-white rounded text-xs font-bold hover:bg-rose-700 cursor-pointer"
+            className="px-2.5 py-0.5 bg-[#FF5252] text-white rounded text-xs font-bold cursor-pointer"
           >
             Retry
           </button>
         </div>
       )}
 
-      {/* Summary Row: Inflow, Expenses, Surplus, Emergency */}
+      {/* Summary Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-xl bg-white border border-[#E7E9F0] space-y-1 shadow-xs">
-          <span className="text-[12px] text-[#667085] font-semibold uppercase tracking-wider block">Monthly Income</span>
-          <div className="text-[20px] sm:text-[22px] font-bold text-[#172033] font-mono">{formatCurrency(totalInflow)}</div>
-          <span className="text-[12.5px] text-[#667085] truncate block">{form.occupation || 'Active Inflow'}</span>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Monthly Inflow</span>
+          <div className="text-xl font-bold text-white font-mono">{formatCurrency(totalInflow)}</div>
+          <span className="text-xs text-[#8A94A6] truncate block">{form.occupation || 'Active Inflow'}</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#E7E9F0] space-y-1 shadow-xs">
-          <span className="text-[12px] text-[#667085] font-semibold uppercase tracking-wider block">Monthly Expenses</span>
-          <div className="text-[20px] sm:text-[22px] font-bold text-slate-700 font-mono">{formatCurrency(totalOutflows)}</div>
-          <span className="text-[12.5px] text-[#667085] block">{expenses.length} Logged Entries</span>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Monthly Outflow</span>
+          <div className="text-xl font-bold text-white font-mono">{formatCurrency(totalOutflows)}</div>
+          <span className="text-xs text-[#8A94A6] block">{expenses.length} Logged Categories</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 space-y-1 shadow-xs">
-          <span className="text-[12px] text-teal-800 font-semibold uppercase tracking-wider block">Monthly Surplus</span>
-          <div className="text-[20px] sm:text-[22px] font-bold text-teal-700 font-mono">{formatCurrency(surplus)}</div>
-          <span className="text-[12.5px] text-teal-700/90 block">Available to invest</span>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Investable Surplus</span>
+          <div className="text-xl font-bold text-[#00D4AA] font-mono">{formatCurrency(surplus)}</div>
+          <span className="text-xs text-[#00D4AA]/80 block">Capacity to deploy</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#E7E9F0] space-y-1 shadow-xs">
-          <span className="text-[12px] text-[#667085] font-semibold uppercase tracking-wider block">Emergency Reserve</span>
-          <div className="text-[20px] sm:text-[22px] font-bold text-[#172033] font-mono">{formatCurrency(numericEmergency)}</div>
-          <span className="text-[12.5px] text-[#667085] block">Liquid Savings</span>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Emergency Reserve</span>
+          <div className="text-xl font-bold text-white font-mono">{formatCurrency(numericEmergency)}</div>
+          <span className="text-xs text-[#8A94A6] block">Liquid Reserves</span>
         </div>
       </div>
 
       <form onSubmit={handleSaveProfile} className="space-y-6">
         
         {/* 1. PERSONAL INFORMATION */}
-        <div className="bg-white border border-[#E7E9F0] rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <h2 className="text-[17px] sm:text-[18px] font-bold text-[#172033] uppercase tracking-wider pb-2.5 border-b border-[#E7E9F0]">
-            1. Personal Information
+        <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
+            1. Investor Demographics
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Full Name</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Full Legal Name</label>
               <input
                 type="text"
                 value={form.fullName}
                 onChange={(e) => updateField('fullName', e.target.value)}
                 placeholder="Investor Name"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Age</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Age (Years)</label>
               <input
                 type="number"
                 value={form.age}
                 onChange={(e) => updateField('age', e.target.value)}
-                placeholder="e.g. 25"
+                placeholder="e.g. 28"
                 min="18"
                 max="100"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Occupation</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Occupation</label>
               <input
                 type="text"
                 value={form.occupation}
                 onChange={(e) => updateField('occupation', e.target.value)}
                 placeholder="e.g. Software Engineer"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* 2. FINANCIAL PARAMETERS */}
-        <div className="bg-white border border-[#E7E9F0] rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <h2 className="text-[17px] sm:text-[18px] font-bold text-[#172033] uppercase tracking-wider pb-2.5 border-b border-[#E7E9F0]">
-            2. Financial Parameters
+        <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
+            2. Capital Inflows & Assets
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Monthly Salary / Primary Income (₹)</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Monthly Take-Home Salary (₹)</label>
               <input
                 type="number"
                 value={form.salaryIncome}
                 onChange={(e) => updateField('salaryIncome', e.target.value)}
-                placeholder="50000"
+                placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Other / Secondary Monthly Income (₹)</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Other Monthly Cash Inflows (₹)</label>
               <input
                 type="number"
                 value={form.otherIncome}
                 onChange={(e) => updateField('otherIncome', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Emergency Fund / Cash Reserves (₹)</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Emergency Cash Reserves (₹)</label>
               <input
                 type="number"
                 value={form.emergencyFund}
                 onChange={(e) => updateField('emergencyFund', e.target.value)}
-                placeholder="150000"
+                placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Existing Portfolio / Investments (₹)</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Existing Investments Portfolio (₹)</label>
               <input
                 type="number"
                 value={form.existingInvestments}
                 onChange={(e) => updateField('existingInvestments', e.target.value)}
-                placeholder="100000"
+                placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white font-mono transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
           </div>
         </div>
 
         {/* 3. RISK TOLERANCE & STRATEGY PREFERENCES */}
-        <div className="bg-white border border-[#E7E9F0] rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <h2 className="text-[17px] sm:text-[18px] font-bold text-[#172033] uppercase tracking-wider pb-2.5 border-b border-[#E7E9F0]">
-            3. Risk Mandate & Preferences
+        <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
+            3. Risk Mandate & Governance
           </h2>
 
           <div className="space-y-4">
             {/* Segmented Risk Selector */}
             <div className="space-y-2">
-              <label className="block text-[#172033] text-[13.5px] font-medium">Risk Tolerance Profile</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold uppercase tracking-wider">Risk Profile Strategy</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { id: 'Conservative', label: 'Conservative', desc: 'Focus on capital preservation and fixed income debt' },
-                  { id: 'Moderate', label: 'Moderate', desc: 'Balanced wealth accumulation with indexed equity core' },
-                  { id: 'Aggressive', label: 'Aggressive', desc: 'Maximized long-term compound alpha with equities' }
+                  { id: 'Conservative', label: 'Conservative', desc: 'Focus on capital safety and high-yield fixed debt' },
+                  { id: 'Moderate', label: 'Moderate', desc: 'Balanced wealth accumulation with indexed core equity' },
+                  { id: 'Aggressive', label: 'Aggressive', desc: 'Maximized long-term alpha with broad equity satellites' }
                 ].map((item) => (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => updateField('riskTolerance', item.id as any)}
-                    className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
                       form.riskTolerance === item.id 
-                        ? 'bg-teal-50 border-teal-500 text-teal-900 ring-2 ring-teal-500/20 shadow-xs' 
-                        : 'bg-[#F8F9FC] border-[#E7E9F0] text-[#667085] hover:border-slate-300'
+                        ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white' 
+                        : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6] hover:border-white/[0.14]'
                     }`}
                   >
-                    <span className={`font-bold text-[15px] block mb-1 ${form.riskTolerance === item.id ? 'text-teal-900' : 'text-[#172033]'}`}>{item.label}</span>
-                    <span className="text-[13px] text-[#667085] leading-relaxed block">{item.desc}</span>
+                    <span className={`font-bold text-sm block mb-0.5 ${form.riskTolerance === item.id ? 'text-[#00D4AA]' : 'text-white'}`}>{item.label}</span>
+                    <span className="text-xs text-[#8A94A6] leading-relaxed block">{item.desc}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               <div>
-                <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Investment Horizon</label>
+                <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Investment Horizon</label>
                 <select
                   value={form.investmentHorizon}
                   onChange={(e) => updateField('investmentHorizon', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
                 >
-                  <option value="1 to 3 years">Short Term (1 to 3 years)</option>
-                  <option value="3 to 5 years">Medium Term (3 to 5 years)</option>
-                  <option value="5 to 10 years">Long Term (5 to 10 years)</option>
-                  <option value="10 to 20 years">Extended Growth (10 to 20 years)</option>
-                  <option value="20+ years">Generational (20+ years)</option>
+                  <option value="1 to 3 years" className="bg-[#0A1022] text-white">Short Term (1 to 3 years)</option>
+                  <option value="3 to 5 years" className="bg-[#0A1022] text-white">Medium Term (3 to 5 years)</option>
+                  <option value="5 to 10 years" className="bg-[#0A1022] text-white">Long Term (5 to 10 years)</option>
+                  <option value="10 to 20 years" className="bg-[#0A1022] text-white">Extended Growth (10 to 20 years)</option>
+                  <option value="20+ years" className="bg-[#0A1022] text-white">Multi-Decade (20+ years)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Market Experience</label>
+                <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Market Experience</label>
                 <select
                   value={form.investmentExperience}
                   onChange={(e) => updateField('investmentExperience', e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
                 >
-                  <option value="Beginner">Beginner (Index funds & SIP focus)</option>
-                  <option value="Intermediate">Intermediate (Multi-asset & ETFs)</option>
-                  <option value="Advanced">Advanced (Global allocation & hedging)</option>
+                  <option value="Beginner" className="bg-[#0A1022] text-white">Beginner (Index funds & SIP focus)</option>
+                  <option value="Intermediate" className="bg-[#0A1022] text-white">Intermediate (Multi-asset & ETFs)</option>
+                  <option value="Advanced" className="bg-[#0A1022] text-white">Advanced (Global allocation & hedging)</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-[#172033] text-[13.5px] font-medium mb-1.5">Primary Financial Goal</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Primary Financial Mandate</label>
               <input
                 type="text"
                 value={form.financialGoal}
                 onChange={(e) => updateField('financialGoal', e.target.value)}
                 placeholder="e.g. Wealth Creation & Early Independence"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8F9FC] border border-[#E7E9F0] text-[#172033] text-[14.5px] focus:outline-none focus:border-teal-500 focus:bg-white transition-all"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
               />
             </div>
           </div>
@@ -441,9 +444,9 @@ export const ProfileView: React.FC = () => {
 
         {/* Bottom Action Footer */}
         <div className="flex items-center justify-between pt-2">
-          <div className="text-[13px] text-[#667085]">
+          <div className="text-xs text-[#8A94A6]">
             {isDirty ? (
-              <span className="text-amber-700 font-medium">You have unsaved profile changes.</span>
+              <span className="text-amber-400 font-medium">Unsaved parameters detected.</span>
             ) : (
               <span>Profile parameters are synchronized.</span>
             )}
@@ -455,7 +458,7 @@ export const ProfileView: React.FC = () => {
                 type="button"
                 onClick={handleReset}
                 disabled={isSaving}
-                className="px-4 py-2.5 rounded-lg border border-[#E7E9F0] text-[#667085] hover:text-[#172033] hover:bg-slate-50 text-[14px] font-semibold cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -464,10 +467,10 @@ export const ProfileView: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="glow-btn-primary px-6 py-2.5 rounded-lg text-white font-bold text-[14px] flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+              className="px-5 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} />
-              <span>{isSaving ? 'Saving & Recalibrating...' : 'Save & Recalibrate Strategy'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
+              <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate Strategy'}</span>
             </button>
           </div>
         </div>

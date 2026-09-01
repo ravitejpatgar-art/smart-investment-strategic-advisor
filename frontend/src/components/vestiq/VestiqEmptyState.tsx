@@ -31,8 +31,7 @@ const INTELLIGENCE_CATEGORIES = [
     id: 'market',
     title: 'Market Intelligence',
     icon: Globe,
-    color: '#0284c7',
-    badgeBg: 'bg-sky-50 text-sky-700 border-sky-200',
+    color: '#00D4AA',
     description: 'Ask about NIFTY, SENSEX, NASDAQ, Gold trends, and macroeconomic movements.',
     samplePrompts: ['What is Nifty doing today?', 'Why is gold rising as a hedge?', 'US market tech outlook']
   },
@@ -40,8 +39,7 @@ const INTELLIGENCE_CATEGORIES = [
     id: 'portfolio',
     title: 'Portfolio Intelligence',
     icon: Layers,
-    color: '#6366f1',
-    badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    color: '#1E88E5',
     description: 'Evaluate portfolio diversification, risk capacity, asset overlap, and mandate alignment.',
     samplePrompts: ['Review my portfolio', 'Am I too concentrated in Nifty?', 'Explain my asset allocation']
   },
@@ -49,8 +47,7 @@ const INTELLIGENCE_CATEGORIES = [
     id: 'research',
     title: 'Investment Research',
     icon: Search,
-    color: '#0d9488',
-    badgeBg: 'bg-teal-50 text-teal-700 border-teal-200',
+    color: '#00D4AA',
     description: 'Deep-dive into individual direct index funds, ETFs, stocks, global tech, and bonds.',
     samplePrompts: ['Suggest some US stocks', 'Is MON100 a good ETF?', 'Explain direct index fund benefits']
   },
@@ -58,30 +55,35 @@ const INTELLIGENCE_CATEGORIES = [
     id: 'planning',
     title: 'Financial Planning',
     icon: Compass,
-    color: '#ea580c',
-    badgeBg: 'bg-orange-50 text-orange-700 border-orange-200',
+    color: '#1E88E5',
     description: 'Simulate monthly SIPs, milestone target dates, emergency fund runways, and affordability.',
     samplePrompts: ['How much SIP for ₹1 crore?', 'Can I afford a ₹10 lakh car?', 'Where should I invest surplus?']
   }
 ];
 
 export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, loading }) => {
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+  };
+
   return (
-    <div className="w-full max-w-[860px] mx-auto space-y-6 sm:space-y-7 py-4 sm:py-6 font-sans animate-fade-in">
+    <div className="w-full max-w-[860px] mx-auto space-y-6 py-4 sm:py-6 font-sans animate-fade-in">
       
       {/* 1. Hero Title & Subtitle */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-teal-50 to-indigo-50 border border-teal-200 text-[12px] font-bold text-teal-900 shadow-xs mb-1">
-          <Sparkles className="w-3.5 h-3.5 text-teal-600 animate-pulse" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A1022] border border-white/[0.08] text-xs font-bold text-[#00D4AA] mb-1">
+          <Sparkles className="w-3.5 h-3.5 text-[#00D4AA]" />
           <span>VestIQ Intelligence Workspace</span>
         </div>
 
-        <h1 className="text-[28px] sm:text-[38px] lg:text-[44px] font-black text-[#172033] tracking-tight leading-tight">
-          How can <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-indigo-600">VestIQ</span> help?
+        <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+          How can <span className="text-[#00D4AA]">VestIQ</span> assist your wealth strategy?
         </h1>
 
-        <p className="text-[14.5px] sm:text-[16px] text-[#667085] max-w-[620px] mx-auto leading-relaxed">
-          Analyze markets, explore institutional research, optimize portfolio allocation, and simulate your wealth milestones.
+        <p className="text-xs sm:text-sm text-[#8A94A6] max-w-[620px] mx-auto leading-relaxed">
+          Analyze real-time market data, explore institutional research, optimize portfolio allocation, and simulate your wealth milestones.
         </p>
       </div>
 
@@ -92,9 +94,9 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
 
       {/* 3. Suggested Questions Pills */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1.5 text-[11.5px] font-bold text-[#98A2B3] uppercase tracking-wider">
-          <Zap className="w-3.5 h-3.5 text-amber-500" />
-          <span>Suggested Questions:</span>
+        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider">
+          <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <span>Suggested Queries:</span>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -102,10 +104,10 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
             <button
               key={idx}
               onClick={() => onSend(q)}
-              className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E7EAF0] text-[#172033] text-[13px] font-medium transition-all hover:border-teal-400 hover:shadow-xs flex items-center gap-1.5 cursor-pointer text-left"
+              className="px-3 py-1.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-white text-xs font-medium transition-all hover:border-[#00D4AA]/40 flex items-center gap-1.5 cursor-pointer text-left"
             >
               <span>{q}</span>
-              <ArrowRight className="w-3 h-3 text-teal-600 shrink-0" />
+              <ArrowRight className="w-3 h-3 text-[#00D4AA] shrink-0" />
             </button>
           ))}
         </div>
@@ -118,8 +120,8 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
 
       {/* 5. 4 Quick Intelligence Categories */}
       <div className="space-y-3">
-        <div className="text-[12.5px] font-bold text-[#172033] uppercase tracking-wider flex items-center gap-1.5">
-          <span>Financial Intelligence Categories</span>
+        <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <span>Financial Intelligence Capabilities</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -128,34 +130,35 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
             return (
               <div
                 key={cat.id}
-                className="p-4 rounded-xl bg-white border border-[#E7EAF0] hover:border-teal-400 hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
+                style={cardStyle}
+                className="p-4 flex flex-col justify-between space-y-3 hover:border-[#00D4AA]/30 transition-all"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#0A1022] text-[#00D4AA]">
                         <Icon className="w-4 h-4" />
                       </div>
-                      <h3 className="font-bold text-[#172033] text-[15px]">{cat.title}</h3>
+                      <h3 className="font-bold text-white text-sm">{cat.title}</h3>
                     </div>
                   </div>
 
-                  <p className="text-[13px] text-[#667085] leading-relaxed">
+                  <p className="text-xs text-[#8A94A6] leading-relaxed">
                     {cat.description}
                   </p>
                 </div>
 
-                <div className="space-y-1.5 pt-2 border-t border-[#F8FAFC]">
-                  <span className="text-[11px] font-semibold text-[#98A2B3] uppercase">Try Asking:</span>
+                <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
+                  <span className="text-[10.5px] font-semibold text-[#5A667A] uppercase">Try Asking:</span>
                   <div className="flex flex-col gap-1">
                     {cat.samplePrompts.map((p, pIdx) => (
                       <button
                         key={pIdx}
                         onClick={() => onSend(p)}
-                        className="text-left text-[12.5px] text-teal-800 hover:text-teal-950 hover:underline flex items-center justify-between font-medium cursor-pointer py-0.5 group"
+                        className="text-left text-xs text-[#00D4AA] hover:underline flex items-center justify-between font-medium cursor-pointer py-0.5 group"
                       >
                         <span className="truncate">"{p}"</span>
-                        <ArrowRight className="w-3 h-3 text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight className="w-3 h-3 text-[#00D4AA] opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     ))}
                   </div>
