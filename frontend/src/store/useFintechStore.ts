@@ -172,20 +172,33 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     set({ isAuthLoading: true });
     const unsubscribe = subscribeToAuthState((firebaseUser) => {
       if (firebaseUser) {
-        const localProf = userProfileRepo.getProfile();
-        const userObj: UserProfile = (localProf && (!localProf.id || localProf.id === firebaseUser.uid))
-          ? { ...localProf, id: firebaseUser.uid, email: firebaseUser.email || localProf.email || '' }
-          : {
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
-              email: firebaseUser.email || '',
-              onboardingCompleted: false,
-              riskTolerance: 'Moderate',
-              investmentHorizon: '5 to 10 years',
-              investmentExperience: 'Intermediate'
-            };
-        const loadedExpenses = userProfileRepo.getExpenses();
-        const loadedGoals = userProfileRepo.getGoals();
+        let userObj: UserProfile;
+        const savedProf = userProfileRepo.getProfile(firebaseUser.uid);
+
+        if (savedProf) {
+          userObj = { ...savedProf, id: firebaseUser.uid, email: firebaseUser.email || savedProf.email || '' };
+        } else {
+          const draft = userProfileRepo.getOnboardingDraft(firebaseUser.uid);
+          userObj = {
+            id: firebaseUser.uid,
+            name: draft?.fullName || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
+            email: firebaseUser.email || '',
+            age: draft?.age ? Number(draft.age) : undefined,
+            occupation: draft?.occupation || undefined,
+            salaryIncome: draft?.monthlySalary ? Number(draft.monthlySalary) : undefined,
+            otherIncome: draft?.otherIncome ? Number(draft.otherIncome) : undefined,
+            emergencyFund: draft?.emergencyFund ? Number(draft.emergencyFund) : undefined,
+            existingSavings: draft?.savingsBalance ? Number(draft.savingsBalance) : undefined,
+            existingInvestments: draft?.existingInvestments ? Number(draft.existingInvestments) : undefined,
+            onboardingCompleted: false,
+            riskTolerance: 'Moderate',
+            investmentHorizon: draft?.investmentHorizon || '5 to 10 years',
+            investmentExperience: 'Intermediate'
+          };
+        }
+
+        const loadedExpenses = userProfileRepo.getExpenses(firebaseUser.uid);
+        const loadedGoals = userProfileRepo.getGoals(firebaseUser.uid);
         const computedStrategy = calculateInvestmentStrategy(userObj, loadedExpenses, loadedGoals);
         set({
           user: userObj,
@@ -197,7 +210,6 @@ export const useFintechStore = create<FintechState>((set, get) => ({
           activeView: userObj.onboardingCompleted ? 'dashboard' : 'onboarding'
         });
       } else {
-        userProfileRepo.clearProfile();
         localStorage.removeItem('smartvest_token');
         const emptyStrategy = calculateInvestmentStrategy(null, [], []);
         set({
@@ -231,7 +243,6 @@ export const useFintechStore = create<FintechState>((set, get) => ({
         activeView: user.onboardingCompleted ? 'dashboard' : 'onboarding'
       });
     } else {
-      userProfileRepo.clearProfile();
       localStorage.removeItem('smartvest_token');
       set({ 
         user: null, 
@@ -322,21 +333,21 @@ export const useFintechStore = create<FintechState>((set, get) => ({
   expenses: initialExpenses,
   addExpense: (expense) => set((state) => {
     const newExpenses = [{ ...expense, id: `exp_${Date.now()}` }, ...state.expenses];
-    userProfileRepo.saveExpenses(newExpenses);
+    userProfileRepo.saveExpenses(newExpenses, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, newExpenses, state.goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
     return { expenses: newExpenses, strategy: updatedStrategy };
   }),
   editExpense: (id, updated) => set((state) => {
     const newExpenses = state.expenses.map((e) => e.id === id ? { ...e, ...updated } : e);
-    userProfileRepo.saveExpenses(newExpenses);
+    userProfileRepo.saveExpenses(newExpenses, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, newExpenses, state.goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
     return { expenses: newExpenses, strategy: updatedStrategy };
   }),
   deleteExpense: (id) => set((state) => {
     const newExpenses = state.expenses.filter((e) => e.id !== id);
-    userProfileRepo.saveExpenses(newExpenses);
+    userProfileRepo.saveExpenses(newExpenses, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, newExpenses, state.goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
     return { expenses: newExpenses, strategy: updatedStrategy };
@@ -346,21 +357,21 @@ export const useFintechStore = create<FintechState>((set, get) => ({
   goals: initialGoals,
   addGoal: (goal) => set((state) => {
     const newGoals = [{ ...goal, id: `goal_${Date.now()}` }, ...state.goals];
-    userProfileRepo.saveGoals(newGoals);
+    userProfileRepo.saveGoals(newGoals, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, state.expenses, newGoals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
     return { goals: newGoals, strategy: updatedStrategy };
   }),
   editGoal: (id, updated) => set((state) => {
     const newGoals = state.goals.map((g) => g.id === id ? { ...g, ...updated } : g);
-    userProfileRepo.saveGoals(newGoals);
+    userProfileRepo.saveGoals(newGoals, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, state.expenses, newGoals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
     return { goals: newGoals, strategy: updatedStrategy };
   }),
   deleteGoal: (id) => set((state) => {
     const newGoals = state.goals.filter((g) => g.id !== id);
-    userProfileRepo.saveGoals(newGoals);
+    userProfileRepo.saveGoals(newGoals, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, state.expenses, newGoals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
     return { goals: newGoals, strategy: updatedStrategy };

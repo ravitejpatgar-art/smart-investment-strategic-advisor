@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
+import { useAuth } from '../../context/AuthContext';
+import { isAuthEnabled } from '../../services/firebase';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -21,11 +23,16 @@ import {
 } from 'lucide-react';
 import type { UserProfile, ExpenseItem } from '../../types';
 import { BrandLogo } from '../common/BrandLogo';
+import { userProfileRepo } from '../../services/userProfileRepository';
 
 export const OnboardingWizard: React.FC = () => {
   const { user, setUser, addExpense, runAiAnalysis, formatCurrency, currency } = useFintechStore();
+  const { currentUser } = useAuth();
+  const effectiveUid = currentUser?.uid || user?.id || null;
 
   const [step, setStep] = useState<number>(1);
+  const [hasHydrated, setHasHydrated] = useState<boolean>(false);
+  const hydratedForUidRef = useRef<string | null>(null);
 
   // STEP 1: Personal Profile
   const [fullName, setFullName] = useState(user?.name || '');
@@ -166,6 +173,104 @@ export const OnboardingWizard: React.FC = () => {
   const [includeGoldHedge, setIncludeGoldHedge] = useState<boolean>(true);
   const [directPlansOnly, setDirectPlansOnly] = useState<boolean>(true);
 
+  // 1. Hydrate saved onboarding draft for the authenticated user
+  useEffect(() => {
+    if (isAuthEnabled() && !effectiveUid) {
+      return;
+    }
+
+    const draft = userProfileRepo.getOnboardingDraft(effectiveUid);
+    const existingProfile = userProfileRepo.getProfile(effectiveUid) || user;
+
+    if (draft) {
+      if (draft.step && draft.step >= 1 && draft.step <= 7) {
+        setStep(draft.step);
+      }
+      if (draft.fullName !== undefined) setFullName(draft.fullName);
+      if (draft.age !== undefined) setAge(draft.age);
+      if (draft.occupation !== undefined) setOccupation(draft.occupation);
+      if (draft.monthlySalary !== undefined) setMonthlySalary(draft.monthlySalary);
+      if (draft.otherIncome !== undefined) setOtherIncome(draft.otherIncome);
+      if (draft.emergencyFund !== undefined) setEmergencyFund(draft.emergencyFund);
+      if (draft.existingInvestments !== undefined) setExistingInvestments(draft.existingInvestments);
+      if (draft.savingsBalance !== undefined) setSavingsBalance(draft.savingsBalance);
+      if (draft.rent !== undefined) setRent(draft.rent);
+      if (draft.food !== undefined) setFood(draft.food);
+      if (draft.transport !== undefined) setTransport(draft.transport);
+      if (draft.emi !== undefined) setEmi(draft.emi);
+      if (draft.selectedGoals && draft.selectedGoals.length > 0) setSelectedGoals(draft.selectedGoals);
+      if (draft.riskAnswers && Object.keys(draft.riskAnswers).length > 0) setRiskAnswers(draft.riskAnswers);
+      if (draft.investmentHorizon !== undefined) setInvestmentHorizon(draft.investmentHorizon);
+      if (draft.includeGlobalAssets !== undefined) setIncludeGlobalAssets(draft.includeGlobalAssets);
+      if (draft.includeGoldHedge !== undefined) setIncludeGoldHedge(draft.includeGoldHedge);
+      if (draft.directPlansOnly !== undefined) setDirectPlansOnly(draft.directPlansOnly);
+    } else if (existingProfile) {
+      if (existingProfile.name && !fullName) setFullName(existingProfile.name);
+      if (existingProfile.age && !age) setAge(String(existingProfile.age));
+      if (existingProfile.occupation && !occupation) setOccupation(existingProfile.occupation);
+      if (existingProfile.salaryIncome && !monthlySalary) setMonthlySalary(String(existingProfile.salaryIncome));
+      if (existingProfile.otherIncome && !otherIncome) setOtherIncome(String(existingProfile.otherIncome));
+      if (existingProfile.emergencyFund && !emergencyFund) setEmergencyFund(String(existingProfile.emergencyFund));
+      if (existingProfile.existingSavings && !savingsBalance) setSavingsBalance(String(existingProfile.existingSavings));
+      if (existingProfile.existingInvestments && !existingInvestments) setExistingInvestments(String(existingProfile.existingInvestments));
+    }
+
+    hydratedForUidRef.current = effectiveUid;
+    setHasHydrated(true);
+  }, [effectiveUid]);
+
+  // 2. Automatically persist changes to the user's onboarding draft
+  useEffect(() => {
+    if (!hasHydrated || hydratedForUidRef.current !== effectiveUid) return;
+    if (isAuthEnabled() && !effectiveUid) return;
+    if (user?.onboardingCompleted) return;
+
+    userProfileRepo.saveOnboardingDraft({
+      step,
+      fullName,
+      age,
+      occupation,
+      monthlySalary,
+      otherIncome,
+      emergencyFund,
+      existingInvestments,
+      savingsBalance,
+      rent,
+      food,
+      transport,
+      emi,
+      selectedGoals,
+      riskAnswers,
+      investmentHorizon,
+      includeGlobalAssets,
+      includeGoldHedge,
+      directPlansOnly
+    }, effectiveUid);
+  }, [
+    hasHydrated,
+    effectiveUid,
+    step,
+    fullName,
+    age,
+    occupation,
+    monthlySalary,
+    otherIncome,
+    emergencyFund,
+    existingInvestments,
+    savingsBalance,
+    rent,
+    food,
+    transport,
+    emi,
+    selectedGoals,
+    riskAnswers,
+    investmentHorizon,
+    includeGlobalAssets,
+    includeGoldHedge,
+    directPlansOnly,
+    user?.onboardingCompleted
+  ]);
+
   // Live Calculations — UNCHANGED LOGIC
   const totalIncomeVal = (Number(monthlySalary) || 0) + (Number(otherIncome) || 0);
   const totalExpensesVal = 
@@ -193,9 +298,10 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   const handleFinish = () => {
+    const activeId = effectiveUid || user?.id || `usr_${Date.now()}`;
     const updatedProfile: UserProfile = {
-      id: user?.id || `usr_${Date.now()}`,
-      email: user?.email || 'investor@smartvest.ai',
+      id: activeId,
+      email: currentUser?.email || user?.email || 'investor@smartvest.ai',
       name: fullName.trim() || 'Investor',
       age: Number(age) || undefined,
       occupation: occupation.trim() || undefined,
@@ -219,6 +325,9 @@ export const OnboardingWizard: React.FC = () => {
     };
 
     setUser(updatedProfile);
+
+    // Clear onboarding draft on completion
+    userProfileRepo.clearOnboardingDraft(activeId);
 
     // Populate initial expense items into the Expense Tracker
     const today = new Date().toISOString().split('T')[0];
@@ -253,16 +362,16 @@ export const OnboardingWizard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white flex flex-col justify-between p-4 sm:p-8 font-sans relative">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#060811] text-slate-900 dark:text-white flex flex-col justify-between p-4 sm:p-8 font-sans relative">
       
       {/* Top Header with Institutional Brand Logo */}
-      <div className="max-w-4xl mx-auto w-full flex items-center justify-between z-10 pb-6 border-b border-white/[0.06]">
+      <div className="max-w-4xl mx-auto w-full flex items-center justify-between z-10 pb-6 border-b border-slate-200 dark:border-white/[0.06]">
         <BrandLogo size="md" subtitleText="WEALTH DISCOVERY" />
 
-        <div className="flex items-center gap-2 text-xs text-[#8A94A6]">
-          <span>Step <strong className="text-white">{step}</strong> of 7</span>
-          <span className="text-[#5A667A]">|</span>
-          <span className="text-[#00D4AA] font-semibold">{stepsList[step - 1]?.label}</span>
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>Step <strong className="text-slate-900 dark:text-white">{step}</strong> of 7</span>
+          <span className="text-slate-300 dark:text-slate-600">|</span>
+          <span className="text-[#0D9488] dark:text-[#00D4AA] font-bold">{stepsList[step - 1]?.label}</span>
         </div>
       </div>
 
@@ -280,26 +389,26 @@ export const OnboardingWizard: React.FC = () => {
                   onClick={() => {
                     if (s.num < step) setStep(s.num);
                   }}
-                  className={`flex flex-col items-center gap-1.5 cursor-pointer group`}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer group"
                 >
                   <div 
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all shadow-xs ${
                       isCurrent 
-                        ? 'bg-[#00D4AA] text-[#050816] shadow-sm'
+                        ? 'bg-[#00D4AA] text-[#060811] shadow-md shadow-[#00D4AA]/20'
                         : isCompleted
-                        ? 'bg-[#0A1022] text-[#00D4AA] border border-[#00D4AA]/30'
-                        : 'bg-[#0A1022] text-[#5A667A] border border-white/[0.06]'
+                        ? 'bg-emerald-50 dark:bg-[#0B1120] text-emerald-700 dark:text-[#00D4AA] border border-emerald-200 dark:border-[#00D4AA]/30'
+                        : 'bg-slate-100 dark:bg-[#0B1120] text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-white/[0.06]'
                     }`}
                   >
                     {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <StepIcon className="w-3.5 h-3.5" />}
                   </div>
-                  <span className={`text-[10.5px] font-semibold tracking-wider uppercase ${isCurrent ? 'text-white' : isCompleted ? 'text-[#8A94A6]' : 'text-[#5A667A]'}`}>
+                  <span className={`text-[10px] font-bold tracking-wider uppercase ${isCurrent ? 'text-slate-900 dark:text-white' : isCompleted ? 'text-slate-500 dark:text-slate-400' : 'text-slate-400 dark:text-slate-600'}`}>
                     {s.label}
                   </span>
                 </div>
 
                 {idx < stepsList.length - 1 && (
-                  <div className={`flex-1 h-[1.5px] mx-2 transition-all ${step > s.num ? 'bg-[#00D4AA]/50' : 'bg-white/[0.06]'}`} />
+                  <div className={`flex-1 h-[1.5px] mx-2 transition-all ${step > s.num ? 'bg-emerald-400 dark:bg-[#00D4AA]/50' : 'bg-slate-200 dark:bg-white/[0.06]'}`} />
                 )}
               </React.Fragment>
             );
@@ -308,35 +417,35 @@ export const OnboardingWizard: React.FC = () => {
       </div>
 
       {/* Main Form Container */}
-      <div className="max-w-4xl mx-auto w-full bg-[#101827] border border-white/[0.08] rounded-xl p-6 sm:p-9 shadow-xl z-10 space-y-6 my-auto">
+      <div className="max-w-4xl mx-auto w-full bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl p-6 sm:p-9 shadow-xl z-10 space-y-6 my-auto">
         
         {/* STEP 1: Personal Profile */}
         {step === 1 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 1 — Profile Identity</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Investor Demographics</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 1 — Profile Identity</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Investor Demographics</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Calibrate your investment profile and lifecycle horizon for fiduciary portfolio modeling.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Full Legal Name</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Full Legal Name</label>
                 <input
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Aryan Sharma"
-                  className="w-full px-4 py-3 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-[#5A667A]"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Age (Years)</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Age (Years)</label>
                   <input
                     type="number"
                     required
@@ -345,18 +454,18 @@ export const OnboardingWizard: React.FC = () => {
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
                     placeholder="e.g. 28"
-                    className="w-full px-4 py-3 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-[#5A667A]"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400 font-mono"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Occupation / Professional Field</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Occupation / Professional Field</label>
                   <input
                     type="text"
                     required
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
                     placeholder="e.g. Software Engineer / Consultant"
-                    className="w-full px-4 py-3 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-[#5A667A]"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                   />
                 </div>
               </div>
@@ -367,133 +476,133 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 2: Income & Assets */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 2 — Financial Balance Sheet</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Income Inflow & Existing Capital</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 2 — Financial Balance Sheet</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Income Inflow & Existing Capital</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Provide your cash inflow and current balance sheet to calculate surplus capacity and emergency reserve targets.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Monthly Net Salary ({currency})</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Monthly Net Salary ({currency})</label>
                   <input
                     type="number"
                     required
                     placeholder="e.g. 125000"
                     value={monthlySalary}
                     onChange={(e) => setMonthlySalary(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono font-bold text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-[#5A667A]"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono font-bold text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Other Monthly Income ({currency})</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Other Monthly Income ({currency})</label>
                   <input
                     type="number"
                     placeholder="e.g. Freelance, Dividends (0 if none)"
                     value={otherIncome}
                     onChange={(e) => setOtherIncome(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-[#5A667A]"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Emergency Fund ({currency})</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Emergency Fund ({currency})</label>
                   <input
                     type="number"
                     placeholder="e.g. 200000"
                     value={emergencyFund}
                     onChange={(e) => setEmergencyFund(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                   />
-                  <span className="text-[10.5px] text-[#5A667A] mt-1 block">Liquid cash in savings</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Liquid cash in savings</span>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Existing Portfolios ({currency})</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Existing Portfolios ({currency})</label>
                   <input
                     type="number"
                     placeholder="e.g. 350000"
                     value={existingInvestments}
                     onChange={(e) => setExistingInvestments(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                   />
-                  <span className="text-[10.5px] text-[#5A667A] mt-1 block">Mutual funds, stocks, PF</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Mutual funds, stocks, PF</span>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-1.5">Savings Account ({currency})</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Savings Account ({currency})</label>
                   <input
                     type="number"
                     placeholder="e.g. 80000"
                     value={savingsBalance}
                     onChange={(e) => setSavingsBalance(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                   />
-                  <span className="text-[10.5px] text-[#5A667A] mt-1 block">Operating cash balance</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Operating cash balance</span>
                 </div>
               </div>
 
               {/* Monthly Outflow Fields */}
-              <div className="pt-2">
-                <label className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider block mb-2">Monthly Living Costs (Optional Baseline)</label>
+              <div className="pt-2 space-y-2">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Monthly Living Costs (Optional Baseline)</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                   <div>
-                    <span className="text-[#8A94A6] block mb-1">Housing/Rent</span>
+                    <span className="text-slate-500 dark:text-slate-400 block mb-1">Housing/Rent</span>
                     <input
                       type="number"
                       placeholder="e.g. 25000"
                       value={rent}
                       onChange={(e) => setRent(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
                   <div>
-                    <span className="text-[#8A94A6] block mb-1">Food & Groceries</span>
+                    <span className="text-slate-500 dark:text-slate-400 block mb-1">Food & Groceries</span>
                     <input
                       type="number"
                       placeholder="e.g. 10000"
                       value={food}
                       onChange={(e) => setFood(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
                   <div>
-                    <span className="text-[#8A94A6] block mb-1">Commute/Transport</span>
+                    <span className="text-slate-500 dark:text-slate-400 block mb-1">Commute/Transport</span>
                     <input
                       type="number"
                       placeholder="e.g. 4000"
                       value={transport}
                       onChange={(e) => setTransport(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
                   <div>
-                    <span className="text-[#8A94A6] block mb-1">Debt / EMI</span>
+                    <span className="text-slate-500 dark:text-slate-400 block mb-1">Debt / EMI</span>
                     <input
                       type="number"
                       placeholder="e.g. 0"
                       value={emi}
                       onChange={(e) => setEmi(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-mono text-xs focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-lg bg-[#0A1022] border border-white/[0.06] flex items-center justify-between text-xs">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[#8A94A6]">Monthly Inflow: </span>
-                  <strong className="text-white font-mono">{formatCurrency(totalIncomeVal)}</strong>
+                  <span className="text-slate-500 dark:text-slate-400">Monthly Inflow: </span>
+                  <strong className="text-slate-900 dark:text-white font-mono">{formatCurrency(totalIncomeVal)}</strong>
                 </div>
                 <div>
-                  <span className="text-[#8A94A6]">Investable Surplus: </span>
-                  <strong className="text-[#00D4AA] font-mono text-sm">{formatCurrency(surplusVal)}/mo</strong>
+                  <span className="text-slate-500 dark:text-slate-400">Investable Surplus: </span>
+                  <strong className="text-[#0D9488] dark:text-[#00D4AA] font-mono text-sm">{formatCurrency(surplusVal)}/mo</strong>
                 </div>
               </div>
             </div>
@@ -503,15 +612,15 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 3: Financial Goals */}
         {step === 3 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 3 — Strategic Objectives</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Target Financial Milestones</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 3 — Strategic Objectives</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Target Financial Milestones</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Select the target objectives you wish to fund. SmartVest models dedicated SIP allocations for each goal.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {goalOptions.map((g) => {
                 const isSelected = selectedGoals.includes(g.id);
                 const Icon = g.icon;
@@ -520,23 +629,23 @@ export const OnboardingWizard: React.FC = () => {
                   <div
                     key={g.id}
                     onClick={() => toggleGoal(g.id)}
-                    className={`p-4 rounded-lg border transition-all cursor-pointer flex items-center gap-3 ${
+                    className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-3.5 ${
                       isSelected
-                        ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white'
-                        : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6] hover:border-white/[0.14]'
+                        ? 'bg-emerald-50 dark:bg-[#00D4AA]/10 border-emerald-400 dark:border-[#00D4AA]/40 text-slate-900 dark:text-white shadow-xs'
+                        : 'bg-slate-50 dark:bg-[#0B1120] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/[0.14]'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                      isSelected ? 'bg-[#00D4AA]/20 text-[#00D4AA]' : 'bg-[#101827] text-[#5A667A]'
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-emerald-100 dark:bg-[#00D4AA]/20 text-[#0D9488] dark:text-[#00D4AA]' : 'bg-white dark:bg-[#0F172A] text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-white/[0.04]'
                     }`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-white truncate">{g.title}</div>
-                      <div className="text-[11px] text-[#8A94A6] truncate">{g.desc}</div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white truncate">{g.title}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{g.desc}</div>
                     </div>
                     <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                      isSelected ? 'bg-[#00D4AA] border-[#00D4AA] text-[#050816]' : 'border-white/[0.14]'
+                      isSelected ? 'bg-[#00D4AA] border-[#00D4AA] text-[#060811]' : 'border-slate-300 dark:border-white/[0.14]'
                     }`}>
                       {isSelected && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
                     </div>
@@ -550,33 +659,33 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 4: Risk Assessment Questionnaire */}
         {step === 4 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 4 — Quantitative Risk Assessment</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Risk Matrix & Capacity Questionnaire</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 4 — Quantitative Risk Assessment</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Risk Matrix & Capacity Questionnaire</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 10 institutional questions evaluating psychological volatility tolerance and financial loss absorption capacity.
               </p>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 text-xs scrollbar-none">
               {riskQuestions.map((q) => (
-                <div key={q.id} className="p-3.5 rounded-lg bg-[#0A1022] border border-white/[0.06] space-y-2">
-                  <span className="font-bold text-white block text-xs">{q.question}</span>
-                  <div className="space-y-1.5">
+                <div key={q.id} className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] space-y-2.5">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs">{q.question}</span>
+                  <div className="space-y-2">
                     {q.options.map((opt, oIdx) => {
                       const isChosen = riskAnswers[q.id] === opt.score;
                       return (
                         <div
                           key={oIdx}
                           onClick={() => setRiskAnswers(prev => ({ ...prev, [q.id]: opt.score }))}
-                          className={`p-2.5 rounded-md border transition-all cursor-pointer flex items-center justify-between ${
+                          className={`p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between ${
                             isChosen
-                              ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-[#00D4AA] font-bold'
-                              : 'bg-[#101827] border-white/[0.04] text-[#8A94A6] hover:border-white/[0.10]'
+                              ? 'bg-emerald-50 dark:bg-[#00D4AA]/10 border-emerald-400 dark:border-[#00D4AA]/40 text-[#0D9488] dark:text-[#00D4AA] font-bold shadow-xs'
+                              : 'bg-white dark:bg-[#0F172A] border-slate-200/80 dark:border-white/[0.04] text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/[0.10]'
                           }`}
                         >
                           <span>{opt.label}</span>
-                          {isChosen && <CheckCircle2 className="w-3.5 h-3.5 text-[#00D4AA] shrink-0" />}
+                          {isChosen && <CheckCircle2 className="w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA] shrink-0" />}
                         </div>
                       );
                     })}
@@ -586,14 +695,14 @@ export const OnboardingWizard: React.FC = () => {
             </div>
 
             {/* Live Risk Profile Badge */}
-            <div className="p-3.5 rounded-lg bg-[#0A1022] border border-white/[0.06] flex items-center justify-between text-xs">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between text-xs">
               <div>
-                <span className="text-[10px] text-[#8A94A6] uppercase tracking-wider block">Calculated Risk Mandate:</span>
-                <div className="text-sm font-bold text-white">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Calculated Risk Mandate:</span>
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
                   {riskCategory} Profile ({normalizedRiskScore}/100 Score)
                 </div>
               </div>
-              <ShieldCheck className="w-6 h-6 text-[#00D4AA]" />
+              <ShieldCheck className="w-6 h-6 text-[#0D9488] dark:text-[#00D4AA]" />
             </div>
           </div>
         )}
@@ -601,10 +710,10 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 5: Investment Horizon */}
         {step === 5 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 5 — Time Horizon</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Deployment Timeline</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 5 — Time Horizon</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Deployment Timeline</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Specify your primary capital compounding timeframe before major liquidation.
               </p>
             </div>
@@ -619,18 +728,18 @@ export const OnboardingWizard: React.FC = () => {
                 <div
                   key={item.horizon}
                   onClick={() => setInvestmentHorizon(item.horizon)}
-                  className={`p-4 rounded-lg border text-left transition-all cursor-pointer space-y-1 ${
+                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer space-y-1 ${
                     investmentHorizon === item.horizon
-                      ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40'
-                      : 'bg-[#0A1022] border-white/[0.06] hover:border-white/[0.14]'
+                      ? 'bg-emerald-50 dark:bg-[#00D4AA]/10 border-emerald-400 dark:border-[#00D4AA]/40 shadow-xs'
+                      : 'bg-slate-50 dark:bg-[#0B1120] border-slate-200 dark:border-white/[0.06] hover:border-slate-300 dark:hover:border-white/[0.14]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">{item.horizon}</span>
-                    {investmentHorizon === item.horizon && <CheckCircle2 className="w-4 h-4 text-[#00D4AA]" />}
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{item.horizon}</span>
+                    {investmentHorizon === item.horizon && <CheckCircle2 className="w-4 h-4 text-[#0D9488] dark:text-[#00D4AA]" />}
                   </div>
-                  <span className="text-xs font-semibold text-[#00D4AA] block">{item.tag}</span>
-                  <p className="text-xs text-[#8A94A6] leading-relaxed">{item.desc}</p>
+                  <span className="text-xs font-semibold text-[#0D9488] dark:text-[#00D4AA] block">{item.tag}</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -640,10 +749,10 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 6: Preferences & Asset Mix */}
         {step === 6 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 6 — Strategic Preferences</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Asset Class & Fiduciary Governance</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 6 — Strategic Preferences</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Asset Class & Fiduciary Governance</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Configure multi-currency exposure and zero-commission execution preferences.
               </p>
             </div>
@@ -651,45 +760,45 @@ export const OnboardingWizard: React.FC = () => {
             <div className="space-y-3">
               <div 
                 onClick={() => setIncludeGlobalAssets(!includeGlobalAssets)}
-                className={`p-4 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
-                  includeGlobalAssets ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white' : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6]'
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                  includeGlobalAssets ? 'bg-emerald-50 dark:bg-[#00D4AA]/10 border-emerald-400 dark:border-[#00D4AA]/40 text-slate-900 dark:text-white shadow-xs' : 'bg-slate-50 dark:bg-[#0B1120] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-slate-400'
                 }`}
               >
                 <div>
-                  <div className="text-sm font-bold text-white">Global US Equities Satellites (10–15%)</div>
-                  <div className="text-xs text-[#8A94A6]">Include NASDAQ-100 and S&P 500 ETFs for dollar-hedged growth.</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">Global US Equities Satellites (10–15%)</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Include NASDAQ-100 and S&P 500 ETFs for dollar-hedged growth.</div>
                 </div>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center ${includeGlobalAssets ? 'bg-[#00D4AA] border-[#00D4AA] text-[#050816]' : 'border-white/[0.14]'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center ${includeGlobalAssets ? 'bg-[#00D4AA] border-[#00D4AA] text-[#060811]' : 'border-slate-300 dark:border-white/[0.14]'}`}>
                   {includeGlobalAssets && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
                 </div>
               </div>
 
               <div 
                 onClick={() => setIncludeGoldHedge(!includeGoldHedge)}
-                className={`p-4 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
-                  includeGoldHedge ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white' : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6]'
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                  includeGoldHedge ? 'bg-emerald-50 dark:bg-[#00D4AA]/10 border-emerald-400 dark:border-[#00D4AA]/40 text-slate-900 dark:text-white shadow-xs' : 'bg-slate-50 dark:bg-[#0B1120] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-slate-400'
                 }`}
               >
                 <div>
-                  <div className="text-sm font-bold text-white">Sovereign Gold / Macro Commodity Hedge (10%)</div>
-                  <div className="text-xs text-[#8A94A6]">Preserve purchasing power against currency depreciation and macro turbulence.</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">Sovereign Gold / Macro Commodity Hedge (10%)</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Preserve purchasing power against currency depreciation and macro turbulence.</div>
                 </div>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center ${includeGoldHedge ? 'bg-[#00D4AA] border-[#00D4AA] text-[#050816]' : 'border-white/[0.14]'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center ${includeGoldHedge ? 'bg-[#00D4AA] border-[#00D4AA] text-[#060811]' : 'border-slate-300 dark:border-white/[0.14]'}`}>
                   {includeGoldHedge && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
                 </div>
               </div>
 
               <div 
                 onClick={() => setDirectPlansOnly(!directPlansOnly)}
-                className={`p-4 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
-                  directPlansOnly ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white' : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6]'
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                  directPlansOnly ? 'bg-emerald-50 dark:bg-[#00D4AA]/10 border-emerald-400 dark:border-[#00D4AA]/40 text-slate-900 dark:text-white shadow-xs' : 'bg-slate-50 dark:bg-[#0B1120] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-slate-400'
                 }`}
               >
                 <div>
-                  <div className="text-sm font-bold text-white">Direct Zero-Commission Architecture (Fiduciary)</div>
-                  <div className="text-xs text-[#8A94A6]">Only recommend Direct-plan funds to save 0.5%–1.5% in distributor commissions.</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">Direct Zero-Commission Architecture (Fiduciary)</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Only recommend Direct-plan funds to save 0.5%–1.5% in distributor commissions.</div>
                 </div>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center ${directPlansOnly ? 'bg-[#00D4AA] border-[#00D4AA] text-[#050816]' : 'border-white/[0.14]'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center ${directPlansOnly ? 'bg-[#00D4AA] border-[#00D4AA] text-[#060811]' : 'border-slate-300 dark:border-white/[0.14]'}`}>
                   {directPlansOnly && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
                 </div>
               </div>
@@ -700,48 +809,48 @@ export const OnboardingWizard: React.FC = () => {
         {/* STEP 7: Strategy Review & Final Handoff */}
         {step === 7 && (
           <div className="space-y-6">
-            <div className="space-y-1 pb-3 border-b border-white/[0.06]">
-              <span className="text-[11px] font-bold text-[#00D4AA] uppercase tracking-wider">Step 7 — Mandate Review</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Verify Your Investment Mandate</h2>
-              <p className="text-xs text-[#8A94A6]">
+            <div className="space-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider">Step 7 — Mandate Review</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Verify Your Investment Mandate</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Confirm parameters before generating your institutional multi-asset strategic blueprint.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="bg-[#0A1022] rounded-lg p-4 border border-white/[0.06] space-y-2">
-                <span className="text-[#8A94A6] uppercase font-semibold text-[10.5px] block">Investor Identity</span>
-                <div className="text-sm font-bold text-white">{fullName}</div>
-                <div className="text-[#8A94A6]">{age} Years Old · {occupation}</div>
-                <div className="text-[#8A94A6] pt-2 border-t border-white/[0.06]">
-                  Time Horizon: <strong className="text-white">{investmentHorizon}</strong>
+              <div className="bg-slate-50 dark:bg-[#0B1120] rounded-xl p-4 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] block">Investor Identity</span>
+                <div className="text-sm font-bold text-slate-900 dark:text-white">{fullName}</div>
+                <div className="text-slate-500 dark:text-slate-400">{age} Years Old · {occupation}</div>
+                <div className="text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200/80 dark:border-white/[0.06]">
+                  Time Horizon: <strong className="text-slate-900 dark:text-white">{investmentHorizon}</strong>
                 </div>
               </div>
 
-              <div className="bg-[#0A1022] rounded-lg p-4 border border-white/[0.06] space-y-2">
-                <span className="text-[#8A94A6] uppercase font-semibold text-[10.5px] block">Financial Parameters</span>
-                <div className="text-sm font-bold text-[#00D4AA] font-mono">{formatCurrency(totalIncomeVal)}/mo Inflow</div>
-                <div className="text-[#8A94A6]">Goals: <strong className="text-white">{selectedGoals.join(', ')}</strong></div>
-                <div className="text-[#8A94A6] pt-2 border-t border-white/[0.06]">
-                  Risk Category: <strong className="text-white">{riskCategory} ({normalizedRiskScore}/100)</strong>
+              <div className="bg-slate-50 dark:bg-[#0B1120] rounded-xl p-4 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] block">Financial Parameters</span>
+                <div className="text-sm font-bold text-[#0D9488] dark:text-[#00D4AA] font-mono">{formatCurrency(totalIncomeVal)}/mo Inflow</div>
+                <div className="text-slate-500 dark:text-slate-400">Goals: <strong className="text-slate-900 dark:text-white">{selectedGoals.join(', ')}</strong></div>
+                <div className="text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200/80 dark:border-white/[0.06]">
+                  Risk Category: <strong className="text-slate-900 dark:text-white">{riskCategory} ({normalizedRiskScore}/100)</strong>
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-[#0A1022] border border-white/[0.06] flex items-center gap-3 text-xs text-[#8A94A6]">
-              <ShieldCheck className="w-5 h-5 text-[#00D4AA] shrink-0" />
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
+              <ShieldCheck className="w-5 h-5 text-[#0D9488] dark:text-[#00D4AA] shrink-0" />
               <span>SmartVest will immediately compile your multi-asset blueprint with exact monthly deployment targets across Indian equities, global ETFs, and debt hedges.</span>
             </div>
           </div>
         )}
 
         {/* Wizard Action Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/[0.06]">
           {step > 1 ? (
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="px-4 py-2 rounded-lg bg-[#0A1022] hover:bg-[#141F36] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/[0.06]"
+              className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B1120] hover:bg-slate-200 dark:hover:bg-[#15203B] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200 dark:border-white/[0.06]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -758,7 +867,7 @@ export const OnboardingWizard: React.FC = () => {
                 }
                 setStep(step + 1);
               }}
-              className="px-5 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] text-xs font-bold flex items-center gap-1.5 hover:bg-[#00D4AA]/90 transition-all cursor-pointer shadow-xs"
+              className="px-5 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] text-xs font-bold flex items-center gap-1.5 hover:bg-[#00BFA5] transition-all cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25"
             >
               <span>Continue</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -767,7 +876,7 @@ export const OnboardingWizard: React.FC = () => {
             <button
               type="button"
               onClick={handleFinish}
-              className="px-6 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] text-xs font-bold flex items-center gap-2 hover:bg-[#00D4AA]/90 transition-all cursor-pointer shadow-sm"
+              className="px-6 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] text-xs font-bold flex items-center gap-2 hover:bg-[#00BFA5] transition-all cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25"
             >
               <span>Compile Wealth Strategy</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -778,7 +887,7 @@ export const OnboardingWizard: React.FC = () => {
       </div>
 
       {/* Institutional Compliance Notice */}
-      <div className="max-w-2xl mx-auto w-full text-center text-[11px] text-[#5A667A] pt-4">
+      <div className="max-w-2xl mx-auto w-full text-center text-[11px] text-slate-400 dark:text-slate-500 pt-4">
         SmartVest Capital Advisory operates under fiduciary non-custodial principles. Client data is encrypted with 256-bit SSL.
       </div>
 

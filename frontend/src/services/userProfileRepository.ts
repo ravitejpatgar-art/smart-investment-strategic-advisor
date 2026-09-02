@@ -82,14 +82,40 @@ export interface SmartVestUserContext {
 
 export type NormalizedUserContext = SmartVestUserContext;
 
+export interface OnboardingDraft {
+  step: number;
+  fullName: string;
+  age: string;
+  occupation: string;
+  monthlySalary: string;
+  otherIncome: string;
+  emergencyFund: string;
+  existingInvestments: string;
+  savingsBalance: string;
+  rent: string;
+  food: string;
+  transport: string;
+  emi: string;
+  selectedGoals: string[];
+  riskAnswers: Record<string, number>;
+  investmentHorizon: string;
+  includeGlobalAssets: boolean;
+  includeGoldHedge: boolean;
+  directPlansOnly: boolean;
+  updatedAt?: number;
+}
+
 export interface UserProfileRepository {
-  getProfile(): UserProfile | null;
+  getProfile(userId?: string | null): UserProfile | null;
   saveProfile(profile: UserProfile): void;
   clearProfile(): void;
-  getExpenses(): ExpenseItem[];
-  saveExpenses(expenses: ExpenseItem[]): void;
-  getGoals(): GoalItem[];
-  saveGoals(goals: GoalItem[]): void;
+  getExpenses(userId?: string | null): ExpenseItem[];
+  saveExpenses(expenses: ExpenseItem[], userId?: string | null): void;
+  getGoals(userId?: string | null): GoalItem[];
+  saveGoals(goals: GoalItem[], userId?: string | null): void;
+  getOnboardingDraft(userId?: string | null): OnboardingDraft | null;
+  saveOnboardingDraft(draft: OnboardingDraft, userId?: string | null): void;
+  clearOnboardingDraft(userId?: string | null): void;
 }
 
 export class LocalUserProfileRepository implements UserProfileRepository {
@@ -97,11 +123,51 @@ export class LocalUserProfileRepository implements UserProfileRepository {
   private readonly EXPENSES_KEY = 'smartvest_expenses';
   private readonly GOALS_KEY = 'smartvest_goals';
 
-  getProfile(): UserProfile | null {
+  private getDraftKey(userId?: string | null): string {
+    return userId ? `smartvest_onboarding_${userId}` : 'smartvest_onboarding_draft';
+  }
+
+  getOnboardingDraft(userId?: string | null): OnboardingDraft | null {
     try {
+      const key = this.getDraftKey(userId);
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw) as OnboardingDraft;
+    } catch {
+      return null;
+    }
+  }
+
+  saveOnboardingDraft(draft: OnboardingDraft, userId?: string | null): void {
+    try {
+      const key = this.getDraftKey(userId);
+      localStorage.setItem(key, JSON.stringify({ ...draft, updatedAt: Date.now() }));
+    } catch (e) {
+      console.error('Failed to save onboarding draft to localStorage', e);
+    }
+  }
+
+  clearOnboardingDraft(userId?: string | null): void {
+    try {
+      const key = this.getDraftKey(userId);
+      localStorage.removeItem(key);
+    } catch (e) {
+      console.error('Failed to clear onboarding draft from localStorage', e);
+    }
+  }
+
+  getProfile(userId?: string | null): UserProfile | null {
+    try {
+      if (userId) {
+        const userRaw = localStorage.getItem(`smartvest_profile_${userId}`) || localStorage.getItem(`smartvest_user_${userId}`);
+        if (userRaw) return JSON.parse(userRaw) as UserProfile;
+      }
       const raw = localStorage.getItem(this.PROFILE_KEY) || localStorage.getItem('smartvest_user');
       if (!raw) return null;
       const parsed = JSON.parse(raw) as UserProfile;
+      if (userId && parsed.id && parsed.id !== userId) {
+        return null;
+      }
       return parsed;
     } catch {
       return null;
@@ -114,6 +180,7 @@ export class LocalUserProfileRepository implements UserProfileRepository {
       localStorage.setItem(this.PROFILE_KEY, serialized);
       localStorage.setItem('smartvest_user', serialized);
       if (profile.id) {
+        localStorage.setItem(`smartvest_profile_${profile.id}`, serialized);
         localStorage.setItem(`smartvest_user_${profile.id}`, serialized);
       }
     } catch (e) {
@@ -132,18 +199,17 @@ export class LocalUserProfileRepository implements UserProfileRepository {
       localStorage.removeItem(this.GOALS_KEY);
       localStorage.removeItem('smartvest_recommendations');
       localStorage.removeItem('smartvest_chat_history');
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('smartvest_')) {
-          localStorage.removeItem(key);
-        }
-      });
     } catch (e) {
       console.error('Failed to clear profile from localStorage', e);
     }
   }
 
-  getExpenses(): ExpenseItem[] {
+  getExpenses(userId?: string | null): ExpenseItem[] {
     try {
+      if (userId) {
+        const rawUser = localStorage.getItem(`smartvest_expenses_${userId}`);
+        if (rawUser) return JSON.parse(rawUser) as ExpenseItem[];
+      }
       const raw = localStorage.getItem(this.EXPENSES_KEY);
       if (!raw) return [];
       return JSON.parse(raw) as ExpenseItem[];
@@ -152,16 +218,24 @@ export class LocalUserProfileRepository implements UserProfileRepository {
     }
   }
 
-  saveExpenses(expenses: ExpenseItem[]): void {
+  saveExpenses(expenses: ExpenseItem[], userId?: string | null): void {
     try {
-      localStorage.setItem(this.EXPENSES_KEY, JSON.stringify(expenses));
+      const serialized = JSON.stringify(expenses);
+      localStorage.setItem(this.EXPENSES_KEY, serialized);
+      if (userId) {
+        localStorage.setItem(`smartvest_expenses_${userId}`, serialized);
+      }
     } catch (e) {
       console.error('Failed to save expenses to localStorage', e);
     }
   }
 
-  getGoals(): GoalItem[] {
+  getGoals(userId?: string | null): GoalItem[] {
     try {
+      if (userId) {
+        const rawUser = localStorage.getItem(`smartvest_goals_${userId}`);
+        if (rawUser) return JSON.parse(rawUser) as GoalItem[];
+      }
       const raw = localStorage.getItem(this.GOALS_KEY);
       if (!raw) return [];
       return JSON.parse(raw) as GoalItem[];
@@ -170,9 +244,13 @@ export class LocalUserProfileRepository implements UserProfileRepository {
     }
   }
 
-  saveGoals(goals: GoalItem[]): void {
+  saveGoals(goals: GoalItem[], userId?: string | null): void {
     try {
-      localStorage.setItem(this.GOALS_KEY, JSON.stringify(goals));
+      const serialized = JSON.stringify(goals);
+      localStorage.setItem(this.GOALS_KEY, serialized);
+      if (userId) {
+        localStorage.setItem(`smartvest_goals_${userId}`, serialized);
+      }
     } catch (e) {
       console.error('Failed to save goals to localStorage', e);
     }
