@@ -153,7 +153,7 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
   const isStale = candles?.freshness === 'STALE';
 
   return (
-    <div className={`w-full bg-slate-50 dark:bg-[#060811] rounded-xl border border-slate-200/80 dark:border-white/[0.06] p-3.5 flex flex-col justify-between space-y-2 ${className}`}>
+    <div className={`w-full min-w-0 overflow-hidden bg-slate-50 dark:bg-[#060811] rounded-xl border border-slate-200/80 dark:border-white/[0.06] p-3.5 flex flex-col justify-between space-y-2 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-200/80 dark:border-white/[0.06]">
         <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
       )}
 
       {/* Chart Canvas Area */}
-      <div className="w-full relative h-[145px] flex items-center justify-center">
+      <div className="w-full min-w-0 overflow-hidden relative h-[145px] flex items-center justify-center">
         {isLoading ? (
           <div className="flex items-center gap-2 text-slate-500 dark:text-[#8A94A6] text-xs">
             <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#00D4AA]" />

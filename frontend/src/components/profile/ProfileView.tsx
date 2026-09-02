@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { 
-  User, 
   CheckCircle2, 
   RefreshCw,
   AlertCircle,
@@ -160,24 +159,21 @@ export const ProfileView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto w-full min-w-0">
       
-      {/* Top Banner Header */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#E6FDF7] dark:bg-[#00D4AA]/10 flex items-center justify-center border border-[#00D4AA]/30 text-[#00D4AA]">
-              <User className="w-4 h-4" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Investor Mandate & Profile</h1>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Investor Mandate & Profile</h1>
             {isDirty && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
                 Unsaved Edits
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Configure your capital parameters, volatility tolerances, and lifecycle horizon to recalibrate portfolio strategy.
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Configure capital parameters, risk tolerance, and investment horizon to recalibrate strategy.
           </p>
         </div>
 
@@ -187,7 +183,7 @@ export const ProfileView: React.FC = () => {
               type="button"
               onClick={handleReset}
               disabled={isSaving}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -198,7 +194,7 @@ export const ProfileView: React.FC = () => {
             type="button"
             onClick={handleSaveProfile}
             disabled={isSaving}
-            className="px-4 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25 transition-all hover:bg-[#00BFA5] disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
             <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate'}</span>
@@ -208,61 +204,63 @@ export const ProfileView: React.FC = () => {
 
       {/* Success Notification */}
       {savedSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-[#00D4AA]/10 border border-emerald-200 dark:border-[#00D4AA]/30 text-emerald-800 dark:text-[#00D4AA] text-xs font-semibold flex items-center gap-2.5 shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
-          <span>Profile parameters updated. Multi-asset investment strategy successfully recalibrated.</span>
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-[#00D4AA]/10 border border-emerald-200 dark:border-[#00D4AA]/30 text-emerald-800 dark:text-[#00D4AA] text-xs font-medium flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#0D9488] shrink-0" />
+          <span>Profile parameters updated. Multi-asset strategy successfully recalibrated.</span>
         </div>
       )}
 
       {/* Error Notification */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-50 dark:bg-[#FF5252]/10 border border-red-200 dark:border-[#FF5252]/30 text-red-700 dark:text-[#FF5252] text-xs font-semibold flex items-center justify-between gap-2.5 shadow-xs">
+        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 text-xs font-medium flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#FF5252] shrink-0" />
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{errorMessage}</span>
           </div>
           <button
             type="button"
             onClick={handleSaveProfile}
-            className="px-3 py-1 bg-[#FF5252] text-white rounded-lg text-xs font-bold cursor-pointer"
+            className="px-2.5 py-1 bg-rose-600 text-white rounded text-xs font-semibold cursor-pointer"
           >
             Retry
           </button>
         </div>
       )}
 
-      {/* Summary Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Monthly Inflow</span>
-          <div className="text-xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(totalInflow)}</div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 truncate block">{form.occupation || 'Active Inflow'}</span>
-        </div>
+      {/* Summary Metrics (Unified 4-Column Section) */}
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 sm:divide-x sm:divide-slate-100 dark:sm:divide-white/[0.06]">
+          <div className="sm:px-4 space-y-1">
+            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Monthly Inflow</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(totalInflow)}</div>
+            <span className="text-xs text-slate-400 truncate block">{form.occupation || 'Active Inflow'}</span>
+          </div>
 
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Monthly Outflow</span>
-          <div className="text-xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(totalOutflows)}</div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block">{expenses.length} Logged Categories</span>
-        </div>
+          <div className="sm:px-4 space-y-1">
+            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Monthly Outflow</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(totalOutflows)}</div>
+            <span className="text-xs text-slate-400 block">{expenses.length} Logged Categories</span>
+          </div>
 
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Investable Surplus</span>
-          <div className="text-xl font-black text-[#0D9488] dark:text-[#00D4AA] font-mono">{formatCurrency(surplus)}</div>
-          <span className="text-xs text-[#0D9488] dark:text-[#00D4AA]/80 block">Capacity to deploy</span>
-        </div>
+          <div className="sm:px-4 space-y-1">
+            <span className="text-[11px] text-[#0D9488] dark:text-[#00D4AA] font-semibold uppercase tracking-wider block">Investable Surplus</span>
+            <div className="text-xl font-bold text-[#0D9488] dark:text-[#00D4AA] font-mono">{formatCurrency(surplus)}</div>
+            <span className="text-xs text-slate-400 block">Deployable surplus</span>
+          </div>
 
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Emergency Reserve</span>
-          <div className="text-xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(numericEmergency)}</div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block">Liquid Reserves</span>
+          <div className="sm:px-4 space-y-1">
+            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Emergency Reserve</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(numericEmergency)}</div>
+            <span className="text-xs text-slate-400 block">Liquid Reserves</span>
+          </div>
         </div>
       </div>
 
       <form onSubmit={handleSaveProfile} className="space-y-6">
         
         {/* 1. PERSONAL INFORMATION */}
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 space-y-4">
-          <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-white/[0.06]">
+        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
+          <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-white/[0.04]">
             1. Investor Demographics
           </h2>
 

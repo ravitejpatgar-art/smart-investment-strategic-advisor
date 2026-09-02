@@ -29,50 +29,7 @@ const CATEGORY_CONFIG: Record<GoalItem['category'] | string, {
   Other: { icon: Target, color: '#8A94A6' },
 };
 
-// Circular Progress Component
-const CircularProgress: React.FC<{ pct: number; size?: number; color?: string; label?: string }> = ({ 
-  pct, 
-  size = 56, 
-  color = '#00D4AA',
-  label 
-}) => {
-  const strokeWidth = 5;
-  const radius = (size - strokeWidth * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, pct)) / 100) * circumference;
 
-  return (
-    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(0, 0, 0, 0.06)"
-          className="dark:stroke-white/[0.08]"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-bold font-mono text-slate-900 dark:text-white text-[12px] leading-none">
-          {label || `${pct}%`}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 export const GoalPlannerView: React.FC = () => {
   const { 
@@ -173,82 +130,68 @@ export const GoalPlannerView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto">
       
-      {/* Top Header Banner */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#E6FDF7] dark:bg-[#00D4AA]/10 flex items-center justify-center border border-[#00D4AA]/30 text-[#00D4AA]">
-              <Target className="w-4 h-4" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Lifecycle Milestone Roadmaps</h1>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Quantify capital required for primary milestones and model monthly SIP allocations.
+      {/* Page Header (no card wrapper — just text + button) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Milestone Roadmaps</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Set financial milestones and model required monthly SIP allocations.
           </p>
         </div>
-
         <button
           onClick={handleOpenAddModal}
-          className="px-4 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] font-bold text-xs hover:bg-[#00BFA5] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25"
+          className="px-3.5 py-1.5 rounded-lg bg-[#0D9488] text-white font-medium text-xs hover:bg-[#0F766E] transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Add New Goal</span>
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Goal</span>
         </button>
       </div>
 
-      {/* 3 Summary Metric Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Milestone Target</span>
-          <div className="text-2xl font-black text-slate-900 dark:text-white font-mono leading-tight">
-            {formatCurrency(totalTargetAmount)}
+      {/* Metrics: flat unified band */}
+      {goals.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-x divide-slate-100 dark:divide-white/[0.06] border border-slate-100 dark:border-white/[0.06] rounded-xl bg-white dark:bg-[#0B1120]">
+          <div className="px-5 py-4 space-y-1">
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide block">Total Target</span>
+            <div className="text-base font-semibold text-slate-900 dark:text-white font-mono">{formatCurrency(totalTargetAmount)}</div>
+            <div className="text-xs text-slate-400">{totalProgressPct}% funded · {formatCurrency(totalCurrentSaved)} saved</div>
           </div>
-          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
-            <span>Saved: <strong className="text-slate-900 dark:text-white font-mono">{formatCurrency(totalCurrentSaved)}</strong></span>
-            <span className="font-semibold text-[#0D9488] dark:text-[#00D4AA]">{totalProgressPct}% Funded</span>
-          </div>
-        </div>
 
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Required Monthly Deployment</span>
-          <div className={`text-2xl font-black font-mono leading-tight ${isSurplusDeficit ? 'text-[#FF5252]' : 'text-[#0D9488] dark:text-[#00D4AA]'}`}>
-            {formatCurrency(totalRequiredSIP)}/mo
+          <div className="px-5 py-4 space-y-1">
+            <span className={`text-[11px] font-medium uppercase tracking-wide block ${isSurplusDeficit ? 'text-rose-500' : 'text-[#0D9488] dark:text-[#00D4AA]'}`}>Monthly SIP Needed</span>
+            <div className={`text-base font-semibold font-mono ${isSurplusDeficit ? 'text-rose-600' : 'text-[#0D9488] dark:text-[#00D4AA]'}`}>{formatCurrency(totalRequiredSIP)}/mo</div>
+            <div className="text-xs text-slate-400">
+              {isSurplusDeficit ? `Shortfall: ${formatCurrency(totalRequiredSIP - surplus)}` : `Within ${formatCurrency(surplus)} surplus`}
+            </div>
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 pt-1">
-            {isSurplusDeficit ? `Exceeds monthly surplus by ${formatCurrency(totalRequiredSIP - surplus)}` : `Comfortably funded from ${formatCurrency(surplus)} surplus`}
-          </div>
-        </div>
 
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Remaining Funding Gap</span>
-          <div className="text-2xl font-black text-slate-900 dark:text-white font-mono leading-tight">
-            {formatCurrency(totalRemaining)}
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 pt-1">
-            Across {goals.length} Defined Goals
+          <div className="px-5 py-4 space-y-1">
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide block">Remaining Gap</span>
+            <div className="text-base font-semibold text-slate-900 dark:text-white font-mono">{formatCurrency(totalRemaining)}</div>
+            <div className="text-xs text-slate-400">{goals.length} active {goals.length === 1 ? 'goal' : 'goals'}</div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Goals List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
-          <span className="font-bold uppercase tracking-wider text-slate-900 dark:text-white">Active Milestone Portfolios</span>
-          <span>{goals.length} Goals Registered</span>
+        <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/[0.04]">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">Active Goals</span>
+          {goals.length > 0 && <span className="text-xs text-slate-400">{goals.length} registered</span>}
         </div>
 
         {goals.length === 0 ? (
-          <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-10 text-center space-y-3">
-            <Target className="w-8 h-8 text-slate-400 mx-auto" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">No milestone portfolios configured yet.</p>
+          <div className="py-10 text-center space-y-2">
+            <Target className="w-7 h-7 mx-auto text-slate-300 dark:text-slate-600" />
+            <div className="text-sm text-slate-500 dark:text-slate-400">No goals yet</div>
+            <p className="text-xs text-slate-400">Set a target amount and timeline to model your SIP plan.</p>
             <button
               onClick={handleOpenAddModal}
-              className="px-4 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25"
+              className="mt-1 px-3.5 py-1.5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-medium text-xs inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>Create First Milestone</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Goal</span>
             </button>
           </div>
         ) : (
@@ -258,77 +201,63 @@ export const GoalPlannerView: React.FC = () => {
               const Icon = cfg.icon;
               const progressPct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
               const remainingAmt = Math.max(0, g.targetAmount - g.currentAmount);
-              const isFeasible = (g.monthlySipRequired || 0) <= surplus;
 
               return (
                 <div 
                   key={g.id}
-                  className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 flex flex-col justify-between space-y-4 hover:border-[#00D4AA]/50 transition-all"
+                  className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 flex flex-col justify-between space-y-3 min-w-0 overflow-hidden"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#060811] border border-slate-200/80 dark:border-white/[0.08] flex items-center justify-center shadow-xs" style={{ color: cfg.color }}>
-                          <Icon className="w-4 h-4" />
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-[#060811] border border-slate-200/60 dark:border-white/[0.06] flex items-center justify-center" style={{ color: cfg.color }}>
+                          <Icon className="w-3.5 h-3.5" />
                         </div>
                         <div>
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white">{g.title}</h3>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">Target Date: {g.targetDate}</span>
+                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{g.title}</h3>
+                          <span className="text-[11px] text-slate-400">Target: {g.targetDate}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleOpenEditModal(g)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => deleteGoal(g.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#FF5252] hover:bg-red-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Dominant Target Amount & SIP */}
-                    <div className="flex items-baseline justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                    {/* Target Amount & SIP */}
+                    <div className="flex items-baseline justify-between pt-1 border-t border-slate-100 dark:border-white/[0.04]">
                       <div>
-                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Target Corpus</span>
-                        <span className="text-xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(g.targetAmount)}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Target Corpus</span>
+                        <span className="text-base font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(g.targetAmount)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Required Monthly SIP</span>
-                        <span className="text-sm font-black font-mono text-[#0D9488] dark:text-[#00D4AA]">{formatCurrency(g.monthlySipRequired || 0)}/mo</span>
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Required Monthly SIP</span>
+                        <span className="text-xs font-bold font-mono text-[#0D9488] dark:text-[#00D4AA]">{formatCurrency(g.monthlySipRequired || 0)}/mo</span>
                       </div>
                     </div>
 
-                    {/* Visual Progress Gauge */}
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200/80 dark:border-white/[0.04]">
-                      <CircularProgress pct={progressPct} size={50} color={cfg.color} label={`${progressPct}%`} />
-                      <div className="flex-1 space-y-1.5 text-xs">
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-500 dark:text-slate-400">Funded: <strong className="text-slate-900 dark:text-white font-mono">{formatCurrency(g.currentAmount)}</strong></span>
-                          <span className="text-slate-500 dark:text-slate-400">Gap: <strong className="text-slate-600 dark:text-slate-300 font-mono">{formatCurrency(remainingAmt)}</strong></span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-[#0F172A] h-2 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, backgroundColor: cfg.color }} />
-                        </div>
+                    {/* Progress */}
+                    <div className="space-y-1 text-xs pt-1">
+                      <div className="flex justify-between text-[11px] text-slate-400">
+                        <span>Saved: <strong className="text-slate-700 dark:text-slate-200 font-mono">{formatCurrency(g.currentAmount)}</strong></span>
+                        <span>{progressPct}% ({formatCurrency(remainingAmt)} gap)</span>
+                      </div>
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#0D9488] rounded-full transition-all" style={{ width: `${progressPct}%` }} />
                       </div>
                     </div>
-                  </div>
-
-                  {/* Feasibility Indicator */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">Feasibility Status:</span>
-                    <span className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded-full ${
-                      isFeasible ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-[#00D4AA]/10 dark:text-[#00D4AA] dark:border-[#00D4AA]/30' : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
-                    }`}>
-                      {isFeasible ? '✓ FEASIBLE FROM SURPLUS' : '⚠ ADJUST CASH FLOW'}
-                    </span>
                   </div>
                 </div>
               );

@@ -3,8 +3,7 @@ import { useFintechStore } from '../../store/useFintechStore';
 import { 
   ArrowRight, 
   RefreshCw,
-  Sparkles,
-  Zap
+  Sparkles
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -156,25 +155,23 @@ export const OverviewDashboard: React.FC = () => {
   const occupation = user?.occupation || 'it';
 
   return (
-    <div className="space-y-4 pb-8">
+    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto">
 
       {/* ================================================================
-          1. LIVE MARKET FEED STRIP
+          1. LIVE MARKET FEED STRIP (Minimalist Flat Strip)
       ================================================================ */}
-      <section className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-xl px-5 py-3 shadow-xs flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs">
+      <section className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl px-4 py-2.5 flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs">
         <div className="flex items-center gap-6 min-w-max">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00D4AA]" />
-            <span className="text-[11px] font-bold text-[#0D9488] dark:text-[#00D4AA] tracking-wider uppercase">
-              MARKET FEED
-            </span>
+          <div className="flex items-center gap-1.5 font-bold text-slate-400 dark:text-slate-500 uppercase text-[10.5px] tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Market Summary</span>
           </div>
           {dashboardSymbols.map((sym) => {
             const q = quotes[sym];
             const isPos = (q?.changePct ?? 0) >= 0;
             const priceStr = q?.price
               ? (q.currency === 'USD' ? `$${q.price.toLocaleString('en-IN')}` : `₹${q.price.toLocaleString('en-IN')}`)
-              : (sym === 'NIFTY 50' ? '₹24,080.4' : sym === 'SENSEX' ? '₹76,957.27' : sym === 'NASDAQ' ? '$26,402.42' : '₹1,45,865.74');
+              : (sym === 'NIFTY 50' ? '₹24,080.40' : sym === 'SENSEX' ? '₹76,957.27' : sym === 'NASDAQ' ? '$26,402.42' : '₹1,45,865.74');
             const pctStr = q?.changePct !== undefined && q?.changePct !== null
               ? `${isPos ? '+' : ''}${q.changePct.toFixed(2)}%`
               : (sym === 'NIFTY 50' ? '-1.04%' : sym === 'SENSEX' ? '-0.90%' : sym === 'NASDAQ' ? '+0.85%' : '-2.17%');
@@ -182,9 +179,9 @@ export const OverviewDashboard: React.FC = () => {
 
             return (
               <div key={sym} className="flex items-center gap-2">
-                <span className="text-slate-600 dark:text-slate-400 font-semibold">{sym}</span>
-                <span className="text-slate-900 dark:text-white font-mono font-bold">{priceStr}</span>
-                <span className={`font-mono font-bold text-[11px] ${isGreen ? 'text-[#00C853] dark:text-[#00D4AA]' : 'text-[#FF5252]'}`}>
+                <span className="text-slate-500 dark:text-slate-400 font-medium">{sym}</span>
+                <span className="text-slate-900 dark:text-white font-mono font-semibold">{priceStr}</span>
+                <span className={`font-mono text-[11px] font-semibold ${isGreen ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {pctStr}
                 </span>
               </div>
@@ -193,23 +190,23 @@ export const OverviewDashboard: React.FC = () => {
         </div>
         <button 
           onClick={() => refetchMarket()} 
-          className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-md shrink-0 cursor-pointer transition-colors" 
-          title="Refresh Live Data"
+          className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded shrink-0 cursor-pointer transition-colors" 
+          title="Refresh Market Quotes"
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
       </section>
 
       {/* ================================================================
-          2. TOP 5 KPI METRICS STRIP (Unified Row)
+          2. KEY METRICS: Clean Unified 5-Column Section (No Nested Boxes)
       ================================================================ */}
-      <section className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-5 shadow-xs">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-0 md:divide-x md:divide-slate-100 dark:md:divide-white/[0.06]">
+      <section className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-0 lg:divide-x lg:divide-slate-100 dark:lg:divide-white/[0.06]">
           
           {/* Monthly Income */}
-          <div className="md:px-4 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">MONTHLY INCOME</span>
-            <div className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+          <div className="lg:px-4 space-y-1">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Monthly Income</span>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
               {formatCurrency(totalIncome || 50000)}
             </div>
             <div className="text-xs text-slate-400 capitalize">
@@ -218,9 +215,9 @@ export const OverviewDashboard: React.FC = () => {
           </div>
 
           {/* Monthly Expenses */}
-          <div className="md:px-4 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">MONTHLY EXPENSES</span>
-            <div className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+          <div className="lg:px-4 space-y-1">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Monthly Expenses</span>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
               {formatCurrency(totalExpenses || 35000)}
             </div>
             <div className="text-xs text-slate-400">
@@ -229,14 +226,11 @@ export const OverviewDashboard: React.FC = () => {
           </div>
 
           {/* Monthly Surplus */}
-          <div className="md:px-4 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider block">
-                MONTHLY SURPLUS
-              </span>
-              <Zap className="w-3.5 h-3.5 text-[#00D4AA]" />
-            </div>
-            <div className="text-2xl font-black text-[#00BFA5] dark:text-[#00D4AA] font-mono tracking-tight">
+          <div className="lg:px-4 space-y-1">
+            <span className="text-[11px] font-semibold text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider block">
+              Monthly Surplus
+            </span>
+            <div className="text-2xl font-bold text-[#0D9488] dark:text-[#00D4AA] font-mono tracking-tight">
               {formatCurrency(surplus || 15000)}
             </div>
             <div className="text-xs text-[#0D9488] dark:text-[#00D4AA] font-medium">
@@ -245,9 +239,9 @@ export const OverviewDashboard: React.FC = () => {
           </div>
 
           {/* Emergency Reserve */}
-          <div className="md:px-4 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">EMERGENCY RESERVE</span>
-            <div className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+          <div className="lg:px-4 space-y-1">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Emergency Reserve</span>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
               {formatCurrency(emergencyFund)}
             </div>
             <div className="text-xs text-slate-400">
@@ -256,13 +250,13 @@ export const OverviewDashboard: React.FC = () => {
           </div>
 
           {/* Risk Mandate */}
-          <div className="md:px-4 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">RISK MANDATE</span>
-            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="lg:px-4 space-y-1">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Risk Mandate</span>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               {effectiveRiskCategory}
             </div>
             <div className="text-xs text-slate-400">
-              Capacity Score: {riskCapacityScore}/100
+              Capacity: {riskCapacityScore}/100
             </div>
           </div>
 
@@ -270,68 +264,65 @@ export const OverviewDashboard: React.FC = () => {
       </section>
 
       {/* ================================================================
-          3. WELCOME & CALIBRATION BANNER
+          3. WELCOME & STRATEGY CONTEXT (One Clean Wide Section)
       ================================================================ */}
-      <section className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        <div className="space-y-2 max-w-3xl">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#E6FDF7] text-[#0D9488] border border-[#99F6E4] dark:bg-[#00D4AA]/15 dark:text-[#00D4AA] dark:border-[#00D4AA]/30">
-              {effectiveRiskCategory} Risk
-            </span>
-            <span className="text-xs text-slate-400">· {horizon}</span>
+      <section className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1 max-w-2xl">
+          <div className="text-xs text-slate-400">
+            {effectiveRiskCategory} Risk · {horizon}
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">
             Welcome, {userName}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-            Your SmartVest strategy is calibrated around your cashflow surplus of{' '}
-            <strong className="text-slate-800 dark:text-white font-mono">{formatCurrency(surplus || 15000)}/mo</strong>, risk capacity, and long-term milestone goals.
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            Your portfolio strategy is calibrated around your monthly surplus of{' '}
+            <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(surplus || 15000)}/mo</strong>.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button 
             onClick={() => setActiveView('recommendations')} 
-            className="px-5 py-2.5 rounded-xl bg-[#00BFA5] hover:bg-[#00D4AA] text-[#060811] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <span>View Recommendations</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
           <button 
             onClick={() => setActiveView('ai')} 
-            className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-[#00D4AA] text-[#0D9488] dark:text-[#00D4AA] text-xs font-bold hover:bg-[#E6FDF7] dark:hover:bg-white/[0.04] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-[#0D9488]" />
             <span>Ask VestIQ</span>
           </button>
         </div>
       </section>
 
       {/* ================================================================
-          4. DUAL-COLUMN MAIN CHARTS: Projected Wealth + Asset Allocation
+          4. DUAL-COLUMN ANALYTICS: Projected Wealth + Asset Allocation
       ================================================================ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* LEFT 7 COLS: Projected Wealth Growth */}
-        <div className="lg:col-span-7 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="lg:col-span-7 bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-4 min-w-0 overflow-hidden">
           
           {/* Header & Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Projected Wealth Growth</h3>
-              <p className="text-xs text-slate-400">Compounding projection at ~{(scenarioCagr * 100).toFixed(1)}% CAGR based on surplus deployment.</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Projected Wealth Growth</h3>
+              <p className="text-[11px] text-slate-400">~{(scenarioCagr * 100).toFixed(1)}% CAGR based on surplus deployment</p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
               {/* Scenario Toggles */}
-              <div className="flex items-center bg-slate-50 dark:bg-[#0F172A] p-0.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-xs">
+              <div className="flex items-center bg-slate-100 dark:bg-[#0F172A] p-0.5 rounded-md text-xs">
                 {(['Conservative', 'Base', 'Optimistic'] as ProjectionScenario[]).map((sc) => (
                   <button
                     key={sc}
                     onClick={() => setSelectedScenario(sc)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                       selectedScenario === sc 
-                        ? 'bg-white dark:bg-[#15203B] text-[#0D9488] dark:text-[#00D4AA] shadow-xs' 
+                        ? 'bg-white dark:bg-[#15203B] text-slate-900 dark:text-white shadow-2xs font-semibold' 
                         : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -342,14 +333,14 @@ export const OverviewDashboard: React.FC = () => {
 
               {/* Horizon Selector */}
               <div className="flex items-center gap-1">
-                {([5, 10, 15, 20, 25] as ProjectionHorizon[]).map((hz) => (
+                {([5, 10, 15, 20] as ProjectionHorizon[]).map((hz) => (
                   <button
                     key={hz}
                     onClick={() => setSelectedHorizon(hz)}
-                    className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold cursor-pointer transition-all ${
+                    className={`px-1.5 py-0.5 rounded text-[11px] font-mono cursor-pointer transition-colors ${
                       selectedHorizon === hz 
-                        ? 'bg-[#00D4AA] text-[#060811] shadow-xs' 
-                        : 'bg-slate-50 dark:bg-[#0F172A] text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/[0.06]'
+                        ? 'bg-[#0D9488] text-white font-bold' 
+                        : 'bg-slate-100 dark:bg-[#0F172A] text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     {hz}Y
@@ -359,96 +350,92 @@ export const OverviewDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* 3 Metric Tiles Inside */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-white/[0.06]">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block mb-0.5">TOTAL INVESTED</span>
-              <div className="text-base font-black text-slate-900 dark:text-white font-mono">
+          {/* 3 Metric Summary Values (Flat Text, No Heavy Nested Cards) */}
+          <div className="grid grid-cols-3 gap-2 py-1 text-xs">
+            <div>
+              <span className="text-[10px] text-slate-400 uppercase font-semibold block">Total Invested</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-white font-mono">
                 {formatLakhs(finalProjection?.invested || 1620000)}
-              </div>
+              </span>
             </div>
-            <div className="p-3 rounded-xl bg-[#F0FDFA] dark:bg-[#00D4AA]/10 border border-[#99F6E4] dark:border-[#00D4AA]/25">
-              <span className="text-[10px] text-[#0D9488] dark:text-[#00D4AA] uppercase tracking-wider font-bold block mb-0.5">ESTIMATED GROWTH</span>
-              <div className="text-base font-black text-[#0D9488] dark:text-[#00D4AA] font-mono">
+            <div>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-semibold block">Growth</span>
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                 +{formatLakhs(finalProjection?.returns || 938000)}
-              </div>
+              </span>
             </div>
-            <div className="p-3 rounded-xl bg-[#0B1120] text-white">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block mb-0.5">PROJECTED CORPUS ({selectedHorizon}Y)</span>
-              <div className="text-base font-black text-[#00D4AA] font-mono">
+            <div>
+              <span className="text-[10px] text-[#0D9488] dark:text-[#00D4AA] uppercase font-semibold block">Projected ({selectedHorizon}Y)</span>
+              <span className="text-sm font-bold text-[#0D9488] dark:text-[#00D4AA] font-mono">
                 {formatLakhs(finalProjection?.corpus || 2558000)}
-              </div>
+              </span>
             </div>
           </div>
 
           {/* Recharts Area Chart */}
-          <div className="h-56 w-full pt-1">
+          <div className="h-52 w-full min-w-0 overflow-hidden pt-1">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={projectionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="corpusGradLight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00D4AA" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#00D4AA" stopOpacity={0.02}/>
+                    <stop offset="5%" stopColor="#0D9488" stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor="#0D9488" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatCurrency(v).slice(0, 5)} />
                 <Tooltip content={<PremiumTooltip formatCurrency={formatCurrency} />} />
-                <Area type="monotone" dataKey="corpus" stroke="#00D4AA" strokeWidth={2.5} fillOpacity={1} fill="url(#corpusGradLight)" name="Corpus" />
+                <Area type="monotone" dataKey="corpus" stroke="#0D9488" strokeWidth={2} fillOpacity={1} fill="url(#corpusGradLight)" name="Corpus" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
         </div>
 
-        {/* RIGHT 5 COLS: Asset Allocation Card */}
-        <div className="lg:col-span-5 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4">
+        {/* RIGHT 5 COLS: Asset Allocation */}
+        <div className="lg:col-span-5 bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 flex flex-col justify-between space-y-3 min-w-0 overflow-hidden">
           
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/[0.06]">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Asset Allocation</h3>
-              <p className="text-xs text-slate-400">Target multi-asset distribution</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Asset Allocation</h3>
+              <p className="text-[11px] text-slate-400">Target multi-asset distribution</p>
             </div>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#E6FDF7] text-[#0D9488] border border-[#99F6E4] dark:bg-[#00D4AA]/15 dark:text-[#00D4AA]">
-              98/100 Fit
-            </span>
           </div>
 
           {/* Recharts Pie Donut */}
-          <div className="h-56 w-full relative flex items-center justify-center">
+          <div className="h-48 w-full min-w-0 overflow-hidden relative flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={allocationPieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={65}
-                  outerRadius={88}
-                  paddingAngle={4}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={3}
                   dataKey="value"
                 >
                   {allocationPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={1.5} />
                   ))}
                 </Pie>
                 <Tooltip content={<AllocationTooltip />} />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-slate-900 dark:text-white font-mono leading-none">100%</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">ALLOCATED</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white font-mono leading-none">100%</span>
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Target</span>
             </div>
           </div>
 
-          {/* Bottom Action Trigger */}
-          <div className="flex justify-end pt-2">
-            <button
-              onClick={() => setActiveView('ai')}
-              className="px-4 py-2.5 rounded-xl bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#060811] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Open VestIQ</span>
-            </button>
+          {/* Simple Legend */}
+          <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px] text-slate-600 dark:text-slate-400">
+            {allocationPieData.slice(0, 4).map((item) => (
+              <div key={item.name} className="flex items-center gap-1.5 truncate">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                <span className="truncate">{item.name}: <strong>{item.value}%</strong></span>
+              </div>
+            ))}
           </div>
 
         </div>

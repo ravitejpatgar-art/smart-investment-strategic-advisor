@@ -44,13 +44,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
         if (matchType === 'bold') {
           parts.push(
-            <strong key={keyIdx++} className="font-bold text-[#172033]">
+            <strong key={keyIdx++} className="font-bold text-slate-900 dark:text-white">
               {firstMatch[1]}
             </strong>
           );
         } else if (matchType === 'code') {
           parts.push(
-            <code key={keyIdx++} className="px-1.5 py-0.5 rounded bg-slate-100 text-teal-800 font-mono text-[13px] border border-[#E7E9F0]">
+            <code key={keyIdx++} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.08] text-teal-800 dark:text-[#00D4AA] font-mono text-[12px] border border-slate-200 dark:border-white/[0.08]">
               {firstMatch[1]}
             </code>
           );
@@ -139,7 +139,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       renderedElements.push(
         <div
           key={`sec_${i}`}
-          className="text-[12.5px] font-bold text-teal-800 tracking-wider uppercase pt-2.5 pb-1 border-b border-[#E7E9F0]"
+          className="text-[12px] font-bold text-[#0D9488] dark:text-[#00D4AA] tracking-wider uppercase pt-2.5 pb-1 border-b border-slate-200/80 dark:border-white/[0.08]"
         >
           {line.trim()}
         </div>
@@ -149,7 +149,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
     if (line.startsWith('### ')) {
       renderedElements.push(
-        <h3 key={`h3_${i}`} className="text-[15.5px] font-bold text-[#172033] mt-2.5 mb-1">
+        <h3 key={`h3_${i}`} className="text-[15px] font-bold text-slate-900 dark:text-white mt-2.5 mb-1">
           {renderFormattedText(line.replace('### ', ''))}
         </h3>
       );
@@ -158,7 +158,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
     if (line.startsWith('#### ')) {
       renderedElements.push(
-        <h4 key={`h4_${i}`} className="text-[14px] font-semibold text-teal-700 mt-2 mb-0.5">
+        <h4 key={`h4_${i}`} className="text-[14px] font-semibold text-[#0D9488] dark:text-[#00D4AA] mt-2 mb-0.5">
           {renderFormattedText(line.replace('#### ', ''))}
         </h4>
       );
@@ -168,8 +168,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
       const text = line.trim().replace(/^[*|-]\s+/, '');
       renderedElements.push(
-        <div key={`li_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-slate-700 text-[14px]">
-          <span className="text-teal-600 font-bold shrink-0 mt-0.5 text-[13px]">•</span>
+        <div key={`li_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
+          <span className="text-[#0D9488] dark:text-[#00D4AA] font-bold shrink-0 mt-0.5">•</span>
           <div className="flex-1 leading-relaxed">{renderFormattedText(text)}</div>
         </div>
       );
@@ -179,8 +179,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     const numMatch = line.trim().match(/^(\d+)\.\s+(.*)$/);
     if (numMatch) {
       renderedElements.push(
-        <div key={`num_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-slate-700 text-[14px]">
-          <span className="text-teal-600 font-bold shrink-0 text-[13px]">{numMatch[1]}.</span>
+        <div key={`num_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
+          <span className="text-[#0D9488] dark:text-[#00D4AA] font-bold shrink-0">{numMatch[1]}.</span>
           <div className="flex-1 leading-relaxed">{renderFormattedText(numMatch[2])}</div>
         </div>
       );

@@ -5,13 +5,10 @@ import {
   BookmarkCheck, 
   Activity, 
   Layers, 
-  Globe, 
   RefreshCw, 
   AlertCircle,
   ChevronLeft,
-  ChevronRight,
-  Database,
-  Clock
+  ChevronRight
 } from 'lucide-react';
 import { 
   marketApi, 
@@ -215,31 +212,16 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
     { id: 'WATCHLIST', label: `Watchlist (${watchlist.length})` },
   ];
 
-  const formatSyncTime = (isoString?: string) => {
-    if (!isoString) return 'Realtime';
-    try {
-      const dt = new Date(isoString);
-      return dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return 'Realtime';
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto">
       
       {/* 1. TOP HEADER & SEARCH BAR */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#E6FDF7] dark:bg-[#00D4AA]/10 flex items-center justify-center border border-[#00D4AA]/30 text-[#00D4AA]">
-                <Globe className="w-4 h-4" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Inter Tight', sans-serif" }}>Market Universe & Explorer</h1>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl">
-              Research stocks, ETFs, mutual funds, and global market instruments across verified institutional data feeds.
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Market Universe & Explorer</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Research stocks, ETFs, mutual funds, and market benchmarks across verified feeds.
             </p>
           </div>
 
@@ -250,38 +232,13 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 fetchInstruments();
               }}
               disabled={isLoading}
-              className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA] ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[#0D9488] ${isLoading ? 'animate-spin' : ''}`} />
               <span>Refresh Feeds</span>
             </button>
           </div>
         </div>
-
-        {/* Dynamic Coverage Status Metadata Bar */}
-        {coverageData && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2.5 border-t border-slate-100 dark:border-white/[0.06] text-xs text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-1.5 text-[#0D9488] dark:text-[#00D4AA] font-semibold">
-              <Database className="w-3.5 h-3.5" />
-              <span>{coverageData.total_instruments} Instruments Available</span>
-            </div>
-            <span className="text-slate-300 dark:text-white/[0.1]">•</span>
-            <div>
-              <span>Coverage: </span>
-              <strong className="text-slate-900 dark:text-white">{coverageData.exchanges_count} Exchanges</strong>
-              <span className="text-slate-500 dark:text-slate-400"> ({coverageData.exchanges.join(', ')})</span>
-            </div>
-            <span className="text-slate-300 dark:text-white/[0.1]">•</span>
-            <div>
-              <strong className="text-slate-900 dark:text-white">{coverageData.countries_count} Countries</strong>
-            </div>
-            <span className="text-slate-300 dark:text-white/[0.1]">•</span>
-            <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-              <Clock className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-              <span>Last synchronized: {formatSyncTime(coverageData.last_synced_at)}</span>
-            </div>
-          </div>
-        )}
 
         {/* Search Bar */}
         <div className="relative">
@@ -290,13 +247,13 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by company, ticker, fund name, ETF, index, or keyword (e.g. TSMC, Nvidia, Microsoft, Parag Parikh, SPY, Nifty 50)..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] rounded-xl text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-[#00D4AA] transition-colors placeholder:text-slate-400"
+            placeholder="Search by company, ticker, fund name, ETF, index, or keyword..."
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#0D9488] transition-colors placeholder:text-slate-400"
           />
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -305,10 +262,10 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 setSelectedCategory(cat.id);
                 setPage(1);
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+              className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-[#00D4AA] text-[#060811] font-bold shadow-xs'
-                  : 'bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-[#0D9488] text-white font-semibold'
+                  : 'bg-slate-100 dark:bg-[#0B1120] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {cat.label}
@@ -355,7 +312,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-4 space-y-1 cursor-pointer hover:border-[#00D4AA]/50 transition-all"
+                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-4 space-y-1 cursor-pointer hover:border-[#0D9488]/50 dark:hover:border-[#00D4AA]/50 transition-all min-w-0 overflow-hidden"
               >
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-slate-900 dark:text-white">{idx.symbol}</span>
@@ -386,7 +343,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-4 space-y-1 cursor-pointer hover:border-[#38BDF8]/50 transition-all"
+                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-4 space-y-1 cursor-pointer hover:border-[#38BDF8]/50 transition-all min-w-0 overflow-hidden"
               >
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-slate-900 dark:text-white">{idx.symbol}</span>
@@ -417,7 +374,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-4 space-y-1 cursor-pointer hover:border-amber-500/50 transition-all"
+                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-4 space-y-1 cursor-pointer hover:border-amber-500/50 transition-all min-w-0 overflow-hidden"
               >
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-slate-900 dark:text-white">{idx.symbol}</span>
@@ -490,7 +447,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 <div
                   key={item.canonicalId}
                   onClick={() => handleOpenDetail(item)}
-                  className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-5 flex flex-col justify-between gap-3 cursor-pointer hover:border-[#00D4AA]/50 transition-all"
+                  className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-5 flex flex-col justify-between gap-3 cursor-pointer hover:border-[#0D9488]/50 dark:hover:border-[#00D4AA]/50 transition-all min-w-0 overflow-hidden"
                 >
                   {/* Top Row: Symbol, Asset Type, Watchlist */}
                   <div className="flex items-start justify-between gap-2">

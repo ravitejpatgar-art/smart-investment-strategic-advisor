@@ -8,7 +8,7 @@ import { Footer } from './Footer';
 
 export const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 selection:bg-emerald-500 selection:text-slate-950 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#07090e] text-slate-900 dark:text-slate-100 selection:bg-[#00D4AA]/20 selection:text-[#0D9488] font-sans">
       <Navbar />
       <main>
         <HeroSection />

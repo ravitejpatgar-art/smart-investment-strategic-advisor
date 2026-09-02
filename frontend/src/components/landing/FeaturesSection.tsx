@@ -74,22 +74,22 @@ export const FeaturesSection: React.FC = () => {
   ];
 
   return (
-    <section id="features" className="py-24 relative bg-[#060811] border-t border-b border-white/[0.06]">
+    <section id="features" className="py-24 relative bg-[#F8FAFC] dark:bg-[#060811] border-t border-b border-slate-200/80 dark:border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-4 lg:px-12">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B1120] border border-white/[0.08] text-slate-300 text-xs font-semibold uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] dark:bg-[#00D4AA]" />
             <span>Institutional Wealth Capabilities</span>
           </div>
           <h2 
-            className="text-3xl sm:text-4xl font-extrabold text-white tracking-[-0.025em]"
+            className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-[-0.025em]"
             style={{ fontFamily: "'Inter Tight', 'Inter', sans-serif" }}
           >
             Engineered For Disciplined Capital Growth
           </h2>
-          <p className="text-slate-300 text-base sm:text-lg">
+          <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg">
             SmartVest combines modern portfolio theory, institutional quantitative risk models, and direct zero-commission architecture.
           </p>
         </div>
@@ -102,35 +102,35 @@ export const FeaturesSection: React.FC = () => {
               <div
                 key={idx}
                 onClick={() => setActiveView(feature.view)}
-                className="bg-[#0F172A] rounded-2xl p-7 border border-white/[0.08] hover:border-[#00D4AA]/30 transition-all flex flex-col justify-between group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-black/40"
+                className="bg-white dark:bg-[#0F172A] rounded-2xl p-7 border border-slate-200/90 dark:border-white/[0.08] hover:border-[#0D9488]/50 dark:hover:border-[#00D4AA]/30 transition-all flex flex-col justify-between group cursor-pointer shadow-xs hover:shadow-md"
               >
                 <div>
                   {/* Card Header: Icon & Category Tag */}
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-[#0B1120] border border-white/[0.08] flex items-center justify-center text-[#00D4AA] group-hover:bg-[#00D4AA]/10 group-hover:border-[#00D4AA]/30 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-[#0D9488] dark:text-[#00D4AA] group-hover:bg-[#E6FDF7] dark:group-hover:bg-[#00D4AA]/10 transition-all">
                       <Icon className="w-6 h-6 stroke-[1.75]" />
                     </div>
-                    <span className="text-[10.5px] font-bold text-slate-300 uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#0B1120] border border-white/[0.06]">
+                    <span className="text-[10.5px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-100 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06]">
                       {feature.tag}
                     </span>
                   </div>
 
                   {/* Title & Description */}
-                  <h3 className="text-lg font-bold text-white mb-2.5 group-hover:text-[#00D4AA] transition-colors flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2.5 group-hover:text-[#0D9488] dark:group-hover:text-[#00D4AA] transition-colors flex items-center justify-between">
                     <span>{feature.title}</span>
                     <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                   </h3>
                   
-                  <p className="text-sm text-slate-300 leading-relaxed mb-6 font-normal">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 font-normal">
                     {feature.description}
                   </p>
                 </div>
 
                 {/* Quantitative Highlights */}
-                <div className="pt-4 border-t border-white/[0.06] space-y-2">
+                <div className="pt-4 border-t border-slate-100 dark:border-white/[0.06] space-y-2">
                   {feature.highlights.map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-slate-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00D4AA] shrink-0" />
+                    <div key={i} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA] shrink-0" />
                       <span>{item}</span>
                     </div>
                   ))}

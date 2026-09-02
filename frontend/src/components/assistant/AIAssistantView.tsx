@@ -119,8 +119,8 @@ How can I help guide your financial and investment decisions today?`,
         return;
       }
 
-      let answerText = res?.answer || res?.response || '';
-      let followUps = res?.followUps || [];
+      let answerText = res?.answer || res?.response || res?.reply || res?.message || '';
+      let followUps = res?.followUps || res?.follow_up_suggestions || res?.suggested_questions || [];
 
       if (!answerText) {
         answerText = `I have received your query regarding "${userText}". How else can I assist with your financial strategy?`;
@@ -165,34 +165,33 @@ How can I help guide your financial and investment decisions today?`,
 
   return (
     <div className="space-y-6 pb-12">
-      
-      {/* Top Advisor Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/80 border border-slate-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-md">
+      {/* Top Banner */}
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20">
-            <Bot className="w-6 h-6 stroke-[2.2]" />
+          <div className="w-10 h-10 rounded-xl bg-[#E6FDF7] dark:bg-[#00D4AA]/15 text-[#0D9488] dark:text-[#00D4AA] flex items-center justify-center shrink-0 border border-[#0D9488]/20 dark:border-[#00D4AA]/30">
+            <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white">AI Financial Advisor</h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Institutional AI
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">SmartVest AI Strategic Advisor</h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6FDF7] text-[#0D9488] dark:bg-[#00D4AA]/15 dark:text-[#00D4AA] border border-[#0D9488]/20 dark:border-[#00D4AA]/30">
+                ACTIVE
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Personalized guidance synthesizing your real cashflows, goals, and risk mandate.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900/80 px-3.5 py-2 rounded-2xl border border-slate-800">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#060811] px-3.5 py-2 rounded-xl border border-slate-200/80 dark:border-white/[0.08]">
+          <ShieldCheck className="w-4 h-4 text-[#0D9488] dark:text-[#00D4AA]" />
           <span>Fiduciary Guidance • Independent Advisory</span>
         </div>
       </div>
 
       {/* Main Chat Interface Box */}
-      <div className="bg-slate-950/80 border border-slate-800/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[600px] backdrop-blur-md">
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl shadow-xs overflow-hidden flex flex-col h-[620px]">
         
         {/* Messages Stream */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
@@ -205,17 +204,17 @@ How can I help guide your financial and investment decisions today?`,
                 className={`flex gap-3.5 ${isUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center shrink-0 mt-1 shadow-md shadow-emerald-500/20">
+                  <div className="w-8 h-8 rounded-xl bg-[#E6FDF7] dark:bg-[#00D4AA]/15 text-[#0D9488] dark:text-[#00D4AA] flex items-center justify-center shrink-0 mt-1 border border-[#0D9488]/20 dark:border-[#00D4AA]/30 shadow-xs">
                     <Sparkles className="w-4 h-4 stroke-[2.5]" />
                   </div>
                 )}
 
                 <div className={`max-w-[85%] sm:max-w-[75%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
                   <div 
-                    className={`p-4 sm:p-5 rounded-3xl text-xs sm:text-sm leading-relaxed shadow-md ${
+                    className={`p-4 sm:p-5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-xs ${
                       isUser 
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-medium rounded-tr-none' 
-                        : 'bg-slate-900/90 text-slate-200 border border-slate-800 rounded-tl-none'
+                        ? 'bg-[#0D9488] dark:bg-[#00D4AA] text-white dark:text-[#060811] font-semibold rounded-tr-none' 
+                        : 'bg-slate-50 dark:bg-[#0F172A] text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/[0.08] rounded-tl-none'
                     }`}
                   >
                     <MarkdownRenderer content={msg.text} />
@@ -228,7 +227,7 @@ How can I help guide your financial and investment decisions today?`,
                         <button
                           key={idx}
                           onClick={() => handleSendMessage(chip)}
-                          className="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-emerald-950/40 border border-slate-800 hover:border-emerald-500/40 text-[11px] text-slate-400 hover:text-emerald-300 transition-all cursor-pointer"
+                          className="px-3 py-1 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#0F172A] dark:hover:bg-[#152238] border border-slate-200 dark:border-white/[0.08] text-[11px] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs"
                         >
                           {chip}
                         </button>
@@ -236,15 +235,15 @@ How can I help guide your financial and investment decisions today?`,
                     </div>
                   )}
 
-                  <div className={`flex items-center gap-2 px-1 text-[10px] text-slate-500 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`flex items-center gap-2 px-1 text-[10px] text-slate-400 ${isUser ? 'justify-end' : 'justify-start'}`}>
                     <span>{msg.timestamp}</span>
                     {!isUser && (
                       <button 
                         onClick={() => handleCopy(msg.text, msg.id)}
-                        className="hover:text-slate-300 cursor-pointer flex items-center gap-1"
+                        className="hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer flex items-center gap-1"
                         title="Copy message"
                       >
-                        {copiedId === msg.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        {copiedId === msg.id ? <Check className="w-3 h-3 text-[#0D9488] dark:text-[#00D4AA]" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedId === msg.id ? 'Copied' : 'Copy'}</span>
                       </button>
                     )}
@@ -256,11 +255,11 @@ How can I help guide your financial and investment decisions today?`,
 
           {loading && (
             <div className="flex gap-3.5 items-start">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center shrink-0 shadow-md animate-pulse">
+              <div className="w-8 h-8 rounded-xl bg-[#E6FDF7] dark:bg-[#00D4AA]/15 text-[#0D9488] dark:text-[#00D4AA] flex items-center justify-center shrink-0 border border-[#0D9488]/20 dark:border-[#00D4AA]/30 shadow-xs animate-pulse">
                 <Sparkles className="w-4 h-4 stroke-[2.5]" />
               </div>
-              <div className="p-4 rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 text-xs flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0F172A] border border-slate-200/80 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 text-xs flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#0D9488] dark:bg-[#00D4AA] animate-ping" />
                 <span>SmartVest AI analyzing market data & financial parameters...</span>
               </div>
             </div>
@@ -270,13 +269,13 @@ How can I help guide your financial and investment decisions today?`,
         </div>
 
         {/* Suggested Quick Prompt Chips */}
-        <div className="px-4 py-2.5 bg-slate-900/60 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Quick Prompts:</span>
+        <div className="px-4 py-2.5 bg-slate-50/70 dark:bg-[#060811] border-t border-slate-200/80 dark:border-white/[0.06] flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Quick Prompts:</span>
           {promptChips.map((chip, i) => (
             <button
               key={i}
               onClick={() => handleSendMessage(chip)}
-              className="px-3 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 whitespace-nowrap transition-colors cursor-pointer shrink-0"
+              className="px-3 py-1 rounded-full bg-white dark:bg-[#0F172A] hover:bg-slate-100 dark:hover:bg-[#152238] text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-white/[0.08] whitespace-nowrap transition-colors cursor-pointer shrink-0 shadow-2xs"
             >
               {chip}
             </button>
@@ -289,7 +288,7 @@ How can I help guide your financial and investment decisions today?`,
             e.preventDefault();
             handleSendMessage(input);
           }}
-          className="p-3 bg-slate-950 border-t border-slate-800/80 flex items-center gap-2"
+          className="p-3 bg-white dark:bg-[#0B1120] border-t border-slate-200/80 dark:border-white/[0.08] flex items-center gap-2"
         >
           <input 
             type="text"
@@ -297,20 +296,20 @@ How can I help guide your financial and investment decisions today?`,
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your financial allocation, fund selections, goals, or loan affordability..."
             disabled={loading}
-            className="flex-1 bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+            className="flex-1 bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#0D9488] dark:focus:border-[#00D4AA] transition-colors"
           />
 
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+            className="p-2.5 sm:px-4 sm:py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] dark:bg-[#00D4AA] dark:hover:bg-[#00D4AA]/90 text-white dark:text-[#060811] font-bold disabled:opacity-40 disabled:cursor-not-allowed shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Send className="w-4 h-4 stroke-[2.5]" />
+            <span className="hidden sm:inline text-xs">Send</span>
           </button>
         </form>
 
       </div>
-
     </div>
   );
 };

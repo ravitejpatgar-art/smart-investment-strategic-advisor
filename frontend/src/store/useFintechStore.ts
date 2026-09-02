@@ -77,17 +77,35 @@ interface FintechState {
 // Load authoritative session data from UserProfileRepository
 const authActive = isAuthEnabled();
 const storedToken = localStorage.getItem('smartvest_token');
-const storedTheme = (localStorage.getItem('smartvest_theme') as 'light' | 'dark') || 'dark';
+// Migration for existing users: previous versions saved 'dark' as default.
+// Migrate to new 'light' fintech default if v2 migration hasn't run yet.
+const THEME_MIGRATION_KEY = 'smartvest_theme_v2';
+let storedTheme: 'light' | 'dark' = 'light';
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+  try {
+    if (!localStorage.getItem(THEME_MIGRATION_KEY)) {
+      localStorage.setItem('smartvest_theme', 'light');
+      localStorage.setItem(THEME_MIGRATION_KEY, 'true');
+    }
+    const raw = localStorage.getItem('smartvest_theme');
+    storedTheme = raw === 'dark' ? 'dark' : 'light';
+  } catch {
+    storedTheme = 'light';
+  }
+}
+
 const initialUser = authActive ? null : userProfileRepo.getProfile();
 const initialExpenses = authActive ? [] : userProfileRepo.getExpenses();
 const initialGoals = authActive ? [] : userProfileRepo.getGoals();
 
-// Ensure DOM has correct theme class on startup
+// Ensure DOM has correct theme class on startup (defaulting to clean light fintech theme)
 if (typeof document !== 'undefined') {
   if (storedTheme === 'dark') {
     document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
   } else {
     document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
   }
 }
 
@@ -107,8 +125,10 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     if (typeof document !== 'undefined') {
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
       } else {
         document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
       }
     }
     set({ theme });
@@ -120,8 +140,10 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     if (typeof document !== 'undefined') {
       if (next === 'dark') {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
       } else {
         document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
       }
     }
     set({ theme: next });
@@ -200,6 +222,32 @@ export const useFintechStore = create<FintechState>((set, get) => ({
         const loadedExpenses = userProfileRepo.getExpenses(firebaseUser.uid);
         const loadedGoals = userProfileRepo.getGoals(firebaseUser.uid);
         const computedStrategy = calculateInvestmentStrategy(userObj, loadedExpenses, loadedGoals);
+        const currentView = get().activeView;
+        let routeView: ActiveNavTab = userObj.onboardingCompleted ? 'dashboard' : 'onboarding';
+        try {
+          const path = window.location.pathname.toLowerCase();
+          const hash = window.location.hash.toLowerCase();
+          if (path === '/ai' || path === '/vestiq' || path.startsWith('/vestiq/') || path.startsWith('/ai/') || hash === '#ai' || hash === '#vestiq') {
+            routeView = 'ai';
+          } else if (path === '/recommendations' || hash === '#recommendations') {
+            routeView = 'recommendations';
+          } else if (path === '/market' || hash === '#market') {
+            routeView = 'market';
+          } else if (path === '/goals' || hash === '#goals') {
+            routeView = 'goals';
+          } else if (path === '/expenses' || path === '/expense-tracker' || hash === '#expenses' || hash === '#expense-tracker') {
+            routeView = 'expenses';
+          } else if (path === '/profile' || hash === '#profile') {
+            routeView = 'profile';
+          } else if (currentView !== 'landing' && currentView !== 'onboarding') {
+            routeView = currentView;
+          }
+        } catch {
+          if (currentView !== 'landing' && currentView !== 'onboarding') {
+            routeView = currentView;
+          }
+        }
+
         set({
           user: userObj,
           expenses: loadedExpenses,
@@ -207,7 +255,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
           isAuthenticated: true,
           isAuthLoading: false,
           strategy: computedStrategy,
-          activeView: userObj.onboardingCompleted ? 'dashboard' : 'onboarding'
+          activeView: routeView
         });
       } else {
         localStorage.removeItem('smartvest_token');
@@ -306,7 +354,34 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     });
   },
 
-  activeView: !authActive && initialUser && initialUser.onboardingCompleted ? 'dashboard' : 'landing',
+  activeView: (() => {
+    try {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/ai' || path === '/vestiq' || path.startsWith('/vestiq/') || path.startsWith('/ai/') || hash === '#ai' || hash === '#vestiq') {
+        return 'ai';
+      }
+      if (path === '/recommendations' || hash === '#recommendations') {
+        return 'recommendations';
+      }
+      if (path === '/market' || hash === '#market') {
+        return 'market';
+      }
+      if (path === '/goals' || hash === '#goals') {
+        return 'goals';
+      }
+      if (path === '/expenses' || path === '/expense-tracker' || hash === '#expenses' || hash === '#expense-tracker') {
+        return 'expenses';
+      }
+      if (path === '/profile' || hash === '#profile') {
+        return 'profile';
+      }
+      if (path === '/dashboard' || hash === '#dashboard') {
+        return 'dashboard';
+      }
+    } catch {}
+    return !authActive && initialUser && initialUser.onboardingCompleted ? 'dashboard' : 'landing';
+  })(),
   setActiveView: (view) => set({ activeView: view }),
 
   isAdvisorOpen: false,
