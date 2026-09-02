@@ -4,7 +4,6 @@ import { HeroSection } from './HeroSection';
 import { FeaturesSection } from './FeaturesSection';
 import { StatsSection } from './StatsSection';
 import { InteractiveCalculator } from './InteractiveCalculator';
-import { TestimonialsSection } from './TestimonialsSection';
 import { Footer } from './Footer';
 
 export const LandingPage: React.FC = () => {
@@ -16,7 +15,6 @@ export const LandingPage: React.FC = () => {
         <FeaturesSection />
         <StatsSection />
         <InteractiveCalculator />
-        <TestimonialsSection />
       </main>
       <Footer />
     </div>
