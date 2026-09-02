@@ -9,11 +9,11 @@ export const FloatingAIAssistantButton: React.FC = () => {
     <div className="fixed bottom-5 right-5 z-40">
       <button
         onClick={() => setActiveView('ai')}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.1] text-slate-700 dark:text-slate-300 hover:text-[#0D9488] dark:hover:text-[#00D4AA] hover:border-[#0D9488]/40 text-xs font-medium shadow-sm transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#0D9488] hover:bg-[#0F766E] dark:bg-[#00D4AA] dark:hover:bg-[#00D4AA]/90 text-white dark:text-[#060811] text-xs font-bold shadow-lg shadow-[#0D9488]/20 transition-all cursor-pointer"
         title="Open VestIQ"
       >
-        <Sparkles className="w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA]" />
-        <span>VestIQ</span>
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>Open VestIQ</span>
       </button>
     </div>
   );
