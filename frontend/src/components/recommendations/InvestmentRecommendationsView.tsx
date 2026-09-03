@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { 
   Sparkles, 
@@ -14,6 +14,10 @@ import { RECOMMENDED_PLATFORMS } from '../../services/strategyEngine';
 import { useMarketQuotes } from '../../hooks/useMarketQuotes';
 import type { MarketQuote } from '../../services/marketApi';
 import { HistoricalPerformanceChart } from './HistoricalPerformanceChart';
+import { ScenarioSimulatorView } from '../analytics/ScenarioSimulatorView';
+import { PortfolioRebalanceView } from '../analytics/PortfolioRebalanceView';
+
+type RecommendationTab = 'blueprint' | 'scenario' | 'rebalance';
 
 // Market Freshness Badge Component
 const MarketFreshnessBadge: React.FC<{ quote?: MarketQuote | null }> = ({ quote }) => {
@@ -161,6 +165,8 @@ export const InvestmentRecommendationsView: React.FC = () => {
   const recommendedSIP = strategy.recommendedMonthlyInvestment;
   const flexibleBuffer = strategy.remainingFlexibleBuffer;
 
+  const [activeTab, setActiveTab] = useState<RecommendationTab>('blueprint');
+
   // Identify Top Recommendation (highest suitability score)
   const sortedAllocations = [...strategy.allocations].sort((a, b) => (b.suitabilityScore || 0) - (a.suitabilityScore || 0));
   const topRecommendation = sortedAllocations[0];
@@ -174,46 +180,94 @@ export const InvestmentRecommendationsView: React.FC = () => {
     <div className="space-y-6 pb-12 font-sans">
       
       {/* 1. Strategy Summary Header */}
-      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-[#00D4AA]" />
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Institutional Investment Strategy</h1>
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-[#00D4AA]" />
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Institutional Investment Strategy</h1>
+            </div>
+            <p className="text-xs text-[#8A94A6]">
+              Multi-asset portfolio blueprint calibrated for risk-adjusted alpha, tax efficiency, and long-term compounding.
+            </p>
           </div>
-          <p className="text-xs text-[#8A94A6]">
-            Multi-asset portfolio blueprint calibrated for risk-adjusted alpha, tax efficiency, and long-term compounding.
-          </p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <button
+              onClick={() => {
+                refetchQuotes();
+                runAiAnalysis();
+              }}
+              className="w-full sm:w-auto px-3 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors active:scale-95"
+              title="Recalculate Strategy & Refresh NAVs"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-[#00D4AA]" />
+              <span>Refresh NAVs</span>
+            </button>
+
+            <button
+              onClick={() => setActiveView('market')}
+              className="w-full sm:w-auto px-3.5 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors active:scale-95"
+            >
+              <Layers className="w-3.5 h-3.5 text-[#00D4AA]" />
+              <span>Market Universe</span>
+            </button>
+
+            <button
+              onClick={() => setActiveView('ai')}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Consult VestIQ</span>
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
+
+        {/* Sub-Tab Navigation Bar */}
+        <div className="flex items-center gap-2 pt-3 border-t border-white/[0.08] overflow-x-auto pb-1">
           <button
-            onClick={() => {
-              refetchQuotes();
-              runAiAnalysis();
-            }}
-            className="w-full sm:w-auto px-3 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors active:scale-95"
-            title="Recalculate Strategy & Refresh NAVs"
+            onClick={() => setActiveTab('blueprint')}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'blueprint'
+                ? 'bg-[#00D4AA] text-[#050816] shadow-sm'
+                : 'bg-[#0A1022] hover:bg-[#141F36] text-[#8A94A6] hover:text-white border border-white/[0.06]'
+            }`}
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#00D4AA]" />
-            <span>Refresh NAVs</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Allocation Blueprint & Instruments</span>
           </button>
 
           <button
-            onClick={() => setActiveView('market')}
-            className="w-full sm:w-auto px-3.5 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors active:scale-95"
+            onClick={() => setActiveTab('scenario')}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'scenario'
+                ? 'bg-[#00D4AA] text-[#050816] shadow-sm'
+                : 'bg-[#0A1022] hover:bg-[#141F36] text-[#8A94A6] hover:text-white border border-white/[0.06]'
+            }`}
           >
-            <Layers className="w-3.5 h-3.5 text-[#00D4AA]" />
-            <span>Market Universe</span>
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>What-If Scenario Simulator</span>
           </button>
 
           <button
-            onClick={() => setActiveView('ai')}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
+            onClick={() => setActiveTab('rebalance')}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'rebalance'
+                ? 'bg-[#00D4AA] text-[#050816] shadow-sm'
+                : 'bg-[#0A1022] hover:bg-[#141F36] text-[#8A94A6] hover:text-white border border-white/[0.06]'
+            }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Consult VestIQ</span>
+            <Shield className="w-3.5 h-3.5" />
+            <span>Portfolio Rebalancing Advisory</span>
           </button>
         </div>
       </div>
+
+      {/* Render Active View Tab */}
+      {activeTab === 'scenario' && <ScenarioSimulatorView />}
+      {activeTab === 'rebalance' && <PortfolioRebalanceView />}
+
+      {activeTab === 'blueprint' && (
+        <>
 
       {/* 2. Top Strategy Metric Tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 min-w-0">
@@ -519,6 +573,8 @@ export const InvestmentRecommendationsView: React.FC = () => {
           ))}
         </div>
       </div>
+      </>
+      )}
 
     </div>
   );
