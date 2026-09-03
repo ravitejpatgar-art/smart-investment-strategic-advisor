@@ -17,7 +17,7 @@ import { HistoricalPerformanceChart } from './HistoricalPerformanceChart';
 
 // Market Freshness Badge Component
 const MarketFreshnessBadge: React.FC<{ quote?: MarketQuote | null }> = ({ quote }) => {
-  if (!quote || quote.freshness === 'UNAVAILABLE' || quote.price === null) {
+  if (!quote || quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE' || quote.price === null || quote.price === undefined) {
     return (
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0A1022] border border-white/[0.06] text-xs text-[#8A94A6]">
         <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
@@ -26,8 +26,38 @@ const MarketFreshnessBadge: React.FC<{ quote?: MarketQuote | null }> = ({ quote 
     );
   }
 
-  const freshness = quote.freshness;
   const isPositive = (quote.changePct ?? 0) >= 0;
+  const status = quote.status || (quote.freshness === 'REALTIME' ? 'LIVE' : (quote.freshness === 'DELAYED' ? 'DELAYED' : (quote.freshness === 'MODEL_ASSUMPTION' ? 'DEMO' : 'FALLBACK')));
+
+  const renderBadge = () => {
+    switch (status) {
+      case 'LIVE':
+        return (
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA]">
+            LIVE
+          </span>
+        );
+      case 'DELAYED':
+        return (
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#1E88E5]/10 border border-[#1E88E5]/30 text-[#1E88E5]">
+            15M DELAY
+          </span>
+        );
+      case 'DEMO':
+        return (
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 text-[#8B5CF6]">
+            DEMO
+          </span>
+        );
+      case 'FALLBACK':
+      default:
+        return (
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#F59E0B]/10 border border-[#F59E0B]/30 text-[#F59E0B]">
+            {quote.assetType === 'MUTUAL_FUND' ? 'LATEST NAV' : 'FALLBACK'}
+          </span>
+        );
+    }
+  };
 
   return (
     <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#0A1022] border border-white/[0.06] text-xs">
@@ -43,9 +73,7 @@ const MarketFreshnessBadge: React.FC<{ quote?: MarketQuote | null }> = ({ quote 
         )}
       </div>
 
-      <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA]">
-        {freshness === 'REALTIME' ? 'LIVE' : (freshness === 'DELAYED' ? '15M DELAY' : 'LATEST NAV')}
-      </span>
+      {renderBadge()}
     </div>
   );
 };

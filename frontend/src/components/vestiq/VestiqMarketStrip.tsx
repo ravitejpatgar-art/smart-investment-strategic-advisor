@@ -52,7 +52,7 @@ export const VestiqMarketStrip: React.FC<{ onSelectSymbol?: (symbol: string) => 
               </div>
 
               <div className="flex items-center justify-between text-[10.5px] text-[#98A2B3]">
-                <span>{q?.freshness === 'REALTIME' ? 'Live' : (q?.freshness || 'Updated')}</span>
+                <span>{q?.status === 'LIVE' || q?.freshness === 'REALTIME' ? 'Live' : (q?.status === 'DEMO' ? 'Demo' : (q?.status === 'FALLBACK' ? 'Fallback' : (q?.freshness || 'Updated')))}</span>
                 <span className="group-hover:text-teal-600 font-medium transition-colors">Analyze →</span>
               </div>
             </div>

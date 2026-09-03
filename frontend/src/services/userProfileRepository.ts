@@ -1,4 +1,6 @@
 import type { UserProfile, ExpenseItem, GoalItem, InvestmentStrategy } from '../types';
+import { isDemoMode } from './demoData';
+import { buildGroundedContext, type GroundedFinancialContext } from './vestiqGrounding';
 
 export interface SmartVestUserContext {
   userId: string | null;
@@ -78,6 +80,8 @@ export interface SmartVestUserContext {
     riskLevel?: string;
     reasonSelected?: string;
   }>;
+
+  groundedContext?: GroundedFinancialContext;
 }
 
 export type NormalizedUserContext = SmartVestUserContext;
@@ -372,7 +376,8 @@ export function buildUserContext(
         reasonSelected: a.reasonSelected
       })) || []
     } : undefined,
-    recommendations: recommendationsList
+    recommendations: recommendationsList,
+    groundedContext: buildGroundedContext(user, expenses, goals, strategy)
   };
 }
 
@@ -381,9 +386,5 @@ export function buildUserContext(
  * Default is FALSE.
  */
 export function isDemoModeEnabled(): boolean {
-  try {
-    return import.meta.env.VITE_DEMO_MODE === 'true';
-  } catch {
-    return false;
-  }
+  return isDemoMode();
 }

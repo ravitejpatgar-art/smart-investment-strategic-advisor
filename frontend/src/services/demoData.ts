@@ -700,7 +700,10 @@ export function getDemoQuote(symbol: string): MarketQuote {
   );
 
   if (matched && matched.quote) {
-    return matched.quote;
+    return {
+      ...matched.quote,
+      status: 'DEMO'
+    };
   }
 
   // Fallback deterministic structure
@@ -717,6 +720,7 @@ export function getDemoQuote(symbol: string): MarketQuote {
     timestamp: new Date().toISOString(),
     marketStatus: 'OPEN',
     freshness: 'MODEL_ASSUMPTION',
+    status: 'DEMO',
     source: 'Deterministic Demo Market Feed',
     asOf: 'Today',
     message: 'Deterministic demonstration baseline'

@@ -1,4 +1,13 @@
 import { apiClient } from './api';
+import {
+  isDemoMode,
+  DEMO_COVERAGE,
+  DEMO_MARKET_STATUS,
+  DEMO_MARKET_OVERVIEW,
+  getDemoQuote,
+  getDemoInstruments,
+  getDemoResearch
+} from './demoData';
 
 export type FreshnessType = 
   | 'REALTIME' 
@@ -9,6 +18,23 @@ export type FreshnessType =
   | 'MODEL_ASSUMPTION' 
   | 'STALE' 
   | 'UNAVAILABLE';
+
+export type MarketDataStatus = 'LIVE' | 'DELAYED' | 'FALLBACK' | 'DEMO' | 'UNAVAILABLE';
+
+export function resolveQuoteStatus(quote?: Partial<MarketQuote> | null): MarketDataStatus {
+  if (!quote) return 'UNAVAILABLE';
+  if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') return 'UNAVAILABLE';
+  if (quote.price === null || (quote.price !== undefined && isNaN(quote.price))) return 'UNAVAILABLE';
+  
+  if (quote.status) return quote.status;
+  if (quote.freshness === 'REALTIME') return 'LIVE';
+  if (quote.freshness === 'DELAYED') return 'DELAYED';
+  if (quote.freshness === 'MODEL_ASSUMPTION' || quote.source?.includes('Deterministic Demo')) return 'DEMO';
+  if (quote.freshness === 'LATEST_AVAILABLE' || quote.freshness === 'END_OF_DAY' || quote.freshness === 'HISTORICAL') {
+    return quote.source?.includes('Backend') || quote.source?.includes('Live') ? 'LIVE' : 'FALLBACK';
+  }
+  return 'FALLBACK';
+}
 
 export interface MarketQuote {
   symbol: string;
@@ -27,6 +53,7 @@ export interface MarketQuote {
   timestamp: string;
   marketStatus: string;
   freshness: FreshnessType;
+  status?: MarketDataStatus;
   source: string | null;
   asOf: string;
   navDate?: string | null;
@@ -51,9 +78,11 @@ export interface MarketCandlesResponse {
   interval: string;
   source?: string;
   freshness: FreshnessType;
+  status?: MarketDataStatus;
   disclaimer?: string;
   observations: MarketCandleObservation[];
   message?: string;
+  isStale?: boolean;
 }
 
 export interface MarketStatusResponse {
@@ -214,25 +243,30 @@ const BASELINE_PRICE_MAP: Record<string, { basePrice: number; annualGrowth: numb
   '135781': { basePrice: 54.2, annualGrowth: 0.19, vol: 0.20 }
 };
 
+const INDEX_SYMBOLS = new Set(['NIFTY 50', '^NSEI', 'SENSEX', '^BSESN', 'S&P 500', '^GSPC', 'NASDAQ', '^IXIC']);
+
 function matchSchemeCode(symbol: string): string | null {
   if (!symbol) return null;
   const clean = symbol.trim().toUpperCase();
+  if (INDEX_SYMBOLS.has(clean)) return null;
   if (/^\d{6}$/.test(clean)) return clean;
+  if (DIRECT_AMFI_SCHEMES[clean]) {
+    const code = DIRECT_AMFI_SCHEMES[clean].code;
+    return /^\d+$/.test(code) ? code : null;
+  }
   for (const [k, v] of Object.entries(DIRECT_AMFI_SCHEMES)) {
-    if (clean === k || clean.includes(k) || k.includes(clean)) {
-      return v.code;
+    if (clean === k || clean.includes(k)) {
+      return /^\d+$/.test(v.code) ? v.code : null;
     }
   }
-  if (clean.includes('UTI') || (clean.includes('NIFTY') && clean.includes('FUND'))) return '120716';
-  if (clean.includes('NEXT 50')) return '120717';
+  if ((clean.includes('UTI') && clean.includes('INDEX')) || (clean.includes('NIFTY') && clean.includes('FUND'))) return '120716';
+  if (clean.includes('NEXT 50') && clean.includes('FUND')) return '120717';
   if (clean.includes('PARAG') || clean.includes('FLEXI')) return '122639';
-  if (clean.includes('LIQUID')) return '120586';
-  if (clean.includes('SHORT DURATION') || clean.includes('DEBT')) return '119062';
-  if (clean.includes('SMALL CAP')) return '125354';
-  if (clean.includes('MIDCAP') || clean.includes('MID CAP')) return '127042';
-  if (clean.includes('DIGITAL') || clean.includes('TATA')) return '135781';
-  if (clean.includes('GOLD') || clean.includes('SGB')) return 'GOLDBEES.NS';
-  if (clean.includes('NASDAQ') || clean.includes('MON100')) return 'MON100.NS';
+  if (clean.includes('LIQUID FUND')) return '120586';
+  if (clean.includes('SHORT DURATION') && clean.includes('DEBT')) return '119062';
+  if (clean.includes('SMALL CAP') && clean.includes('FUND')) return '125354';
+  if (clean.includes('MIDCAP') && clean.includes('FUND')) return '127042';
+  if (clean.includes('DIGITAL') && clean.includes('INDIA')) return '135781';
   return null;
 }
 
@@ -248,7 +282,8 @@ async function fetchDirectAmfiQuote(schemeCode: string, originalSymbol: string):
     const prev = navList[1] || latest;
     const nav = parseFloat(latest.nav);
     const prevNav = parseFloat(prev.nav);
-    const change = nav - prevNav;
+    if (isNaN(nav)) return null;
+    const change = isNaN(prevNav) ? 0 : nav - prevNav;
     const changePct = prevNav > 0 ? (change / prevNav) * 100 : 0;
     return {
       symbol: originalSymbol,
@@ -263,10 +298,11 @@ async function fetchDirectAmfiQuote(schemeCode: string, originalSymbol: string):
       open: nav,
       high: nav,
       low: nav,
-      prevClose: prevNav,
+      prevClose: isNaN(prevNav) ? nav : prevNav,
       timestamp: new Date().toISOString(),
       marketStatus: 'PUBLISHED',
       freshness: 'LATEST_AVAILABLE',
+      status: 'FALLBACK',
       source: 'AMFI Official NAV Feed',
       asOf: latest.date,
       navDate: latest.date,
@@ -301,6 +337,7 @@ async function fetchDirectAmfiCandles(schemeCode: string, originalSymbol: string
       const parts = item.date.split('-');
       const dateIso = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : item.date;
       const navVal = parseFloat(item.nav);
+      if (isNaN(navVal) || navVal <= 0) continue;
       observations.push({
         date: dateIso,
         timestamp: dateIso,
@@ -313,12 +350,15 @@ async function fetchDirectAmfiCandles(schemeCode: string, originalSymbol: string
       });
     }
 
+    if (observations.length === 0) return null;
+
     return {
       symbol: originalSymbol,
       range,
       interval: '1d',
       source: 'AMFI Historical NAV Feed',
       freshness: 'LATEST_AVAILABLE',
+      status: 'FALLBACK',
       message: 'Latest available market data shown',
       observations
     };
@@ -374,31 +414,38 @@ function generateHistoricalSeries(symbol: string, range: string, _interval: stri
 
 export const marketApi = {
   getCoverage: async (): Promise<MarketCoverageResponse> => {
+    if (isDemoMode()) {
+      return DEMO_COVERAGE;
+    }
     try {
       const res = await apiClient.get<MarketCoverageResponse>('/market/coverage');
       return res.data;
     } catch {
-      return {
-        total_instruments: 100000,
-        stocks_count: 50000,
-        etfs_count: 10000,
-        mutual_funds_count: 40000,
-        indices_count: 100,
-        exchanges_count: 50,
-        exchanges: ['NSE', 'BSE', 'NASDAQ', 'NYSE', 'LSE', 'AMFI'],
-        countries_count: 30,
-        countries: ['IN', 'US', 'GB', 'DE', 'JP'],
-        last_synced_at: new Date().toISOString()
-      };
+      return DEMO_COVERAGE;
     }
   },
 
   getQuote: async (symbol: string): Promise<MarketQuote> => {
+    // 0. Demo Mode: Immediate deterministic presentation data
+    if (isDemoMode()) {
+      const demoQ = getDemoQuote(symbol);
+      return {
+        ...demoQ,
+        status: 'DEMO'
+      };
+    }
+
     // 1. Primary: Try Backend Router API
     try {
       const res = await apiClient.get<MarketQuote>(`/market/quote/${encodeURIComponent(symbol)}`);
-      if (res.data && res.data.price !== null && res.data.freshness !== 'UNAVAILABLE') {
-        return res.data;
+      if (res.data && res.data.price !== null && typeof res.data.price === 'number' && !isNaN(res.data.price) && res.data.freshness !== 'UNAVAILABLE') {
+        const raw = res.data;
+        const resolvedStatus: MarketDataStatus = raw.status || (raw.freshness === 'REALTIME' ? 'LIVE' : (raw.freshness === 'DELAYED' ? 'DELAYED' : 'LIVE'));
+        return {
+          ...raw,
+          status: resolvedStatus,
+          source: raw.source || 'Backend Live Market Engine'
+        };
       }
     } catch (err: any) {
       console.info(`[MARKET_FALLBACK] Backend quote unreachable for ${symbol}; switching to secondary provider:`, err?.message || err);
@@ -430,6 +477,7 @@ export const marketApi = {
         timestamp: new Date().toISOString(),
         marketStatus: 'OPEN',
         freshness: 'LATEST_AVAILABLE',
+        status: 'FALLBACK',
         source: 'NSE GoldBeES / MCX Spot Feed',
         asOf: 'Today',
         message: 'Latest available market data shown'
@@ -444,7 +492,7 @@ export const marketApi = {
         symbol,
         name: symbol,
         exchange: cleanSym.includes('.NS') ? 'NSE' : (cleanSym.includes('^') ? 'INDEX' : 'US_EXCHANGES'),
-        assetType: cleanSym.includes('BEES') || cleanSym.includes('ETF') ? 'ETF' : 'STOCK',
+        assetType: cleanSym.includes('BEES') || cleanSym.includes('ETF') ? 'ETF' : (cleanSym.includes('^') ? 'INDEX' : 'STOCK'),
         price: base.basePrice,
         currency: cleanSym.includes('.NS') || cleanSym.includes('^NSE') ? 'INR' : 'USD',
         change: Math.round(base.basePrice * 0.007 * 100) / 100,
@@ -457,17 +505,30 @@ export const marketApi = {
         timestamp: new Date().toISOString(),
         marketStatus: 'OPEN',
         freshness: 'LATEST_AVAILABLE',
-        source: 'Latest available market data shown',
+        status: 'FALLBACK',
+        source: 'Fallback Market Baseline',
         asOf: 'Today',
         message: 'Latest available market data shown'
       };
     }
 
+    // 5. General Demo Data Fallback
+    const demoQ = getDemoQuote(symbol);
+    if (demoQ && demoQ.price !== null) {
+      return {
+        ...demoQ,
+        status: 'FALLBACK',
+        freshness: 'LATEST_AVAILABLE',
+        source: 'Fallback Market Baseline'
+      };
+    }
+
+    // 6. Graceful Unavailable State (Zero Crashes)
     return {
       symbol,
       name: symbol,
-      exchange: 'GLOBAL',
-      assetType: 'STOCK',
+      exchange: 'UNKNOWN',
+      assetType: 'UNKNOWN',
       price: null,
       currency: 'INR',
       change: null,
@@ -475,38 +536,106 @@ export const marketApi = {
       volume: null,
       timestamp: new Date().toISOString(),
       marketStatus: 'CLOSED',
-      freshness: 'LATEST_AVAILABLE',
-      source: 'Latest available market data shown',
+      freshness: 'UNAVAILABLE',
+      status: 'UNAVAILABLE',
+      source: 'Market Feed Unavailable',
       asOf: 'Unavailable',
-      message: 'Latest available market data shown'
+      message: 'Instrument quote currently unavailable'
     };
   },
 
   getQuotes: async (symbols: string[]): Promise<Record<string, MarketQuote>> => {
+    if (!symbols || symbols.length === 0) return {};
+
+    if (isDemoMode()) {
+      const quotes: Record<string, MarketQuote> = {};
+      symbols.forEach((s) => {
+        quotes[s] = {
+          ...getDemoQuote(s),
+          status: 'DEMO'
+        };
+      });
+      return quotes;
+    }
+
+    const quotes: Record<string, MarketQuote> = {};
+    let liveQuotes: Record<string, MarketQuote> = {};
+
     try {
       const res = await apiClient.get<Record<string, MarketQuote>>(`/market/quotes?symbols=${encodeURIComponent(symbols.join(','))}`);
-      if (res.data && Object.keys(res.data).length > 0) {
-        return res.data;
+      if (res.data && typeof res.data === 'object') {
+        liveQuotes = res.data;
       }
     } catch {
       // Fallback to individual resilient resolution
     }
 
-    const quotes: Record<string, MarketQuote> = {};
     await Promise.all(
       symbols.map(async (s) => {
-        quotes[s] = await marketApi.getQuote(s);
+        const live = liveQuotes[s];
+        if (live && live.price !== null && typeof live.price === 'number' && !isNaN(live.price) && live.freshness !== 'UNAVAILABLE') {
+          quotes[s] = {
+            ...live,
+            status: live.status || (live.freshness === 'REALTIME' ? 'LIVE' : (live.freshness === 'DELAYED' ? 'DELAYED' : 'LIVE')),
+            source: live.source || 'Backend Live Market Engine'
+          };
+        } else {
+          try {
+            quotes[s] = await marketApi.getQuote(s);
+          } catch {
+            quotes[s] = {
+              symbol: s,
+              name: s,
+              exchange: 'UNKNOWN',
+              assetType: 'UNKNOWN',
+              price: null,
+              currency: 'INR',
+              change: null,
+              changePct: null,
+              volume: null,
+              timestamp: new Date().toISOString(),
+              marketStatus: 'CLOSED',
+              freshness: 'UNAVAILABLE',
+              status: 'UNAVAILABLE',
+              source: 'Market Feed Unavailable',
+              asOf: 'Unavailable'
+            };
+          }
+        }
       })
     );
     return quotes;
   },
 
   getCandles: async (symbol: string, range: string = '3y', interval: string = '1d'): Promise<MarketCandlesResponse> => {
+    // 0. Demo Mode: Immediate deterministic presentation candles
+    if (isDemoMode()) {
+      const observations = generateHistoricalSeries(symbol, range, interval);
+      return {
+        symbol,
+        range,
+        interval,
+        source: 'Deterministic Demo Market Feed',
+        freshness: 'MODEL_ASSUMPTION',
+        status: 'DEMO',
+        message: 'Deterministic demonstration data',
+        observations
+      };
+    }
+
     // 1. Primary: Try Backend Router API
     try {
       const res = await apiClient.get<MarketCandlesResponse>(`/market/candles/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`);
-      if (res.data && res.data.observations && res.data.observations.length > 0) {
-        return res.data;
+      if (res.data && Array.isArray(res.data.observations) && res.data.observations.length > 0) {
+        const validObs = res.data.observations.filter(o => typeof o.close === 'number' && !isNaN(o.close) && o.close > 0);
+        if (validObs.length > 0) {
+          return {
+            ...res.data,
+            observations: validObs,
+            status: res.data.status || (res.data.freshness === 'REALTIME' ? 'LIVE' : (res.data.freshness === 'DELAYED' ? 'DELAYED' : 'LIVE')),
+            source: res.data.source || 'Backend Historical Engine'
+          };
+        }
       }
     } catch (err: any) {
       console.info(`[MARKET_FALLBACK] Backend candles unreachable for ${symbol}; switching to fallback provider:`, err?.message || err);
@@ -516,7 +645,12 @@ export const marketApi = {
     const schemeCode = matchSchemeCode(symbol);
     if (schemeCode && /^\d+$/.test(schemeCode)) {
       const amfiCandles = await fetchDirectAmfiCandles(schemeCode, symbol, range);
-      if (amfiCandles && amfiCandles.observations.length > 0) return amfiCandles;
+      if (amfiCandles && amfiCandles.observations.length > 0) {
+        return {
+          ...amfiCandles,
+          status: 'FALLBACK'
+        };
+      }
     }
 
     // 3. Fallback: Resilient Historical Series (Never Display Blank Charts)
@@ -525,8 +659,9 @@ export const marketApi = {
       symbol,
       range,
       interval,
-      source: 'Latest available market data shown',
+      source: 'Fallback Historical Model',
       freshness: 'LATEST_AVAILABLE',
+      status: 'FALLBACK',
       message: 'Latest available market data shown',
       observations
     };
@@ -535,16 +670,22 @@ export const marketApi = {
   getInstruments: async (params: {
     q?: string;
     asset_type?: string;
+    assetType?: string;
     market?: string;
     exchange?: string;
     country?: string;
     page?: number;
     limit?: number;
   } = {}): Promise<MarketInstrumentsResponse> => {
+    if (isDemoMode()) {
+      return getDemoInstruments(params);
+    }
+
     try {
       const queryParts: string[] = [];
       if (params.q) queryParts.push(`q=${encodeURIComponent(params.q)}`);
-      if (params.asset_type && params.asset_type !== 'ALL') queryParts.push(`asset_type=${encodeURIComponent(params.asset_type)}`);
+      const at = params.asset_type || params.assetType;
+      if (at && at !== 'ALL') queryParts.push(`asset_type=${encodeURIComponent(at)}`);
       if (params.market && params.market !== 'ALL') queryParts.push(`market=${encodeURIComponent(params.market)}`);
       if (params.exchange && params.exchange !== 'ALL') queryParts.push(`exchange=${encodeURIComponent(params.exchange)}`);
       if (params.country && params.country !== 'ALL') queryParts.push(`country=${encodeURIComponent(params.country)}`);
@@ -553,30 +694,39 @@ export const marketApi = {
 
       const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
       const res = await apiClient.get<MarketInstrumentsResponse>(`/market/instruments${queryString}`);
-      return res.data;
+      if (res.data && Array.isArray(res.data.items) && res.data.items.length > 0) {
+        return res.data;
+      }
+      // If live returned empty set for default query, fallback to demo dataset to keep explorer populated
+      return getDemoInstruments(params);
     } catch {
-      return {
-        items: [],
-        total: 0,
-        page: params.page || 1,
-        limit: params.limit || 50,
-      };
+      return getDemoInstruments(params);
     }
   },
 
   getOverview: async (): Promise<any> => {
+    if (isDemoMode()) {
+      return {
+        ...DEMO_MARKET_OVERVIEW,
+        status: 'DEMO'
+      };
+    }
     try {
       const res = await apiClient.get('/market/overview');
-      return res.data;
+      if (res.data && res.data.indices && Array.isArray(res.data.indices) && res.data.indices.length > 0) {
+        return {
+          ...res.data,
+          status: 'LIVE'
+        };
+      }
+      return {
+        ...DEMO_MARKET_OVERVIEW,
+        status: 'FALLBACK'
+      };
     } catch {
       return {
-        indices: [
-          { symbol: 'NIFTY 50', name: 'NIFTY 50', price: 24500.0, change: 120.5, changePct: 0.49 },
-          { symbol: 'S&P 500', name: 'S&P 500', price: 5480.0, change: 25.4, changePct: 0.46 }
-        ],
-        gainers: [],
-        losers: [],
-        marketStatus: 'OPEN'
+        ...DEMO_MARKET_OVERVIEW,
+        status: 'FALLBACK'
       };
     }
   },
@@ -609,6 +759,10 @@ export const marketApi = {
   },
 
   getStatus: async (market: string = 'NSE'): Promise<MarketStatusResponse> => {
+    if (isDemoMode()) {
+      const isIndia = market.toUpperCase().includes('NSE') || market.toUpperCase().includes('BSE') || market.toUpperCase() === 'INDIA';
+      return isIndia ? DEMO_MARKET_STATUS[0] : DEMO_MARKET_STATUS[1];
+    }
     try {
       const res = await apiClient.get<MarketStatusResponse>(`/market/status/${encodeURIComponent(market)}`);
       return res.data;
@@ -626,37 +780,31 @@ export const marketApi = {
   },
 
   getMarketStatus: async (): Promise<MarketStatusResponse[]> => {
+    if (isDemoMode()) {
+      return DEMO_MARKET_STATUS;
+    }
     try {
       const res = await apiClient.get<MarketStatusResponse[]>('/market/status');
       return res.data;
     } catch {
-      return [
-        {
-          market: 'INDIA',
-          country: 'IN',
-          timezone: 'Asia/Kolkata',
-          status: 'OPEN',
-          isOpen: true,
-          currentTime: new Date().toISOString()
-        },
-        {
-          market: 'US',
-          country: 'US',
-          timezone: 'America/New_York',
-          status: 'OPEN',
-          isOpen: true,
-          currentTime: new Date().toISOString()
-        }
-      ];
+      return DEMO_MARKET_STATUS;
     }
   },
 
   getFundamentals: async (symbol: string): Promise<MarketFundamentalsResponse> => {
+    if (isDemoMode()) {
+      return getDemoResearch(symbol).fundamentals || {
+        symbol,
+        freshness: 'MODEL_ASSUMPTION',
+        asOf: 'Today',
+        source: 'Deterministic Demo Market Feed'
+      };
+    }
     try {
       const res = await apiClient.get<MarketFundamentalsResponse>(`/market/fundamentals/${encodeURIComponent(symbol)}`);
       return res.data;
     } catch {
-      return {
+      return getDemoResearch(symbol).fundamentals || {
         symbol,
         freshness: 'LATEST_AVAILABLE',
         asOf: 'Today'
@@ -665,6 +813,9 @@ export const marketApi = {
   },
 
   getResearch: async (symbol: string): Promise<InstrumentResearchBundle> => {
+    if (isDemoMode()) {
+      return getDemoResearch(symbol);
+    }
     try {
       const [quote, fundamentals] = await Promise.all([
         marketApi.getQuote(symbol).catch(() => null),
@@ -679,10 +830,7 @@ export const marketApi = {
         }
       };
     } catch {
-      return {
-        quote: null,
-        fundamentals: null
-      };
+      return getDemoResearch(symbol);
     }
   }
 };

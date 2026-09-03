@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
+import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
 
 interface Message {
   id: string;
@@ -136,26 +137,14 @@ How can I help guide your financial and investment decisions today?`,
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch {
-      // Intent-aware fallback to prevent displaying fake numbers
-      const qLow = userText.toLowerCase();
-      let fallbackText = '';
-      if (qLow.includes('etf')) {
-        fallbackText = `### Exchange Traded Fund (ETF)\n\nAn ETF is a basket of securities (like stocks or bonds) that trades on an exchange like an individual stock throughout market hours.\n\n* **Index Tracking:** Most ETFs track benchmarks like Nifty 50 or Nasdaq-100.\n* **Intraday Trading:** Traded in real-time with continuous price discovery via a Demat account.\n* **Ultra-Low Cost:** Passive management yields minimal expense ratios.`;
-      } else if (qLow.includes('sip') && !qLow.includes('increase') && !qLow.includes('calculate')) {
-        fallbackText = `### Systematic Investment Plan (SIP)\n\nA SIP is a disciplined wealth-building method where a fixed amount is automatically invested into mutual funds each month, benefiting from rupee-cost averaging and long-term compounding.`;
-      } else if (qLow.includes('us stock') || qLow.includes('american stock') || (qLow.includes('stock') && qLow.includes('suggest'))) {
-        fallbackText = `### US Stock Screening (Offline Mode)\n\nBased on your **${risk}** risk profile, consider high-quality global compounders:\n\n1. **Microsoft (MSFT):** Enterprise cloud moat (Azure) and high free cash flow.\n2. **Alphabet (GOOGL):** Attractive valuation with digital search and YouTube dominance.\n3. **Visa (V):** Resilient consumer payments network compounder.\n\n*Guidance: Limit direct individual equities to 5%–10% of your equity portfolio.*`;
-      } else if (qLow.includes('surplus') || qLow.includes('where should i invest') || qLow.includes('recommendation')) {
-        fallbackText = `Based on your **${risk} Profile** and investable surplus of **${formatCurrency(surplus)}/month**, SmartVest recommends deploying your capital into low-cost Direct-Growth index funds.\n\n* **Core Large Cap (35%):** UTI Nifty 50 Index Fund Direct\n* **Multi-Cap Alpha (25%):** Parag Parikh Flexi Cap Fund Direct\n* **Global Tech (15%):** Motilal Oswal Nasdaq 100 ETF (MON100)\n* **Liquid Buffer (15%):** ICICI Prudential Liquid Fund Direct\n* **Gold Hedge (10%):** Sovereign Gold Bonds / GoldBeES`;
-      } else {
-        fallbackText = `I can help you screen US and Indian stocks, analyze instruments, review portfolio diversification, calculate loan affordability, or explain any financial concept. What would you like to explore?`;
-      }
-
+      const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
+      const offlineRes = generateGroundedOfflineResponse(userText, groundedCtx);
       const fallbackMsg: Message = {
         id: `ai_${Date.now()}`,
         sender: 'assistant',
-        text: fallbackText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        text: offlineRes.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        followUps: offlineRes.followUps || []
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {

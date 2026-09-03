@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { buildUserContext } from '../../services/userProfileRepository';
+import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
 import { VestiqHeader } from './VestiqHeader';
 import { VestiqSidebar, type VestiqSession } from './VestiqSidebar';
 import { VestiqContextPanel } from './VestiqContextPanel';
@@ -331,16 +332,27 @@ export const VestiqShell: React.FC = () => {
       
       if (status === 401 || status === 403) {
         setError("Session expired or authentication required. Please sign in.");
-      } else if (status === 404) {
-        setError("AI advisory endpoint not found on backend.");
-      } else if (status === 429) {
-        setError("Rate limit reached. Please wait a moment before retrying.");
-      } else if (status === 500) {
-        setError(detail || "Backend processing error. Please retry.");
-      } else if (!err?.response) {
-        setError("Unable to connect to SmartVest backend. Please check network connection and retry.");
       } else {
-        setError(detail || "VestIQ couldn't complete that request.");
+        if (status === 429) {
+          setError("Rate limit reached. Operating under local grounded advisory.");
+        } else if (status === 500) {
+          setError(detail || "Backend processing notice: Using local verified portfolio context.");
+        }
+        
+        // Grounded offline reasoning fallback using authoritative profile
+        const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
+        const offlineRes = generateGroundedOfflineResponse(trimmedText, groundedCtx);
+        const tempAiMsgId = `ai_offline_${Date.now()}`;
+        const assistantMsg: VestiqChatMessage = {
+          id: tempAiMsgId,
+          sender: 'assistant',
+          text: offlineRes.text,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          calculations: offlineRes.calculations || null,
+          followUps: offlineRes.followUps && offlineRes.followUps.length > 0 ? offlineRes.followUps : undefined,
+          intent: offlineRes.intent
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
       }
     } finally {
       isCreatingRef.current = false;

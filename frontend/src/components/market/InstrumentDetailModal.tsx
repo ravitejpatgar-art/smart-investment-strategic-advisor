@@ -173,8 +173,12 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
             </div>
 
             <div className="mt-2.5 flex items-center gap-2 text-[11px] text-[#8A94A6]">
-              <span className={`w-1.5 h-1.5 rounded-full ${quote?.freshness === 'REALTIME' ? 'bg-[#00C853] animate-pulse' : 'bg-slate-500'}`} />
-              <span className="uppercase text-[10px]">{quote?.freshness ?? 'n/a'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                (quote?.status === 'LIVE' || quote?.freshness === 'REALTIME')
+                  ? 'bg-[#00C853] animate-pulse'
+                  : (quote?.status === 'DEMO' ? 'bg-[#8B5CF6]' : (quote?.status === 'FALLBACK' ? 'bg-amber-400' : 'bg-slate-500'))
+              }`} />
+              <span className="uppercase text-[10px]">{quote?.status ?? quote?.freshness ?? 'n/a'}</span>
               <span>•</span>
               <span>Provider: {quote?.source ?? instrument.provider}</span>
               {isLoadingResearch && <><RefreshCw className="w-3 h-3 animate-spin text-[#00D4AA] ml-1" /><span className="text-[#00D4AA] text-[10px]">Loading research…</span></>}

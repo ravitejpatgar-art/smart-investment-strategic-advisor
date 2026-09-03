@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
+import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
 
 interface CalculationData {
   type?: string;
@@ -162,11 +163,15 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch {
+      const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
+      const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
       const fallbackMsg: Message = {
-        id: `err_${Date.now()}`,
+        id: `ai_${Date.now()}`,
         sender: 'assistant',
-        text: 'Unable to reach the advisory intelligence server. Operating under local portfolio guidelines.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        text: offlineRes.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        calculations: offlineRes.calculations || null,
+        followUps: offlineRes.followUps || []
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
