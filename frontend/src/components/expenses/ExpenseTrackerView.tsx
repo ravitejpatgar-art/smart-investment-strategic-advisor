@@ -135,7 +135,7 @@ export const ExpenseTrackerView: React.FC = () => {
 
         <button
           onClick={handleOpenAddModal}
-          className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs hover:bg-[#00D4AA]/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+          className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs hover:bg-[#00D4AA]/90 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Add Expense</span>
@@ -313,13 +313,13 @@ export const ExpenseTrackerView: React.FC = () => {
 
       {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-[#101827] border border-white/[0.12] rounded-xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
-              <h3 className="text-base font-bold text-white uppercase tracking-wider">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
+          <div className="bg-[#101827] border border-white/[0.12] rounded-xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
                 {editingId ? 'Edit Expenditure Record' : 'Add Expenditure Record'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-[#8A94A6] hover:text-white cursor-pointer">
+              <button onClick={() => setShowModal(false)} className="p-1 rounded text-[#8A94A6] hover:text-white cursor-pointer active:scale-95" aria-label="Close">
                 <X className="w-4 h-4" />
               </button>
             </div>

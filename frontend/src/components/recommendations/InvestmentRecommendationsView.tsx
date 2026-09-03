@@ -184,14 +184,13 @@ export const InvestmentRecommendationsView: React.FC = () => {
             Multi-asset portfolio blueprint calibrated for risk-adjusted alpha, tax efficiency, and long-term compounding.
           </p>
         </div>
-
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
           <button
             onClick={() => {
               refetchQuotes();
               runAiAnalysis();
             }}
-            className="px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="w-full sm:w-auto px-3 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors active:scale-95"
             title="Recalculate Strategy & Refresh NAVs"
           >
             <RefreshCw className="w-3.5 h-3.5 text-[#00D4AA]" />
@@ -199,8 +198,16 @@ export const InvestmentRecommendationsView: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setActiveView('market')}
+            className="w-full sm:w-auto px-3.5 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] border border-white/[0.08] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors active:scale-95"
+          >
+            <Layers className="w-3.5 h-3.5 text-[#00D4AA]" />
+            <span>Market Universe</span>
+          </button>
+
+          <button
             onClick={() => setActiveView('ai')}
-            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Consult VestIQ</span>
@@ -209,7 +216,7 @@ export const InvestmentRecommendationsView: React.FC = () => {
       </div>
 
       {/* 2. Top Strategy Metric Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 min-w-0">
         
         {/* Final Advisory Risk */}
         <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
@@ -480,12 +487,12 @@ export const InvestmentRecommendationsView: React.FC = () => {
 
       {/* 5. Zero-Commission Execution Guide */}
       <div style={{ ...cardStyle, padding: '20px 24px' }}>
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.06]">
           <div>
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">Independent Direct Platforms</h3>
             <p className="text-xs text-[#8A94A6] mt-0.5">SmartVest provides decision-support models and does not execute trades or hold funds. Execute directly through registered third-party platforms.</p>
           </div>
-          <span className="text-[10.5px] font-bold text-[#00D4AA] uppercase tracking-wider">Non-Broker Disclosure</span>
+          <span className="text-[10.5px] font-bold text-[#00D4AA] uppercase tracking-wider shrink-0">Non-Broker Disclosure</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">

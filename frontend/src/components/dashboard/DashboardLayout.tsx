@@ -176,33 +176,34 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {/* Institutional TopBar */}
-        <header className="h-14 shrink-0 bg-[#0A1022] border-b border-white/[0.08] px-4 lg:px-8 flex items-center justify-between gap-4 z-20">
+        <header className="h-14 shrink-0 bg-[#0A1022] border-b border-white/[0.08] px-3 sm:px-4 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 z-20">
           {/* Mobile Menu Toggle & Title */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer"
+              aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+              className="lg:hidden p-2 rounded-lg bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer active:scale-95 transition-all"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
 
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-bold text-white tracking-tight truncate leading-none">
+              <h1 className="text-xs sm:text-sm md:text-base font-bold text-white tracking-tight truncate leading-none">
                 {currentMeta.title}
               </h1>
-              <p className="text-[11px] text-[#8A94A6] hidden sm:block truncate mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-[#8A94A6] hidden sm:block truncate mt-0.5">
                 {currentMeta.subtitle}
               </p>
             </div>
           </div>
 
           {/* Right Action Tools */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Currency Selector */}
             <div className="flex items-center bg-[#101827] border border-white/[0.08] rounded-md p-0.5 text-xs">
               <button
                 onClick={() => setCurrency('INR')}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer ${
                   currency === 'INR' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
@@ -210,7 +211,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               </button>
               <button
                 onClick={() => setCurrency('USD')}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer ${
                   currency === 'USD' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
@@ -223,7 +224,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               onClick={handleReanalyze}
               disabled={isReanalyzing}
               title="Recalculate Multi-Asset Blueprint"
-              className="p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white transition-colors cursor-pointer text-xs flex items-center gap-1.5"
+              className="p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white transition-colors cursor-pointer text-xs flex items-center gap-1.5 active:scale-95"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-[#00D4AA]' : ''}`} />
               <span className="hidden sm:inline text-[11px] font-semibold">Recalculate</span>
@@ -233,7 +234,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <button
               onClick={handleExportPdf}
               disabled={isExportingPdf}
-              className="px-3 py-1.5 rounded-md bg-[#101827] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Export PDF Report"
+              className="p-1.5 sm:px-3 sm:py-1.5 rounded-md bg-[#101827] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
               <FileText className="w-3.5 h-3.5 text-[#00D4AA]" />
               <span className="hidden sm:inline">Export PDF</span>
@@ -242,7 +244,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             {/* VestIQ Assistant Trigger */}
             <button
               onClick={() => setActiveView('ai')}
-              className="px-3 py-1.5 rounded-md bg-[#00D4AA] text-[#050816] text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-2.5 sm:px-3 py-1.5 rounded-md bg-[#00D4AA] text-[#050816] text-[10.5px] sm:text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>VestIQ AI</span>
@@ -252,7 +254,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0A1022] border-b border-white/[0.08] p-4 space-y-1 z-30">
+          <div className="lg:hidden bg-[#0A1022] border-b border-white/[0.08] p-3 space-y-1 z-30 animate-fade-in shadow-xl">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -263,21 +265,35 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                     setActiveView(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold ${
-                    isActive ? 'bg-[#101827] text-[#00D4AA]' : 'text-[#8A94A6]'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                    isActive ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]' : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#00D4AA]' : 'text-[#8A94A6]'}`} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
+            <div className="pt-2 border-t border-white/[0.06]">
+              <button
+                onClick={() => {
+                  setActiveView('ai');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                  activeView === 'ai' || activeView === 'vestiq' ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]' : 'text-[#8A94A6] hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-[#00D4AA]" />
+                <span>VestIQ Strategic AI</span>
+              </button>
+            </div>
           </div>
         )}
 
         {/* Dynamic View Scroll Container */}
-        <main className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 bg-[#050816]">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 lg:px-8 py-4 sm:py-6 bg-[#050816] min-w-0">
+          <div className="max-w-7xl mx-auto min-w-0">
             {children}
           </div>
         </main>

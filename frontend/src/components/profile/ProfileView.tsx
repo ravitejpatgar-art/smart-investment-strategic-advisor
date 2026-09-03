@@ -443,7 +443,7 @@ export const ProfileView: React.FC = () => {
         </div>
 
         {/* Bottom Action Footer */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
           <div className="text-xs text-[#8A94A6]">
             {isDirty ? (
               <span className="text-amber-400 font-medium">Unsaved parameters detected.</span>
@@ -452,13 +452,13 @@ export const ProfileView: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
             {isDirty && (
               <button
                 type="button"
                 onClick={handleReset}
                 disabled={isSaving}
-                className="px-4 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold cursor-pointer transition-colors"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold cursor-pointer transition-colors active:scale-95 text-center"
               >
                 Cancel
               </button>
@@ -467,7 +467,7 @@ export const ProfileView: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 active:scale-95"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
               <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate Strategy'}</span>

@@ -242,11 +242,11 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-5 py-3 border-t border-white/[0.06] bg-[#0A1022] flex items-center justify-between gap-3">
+        <div className="px-4 sm:px-5 py-3 border-t border-white/[0.06] bg-[#0A1022] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={handleAskIQ}
-            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Consult VestIQ on {instrument.symbol}</span>
@@ -255,7 +255,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-[#101827] border border-white/[0.08] text-xs font-semibold text-[#8A94A6] hover:text-white cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#101827] border border-white/[0.08] text-xs font-semibold text-[#8A94A6] hover:text-white cursor-pointer active:scale-95 text-center"
           >
             Close
           </button>

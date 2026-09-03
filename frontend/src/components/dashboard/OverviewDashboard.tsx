@@ -204,17 +204,17 @@ export const OverviewDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
           <button 
             onClick={() => setActiveView('recommendations')} 
-            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] text-xs font-bold hover:bg-[#00D4AA]/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] text-xs font-bold hover:bg-[#00D4AA]/90 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
           >
             <span>View Asset Allocation</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
           <button 
             onClick={() => setActiveView('ai')} 
-            className="px-3.5 py-2 rounded-lg bg-[#0A1022] hover:bg-[#141F36] text-white border border-white/[0.08] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto px-3.5 py-2.5 rounded-lg bg-[#0A1022] hover:bg-[#141F36] text-white border border-white/[0.08] text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#00D4AA]" />
             <span>Ask VestIQ</span>
@@ -227,7 +227,7 @@ export const OverviewDashboard: React.FC = () => {
       ================================================================ */}
       <section
         style={{ ...cardStyle, padding: '10px 18px' }}
-        className="flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs"
+        className="flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs min-w-0"
       >
         <div className="flex items-center gap-6 min-w-max">
           <div className="flex items-center gap-2">
@@ -253,7 +253,7 @@ export const OverviewDashboard: React.FC = () => {
             );
           })}
         </div>
-        <button onClick={() => refetchMarket()} className="text-[#8A94A6] hover:text-white p-1 shrink-0 cursor-pointer" title="Refresh Live Data">
+        <button onClick={() => refetchMarket()} className="text-[#8A94A6] hover:text-white p-1 shrink-0 cursor-pointer active:scale-95" title="Refresh Live Data">
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
       </section>
@@ -261,7 +261,7 @@ export const OverviewDashboard: React.FC = () => {
       {/* ================================================================
           3. TOP 5 INSTITUTIONAL KPI STRIP
       ================================================================ */}
-      <section style={{ ...cardStyle, padding: '16px 20px' }}>
+      <section style={{ ...cardStyle, padding: '16px 20px' }} className="min-w-0">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-0">
           {[
             { label: 'Monthly Inflow', value: formatCurrency(totalIncome), sub: 'Gross Cash Flow', accent: '#FFFFFF', icon: TrendingUp, iconColor: '#00C853' },
@@ -272,7 +272,7 @@ export const OverviewDashboard: React.FC = () => {
           ].map((kpi, i) => {
             const Icon = kpi.icon;
             return (
-              <div key={i} className={`sm:px-4 py-2 ${i > 0 ? 'sm:border-l sm:border-white/[0.06]' : ''}`}>
+              <div key={i} className={`sm:px-4 py-2 ${i > 0 ? 'sm:border-l sm:border-white/[0.06]' : ''} ${i === 4 ? 'col-span-2 md:col-span-1' : ''}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider">{kpi.label}</span>
                   <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: kpi.iconColor }} />
@@ -292,10 +292,10 @@ export const OverviewDashboard: React.FC = () => {
       {/* ================================================================
           4. MAIN DUAL-COLUMN AREA: Allocation Ring + Compounding Chart
       ================================================================ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-w-0">
         
         {/* LEFT 7 COLS: Compounding Growth Projections */}
-        <div className="lg:col-span-7 space-y-5">
+        <div className="lg:col-span-7 space-y-5 min-w-0">
           <div style={{ ...cardStyle, padding: '22px 24px' }} className="space-y-4">
             
             {/* Chart Header */}
@@ -306,7 +306,7 @@ export const OverviewDashboard: React.FC = () => {
               </div>
 
               {/* Scenario Toggles */}
-              <div className="flex items-center gap-1 bg-[#0A1022] p-1 rounded-lg border border-white/[0.06] text-xs">
+              <div className="flex flex-wrap items-center gap-1 bg-[#0A1022] p-1 rounded-lg border border-white/[0.06] text-xs">
                 {(['Conservative', 'Base', 'Optimistic'] as ProjectionScenario[]).map((sc) => (
                   <button
                     key={sc}
@@ -322,9 +322,9 @@ export const OverviewDashboard: React.FC = () => {
             </div>
 
             {/* Horizon Selector */}
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="text-[#8A94A6] font-semibold">Time Horizon:</span>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {([5, 10, 15, 20, 25] as ProjectionHorizon[]).map((hz) => (
                   <button
                     key={hz}
