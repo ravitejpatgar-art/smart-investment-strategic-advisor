@@ -59,7 +59,7 @@ describe('Market API & Fallback Resilience', () => {
   it('returns valid instruments list on network failure instead of crashing', async () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Instruments directory offline'));
 
-    const response = await marketApi.getInstruments({ assetType: 'EQUITY' });
+    const response = await marketApi.getInstruments({ asset_type: 'EQUITY' });
     expect(response).toBeDefined();
     expect(Array.isArray(response.items)).toBe(true);
     expect(response.items.length).toBeGreaterThan(0);

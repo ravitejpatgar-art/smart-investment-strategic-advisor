@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { MarketInstrument, MarketStatusResponse } from '../services/marketApi';
 import {
   isDemoMode,
   DEMO_INSTRUMENTS,
@@ -40,14 +41,14 @@ describe('SmartVest Demo Mode & Deterministic Data', () => {
     expect(DEMO_COVERAGE.exchanges).toContain('NASDAQ');
 
     expect(DEMO_MARKET_STATUS.length).toBeGreaterThanOrEqual(2);
-    expect(DEMO_MARKET_STATUS.some(s => s.market === 'INDIA')).toBe(true);
-    expect(DEMO_MARKET_STATUS.some(s => s.market === 'US')).toBe(true);
+    expect(DEMO_MARKET_STATUS.some((s: MarketStatusResponse) => s.market === 'INDIA')).toBe(true);
+    expect(DEMO_MARKET_STATUS.some((s: MarketStatusResponse) => s.market === 'US')).toBe(true);
 
     expect(DEMO_MARKET_OVERVIEW.indices.length).toBeGreaterThanOrEqual(2);
   });
 
   it('contains essential benchmark assets across asset classes in DEMO_INSTRUMENTS', () => {
-    const symbols = DEMO_INSTRUMENTS.map(i => i.symbol);
+    const symbols = DEMO_INSTRUMENTS.map((i: MarketInstrument) => i.symbol);
     expect(symbols).toContain('NIFTY 50');
     expect(symbols).toContain('SENSEX');
     expect(symbols).toContain('S&P 500');
@@ -78,11 +79,11 @@ describe('SmartVest Demo Mode & Deterministic Data', () => {
     expect(all.items.length).toBeGreaterThan(0);
     expect(all.total).toBe(DEMO_INSTRUMENTS.length);
 
-    const stocksOnly = getDemoInstruments({ assetType: 'STOCK' });
-    expect(stocksOnly.items.every(i => i.assetType === 'STOCK')).toBe(true);
+    const stocksOnly = getDemoInstruments({ asset_type: 'STOCK' });
+    expect(stocksOnly.items.every((i: MarketInstrument) => i.assetType === 'STOCK')).toBe(true);
 
     const queryMatch = getDemoInstruments({ q: 'reliance' });
-    expect(queryMatch.items.some(i => i.symbol === 'RELIANCE.NS')).toBe(true);
+    expect(queryMatch.items.some((i: MarketInstrument) => i.symbol === 'RELIANCE.NS')).toBe(true);
   });
 
   it('returns research bundle with fundamentals and technicals', () => {
