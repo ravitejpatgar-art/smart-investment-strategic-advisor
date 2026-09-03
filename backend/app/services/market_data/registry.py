@@ -31,6 +31,16 @@ class MarketDataProviderRegistry:
         """Returns provider capabilities and entitlement status."""
         return [
             {
+                "provider": "TrueData",
+                "market": "Indian Equities & Indices (NSE/BSE/MCX Paid Feed)",
+                "realtime": self.router.truedata.capabilities.realtime,
+                "delayed": True,
+                "historical": True,
+                "apiKeyPresent": bool(self.router.truedata.api_key),
+                "entitlementVerified": self.router.truedata.capabilities.entitlement_verified,
+                "status": "ACTIVE" if self.router.truedata.capabilities.is_configured else "STANDBY"
+            },
+            {
                 "provider": "Polygon.io",
                 "market": "US Equities, ETFs & Aggregates",
                 "realtime": self.router.polygon.capabilities.realtime,

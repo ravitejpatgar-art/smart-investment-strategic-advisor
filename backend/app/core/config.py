@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     INDIA_MARKET_DATA_API_KEY: str = os.getenv("INDIA_MARKET_DATA_API_KEY", "")
     INDIA_MARKET_DATA_API_KEY_BACKUP: str = os.getenv("INDIA_MARKET_DATA_API_KEY_BACKUP", "")
     
+    # Optional Paid Indian Market Data Provider (e.g. TrueData) — Disabled by default
+    PAID_MARKET_DATA_ENABLED: bool = os.getenv("PAID_MARKET_DATA_ENABLED", "false").lower() in ("true", "1", "yes")
+    PAID_MARKET_DATA_PROVIDER: str = os.getenv("PAID_MARKET_DATA_PROVIDER", "truedata")
+    PAID_MARKET_DATA_API_KEY: str = os.getenv("PAID_MARKET_DATA_API_KEY", "")
+    TRUEDATA_API_KEY: str = os.getenv("TRUEDATA_API_KEY", "")
+    TRUEDATA_API_SECRET: str = os.getenv("TRUEDATA_API_SECRET", "")
+    
     US_MARKET_DATA_PROVIDER: str = os.getenv("US_MARKET_DATA_PROVIDER", "yfinance")
     US_MARKET_DATA_API_KEY: str = os.getenv("US_MARKET_DATA_API_KEY", "")
     US_MARKET_DATA_API_KEY_BACKUP: str = os.getenv("US_MARKET_DATA_API_KEY_BACKUP", "")

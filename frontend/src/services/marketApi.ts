@@ -23,6 +23,75 @@ export type FreshnessType =
 
 export type MarketDataStatus = 'LIVE' | 'DELAYED' | 'FALLBACK' | 'DEMO' | 'UNAVAILABLE';
 
+export interface MarketDataProviderAdapter {
+  name: string;
+  isEnabled: () => boolean;
+  getQuote: (symbol: string) => Promise<MarketQuote | null>;
+  getQuotes: (symbols: string[]) => Promise<Record<string, MarketQuote> | null>;
+  getCandles: (symbol: string, range?: string, interval?: string) => Promise<MarketCandlesResponse | null>;
+}
+
+export function isPaidProviderEnabled(): boolean {
+  return import.meta.env.VITE_PAID_MARKET_DATA_ENABLED === 'true' || import.meta.env.VITE_PAID_MARKET_DATA_ENABLED === true;
+}
+
+export function getPaidProviderName(): string {
+  return import.meta.env.VITE_MARKET_DATA_PROVIDER || 'truedata';
+}
+
+export function normalizePaidProviderQuote(data: any, originalSymbol: string): MarketQuote {
+  if (!data || data.price === null || data.price === undefined || isNaN(Number(data.price))) {
+    return {
+      symbol: originalSymbol,
+      name: originalSymbol,
+      exchange: 'UNKNOWN',
+      assetType: 'UNKNOWN',
+      price: null,
+      currency: 'INR',
+      change: null,
+      changePct: null,
+      volume: null,
+      timestamp: new Date().toISOString(),
+      marketStatus: 'CLOSED',
+      freshness: 'UNAVAILABLE',
+      status: 'UNAVAILABLE',
+      source: 'Market Feed Unavailable',
+      asOf: 'Unavailable',
+      message: 'Paid provider quote unavailable'
+    };
+  }
+
+  const p = Number(data.price);
+  const chg = data.change !== undefined && data.change !== null ? Number(data.change) : 0;
+  const chgPct = data.changePct !== undefined && data.changePct !== null 
+    ? Number(data.changePct) 
+    : (data.changePercent !== undefined && data.changePercent !== null ? Number(data.changePercent) : 0);
+  const isRealtime = Boolean(data.isRealtime || data.freshness === 'REALTIME' || data.status === 'LIVE');
+
+  return {
+    symbol: originalSymbol,
+    name: data.name || originalSymbol,
+    exchange: data.exchange || (originalSymbol.includes('.NS') ? 'NSE' : 'BSE'),
+    assetType: data.assetType || (originalSymbol.includes('NIFTY') || originalSymbol.includes('SENSEX') ? 'INDEX' : 'STOCK'),
+    price: p,
+    currency: data.currency || 'INR',
+    change: Math.round(chg * 100) / 100,
+    changePct: Math.round(chgPct * 100) / 100,
+    volume: data.volume !== undefined && data.volume !== null ? Number(data.volume) : 0,
+    open: data.open !== undefined && data.open !== null ? Number(data.open) : p,
+    high: data.high !== undefined && data.high !== null ? Number(data.high) : p,
+    low: data.low !== undefined && data.low !== null ? Number(data.low) : p,
+    prevClose: data.prevClose !== undefined && data.prevClose !== null ? Number(data.prevClose) : p,
+    timestamp: data.timestamp || new Date().toISOString(),
+    marketStatus: data.marketStatus || 'OPEN',
+    freshness: isRealtime ? 'REALTIME' : (data.freshness || 'DELAYED'),
+    status: isRealtime ? 'LIVE' : (data.status === 'DELAYED' ? 'DELAYED' : 'LIVE'),
+    source: data.source || `Authorized Feed (${getPaidProviderName()})`,
+    asOf: data.asOf || 'Today',
+    message: data.message || 'Data supplied by configured market provider'
+  };
+}
+
 export function resolveQuoteStatus(quote?: Partial<MarketQuote> | null): MarketDataStatus {
   if (!quote) return 'UNAVAILABLE';
   if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') return 'UNAVAILABLE';

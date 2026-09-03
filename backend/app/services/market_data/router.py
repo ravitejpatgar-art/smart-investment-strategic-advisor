@@ -9,6 +9,7 @@ from app.services.market_data.providers.twelvedata_provider import TwelveDataPro
 from app.services.market_data.providers.polygon_provider import PolygonProvider
 from app.services.market_data.providers.alphavantage_provider import AlphaVantageProvider
 from app.services.market_data.providers.yahoo_provider import YahooFinanceProvider
+from app.services.market_data.providers.truedata_provider import TrueDataProvider
 from app.services.market_data.indian_equities import IndianEquitiesProvider
 from app.services.market_data.mutual_funds import MutualFundsProvider
 from app.services.market_data.gold import GoldProvider
@@ -68,7 +69,7 @@ class ProviderRouter:
     """
     Multi-provider market data router with automatic failover, health tracking, and caching.
     Strict Priority Fallback Pipeline:
-      1. Indian Stocks: NSE Feed -> Yahoo Finance
+      1. Indian Stocks: Optional Paid TrueData Feed -> NSE Feed -> Yahoo Finance
       2. Mutual Funds: AMFI Official Feed -> MFAPI Feed -> Scheme DB
       3. US Stocks: Finnhub -> TwelveData -> Yahoo Finance
       4. ETFs: Exchange Feed -> Yahoo Finance
@@ -80,12 +81,14 @@ class ProviderRouter:
         self.polygon = PolygonProvider()
         self.alphavantage = AlphaVantageProvider()
         self.yahoo = YahooFinanceProvider()
+        self.truedata = TrueDataProvider()
         self.indian_equities = IndianEquitiesProvider()
         self.mutual_funds = MutualFundsProvider()
         self.gold_provider = GoldProvider()
         self.etf_provider = ETFProvider()
 
         self.health_trackers = {
+            "TrueData": ProviderHealthTracker("TrueData"),
             "Finnhub": ProviderHealthTracker("Finnhub"),
             "TwelveData": ProviderHealthTracker("TwelveData"),
             "Polygon.io": ProviderHealthTracker("Polygon.io"),
@@ -112,9 +115,13 @@ class ProviderRouter:
         if "ETF" in s or "BEES" in s or s in ["MON100", "MON100.NS", "SP500", "SP500.NS", "QQQ", "SPY", "VTI"]:
             return [self.etf_provider, self.yahoo, self.indian_equities]
 
-        # 4. Indian Equities & Indices priority (.NS, .BO, Nifty, Sensex) -> NSE -> Yahoo Finance
+        # 4. Indian Equities & Indices priority (.NS, .BO, Nifty, Sensex) -> TrueData (if configured) -> NSE -> Yahoo Finance
         if s.endswith(".NS") or s.endswith(".BO") or s in ["NIFTY 50", "^NSEI", "SENSEX", "^BSESN", "BANKNIFTY", "^NSEBANK", "RELIANCE", "TCS", "INFY", "HDFCBANK"]:
-            return [self.indian_equities, self.yahoo]
+            chain = []
+            if self.truedata.capabilities.is_configured and self.health_trackers["TrueData"].is_available():
+                chain.append(self.truedata)
+            chain.extend([self.indian_equities, self.yahoo])
+            return chain
 
         # 5. US Stocks & Global Equities -> Finnhub -> TwelveData -> Yahoo Finance -> Polygon -> AlphaVantage
         chain: List[BaseMarketDataProvider] = []
