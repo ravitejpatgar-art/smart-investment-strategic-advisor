@@ -54,11 +54,6 @@ interface FintechState {
   isAnalyzing: boolean;
   runAiAnalysis: (callback?: () => void) => void;
 
-  // Theme
-  theme: 'light' | 'dark';
-  setTheme: (theme: 'light' | 'dark') => void;
-  toggleTheme: () => void;
-
   // Investment Strategy Engine (dynamically computed from real user profile)
   strategy: InvestmentStrategy;
 
@@ -77,37 +72,19 @@ interface FintechState {
 // Load authoritative session data from UserProfileRepository
 const authActive = isAuthEnabled();
 const storedToken = localStorage.getItem('smartvest_token');
-// Migration for existing users: previous versions saved 'dark' as default.
-// Migrate to new 'light' fintech default if v2 migration hasn't run yet.
-const THEME_MIGRATION_KEY = 'smartvest_theme_v2';
-let storedTheme: 'light' | 'dark' = 'light';
+// Clean up any legacy theme keys
 if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
   try {
-    if (!localStorage.getItem(THEME_MIGRATION_KEY)) {
-      localStorage.setItem('smartvest_theme', 'light');
-      localStorage.setItem(THEME_MIGRATION_KEY, 'true');
-    }
-    const raw = localStorage.getItem('smartvest_theme');
-    storedTheme = raw === 'dark' ? 'dark' : 'light';
+    localStorage.removeItem('smartvest_theme');
+    localStorage.removeItem('smartvest_theme_v2');
   } catch {
-    storedTheme = 'light';
+    // Ignore
   }
 }
 
 const initialUser = authActive ? null : userProfileRepo.getProfile();
 const initialExpenses = authActive ? [] : userProfileRepo.getExpenses();
 const initialGoals = authActive ? [] : userProfileRepo.getGoals();
-
-// Ensure DOM has correct theme class on startup (defaulting to clean light fintech theme)
-if (typeof document !== 'undefined') {
-  if (storedTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-    document.documentElement.classList.remove('light');
-  } else {
-    document.documentElement.classList.remove('dark');
-    document.documentElement.classList.add('light');
-  }
-}
 
 const initialStrategy = calculateInvestmentStrategy(initialUser, initialExpenses, initialGoals);
 if (initialUser && initialUser.onboardingCompleted) {
@@ -119,35 +96,6 @@ if (initialUser && initialUser.onboardingCompleted) {
 }
 
 export const useFintechStore = create<FintechState>((set, get) => ({
-  theme: storedTheme,
-  setTheme: (theme: 'light' | 'dark') => {
-    localStorage.setItem('smartvest_theme', theme);
-    if (typeof document !== 'undefined') {
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.classList.add('light');
-      }
-    }
-    set({ theme });
-  },
-  toggleTheme: () => {
-    const current = get().theme;
-    const next = current === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('smartvest_theme', next);
-    if (typeof document !== 'undefined') {
-      if (next === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.classList.add('light');
-      }
-    }
-    set({ theme: next });
-  },
 
   currency: 'INR',
   currencySymbol: '₹',

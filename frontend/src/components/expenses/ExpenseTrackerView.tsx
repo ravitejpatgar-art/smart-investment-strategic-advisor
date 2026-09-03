@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { 
+  Wallet, 
   Plus, 
   Trash2, 
   Edit3, 
@@ -48,6 +49,13 @@ export const ExpenseTrackerView: React.FC = () => {
     Utilities: { color: '#F59E0B', label: 'Bills & Utilities', group: 'Fixed' },
     EMI: { color: '#FF5252', label: 'Debt Service & EMIs', group: 'Fixed' },
     Other: { color: '#8A94A6', label: 'Miscellaneous', group: 'Wants' },
+  };
+
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
   };
 
   // Group totals
@@ -111,87 +119,98 @@ export const ExpenseTrackerView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto">
+    <div className="space-y-6 pb-12">
       
-      {/* Page Header (no card wrapper) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Cash Flow & Expenses</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Track monthly expenditure, identify trends, and manage investable surplus.
+      {/* Top Banner */}
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-[#00D4AA]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Monthly Cash Flow & Surplus</h1>
+          </div>
+          <p className="text-xs text-[#8A94A6]">
+            Audit fixed baseline expenditure, track discretionary leaks, and optimize investable capital capacity.
           </p>
         </div>
+
         <button
           onClick={handleOpenAddModal}
-          className="px-3.5 py-1.5 rounded-lg bg-[#0D9488] text-white font-medium text-xs hover:bg-[#0F766E] transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+          className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs hover:bg-[#00D4AA]/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Add Expense</span>
         </button>
       </div>
 
-      {/* Analytics Overview */}
+      {/* Analytics Overview: Total Expense + Needs / Wants / Fixed Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         
-        {/* Left: cashflow summary */}
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 md:col-span-5 space-y-4 flex flex-col justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wide block">Total Monthly Outflow</span>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-white font-mono">{formatCurrency(totalExpenses)}</div>
-            <div className="flex items-center gap-3 text-xs text-slate-400">
-              <span>Burn: <strong className="text-rose-600 font-mono">{burnRate}%</strong></span>
-              <span>·</span>
-              <span>Savings: <strong className="text-[#0D9488] dark:text-[#00D4AA] font-mono">{savingsRate}%</strong></span>
+        {/* Left: Total Expense & Burn Metric */}
+        <div style={{ ...cardStyle, padding: '20px 22px' }} className="md:col-span-5 space-y-4 flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Total Monthly Outflow</span>
+            <div className="text-3xl font-black text-white font-mono leading-tight">
+              {formatCurrency(totalExpenses)}
+            </div>
+            <div className="flex items-center gap-3 text-xs text-[#8A94A6] pt-1">
+              <span>Burn Ratio: <strong className="text-[#FF5252] font-mono">{burnRate}%</strong></span>
+              <span>•</span>
+              <span>Savings Rate: <strong className="text-[#00D4AA] font-mono">{savingsRate}%</strong></span>
             </div>
           </div>
 
-          <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-white/[0.04]">
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Inflow: <strong className="text-slate-700 dark:text-slate-200 font-mono">{formatCurrency(totalIncome)}</strong></span>
-              <span>Surplus: <strong className="text-[#0D9488] dark:text-[#00D4AA] font-mono">{formatCurrency(netSavings)}</strong></span>
+          {/* Progress Split Bar */}
+          <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
+            <div className="flex justify-between text-xs text-[#8A94A6]">
+              <span>Inflow: <strong className="text-white font-mono">{formatCurrency(totalIncome)}</strong></span>
+              <span>Surplus: <strong className="text-[#00D4AA] font-mono">{formatCurrency(netSavings)}</strong></span>
             </div>
-            <div className="w-full bg-slate-100 dark:bg-[#060811] h-1.5 rounded-full overflow-hidden flex">
-              <div className="h-full bg-rose-500" style={{ width: `${Math.min(100, burnRate)}%` }} />
-              <div className="h-full bg-[#0D9488]" style={{ width: `${Math.min(100 - burnRate, savingsRate)}%` }} />
+            <div className="w-full bg-[#0A1022] h-2 rounded-full overflow-hidden flex">
+              <div className="h-full bg-[#FF5252]" style={{ width: `${Math.min(100, burnRate)}%` }} />
+              <div className="h-full bg-[#00D4AA]" style={{ width: `${Math.min(100 - burnRate, savingsRate)}%` }} />
             </div>
           </div>
         </div>
 
-        {/* Right: 50/30/20 */}
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 md:col-span-7 space-y-3">
-          <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wide block">50 / 30 / 20 Rule</span>
+        {/* Right: Essentiality Distribution (50/30/20 Rule) */}
+        <div style={{ ...cardStyle, padding: '20px 22px' }} className="md:col-span-7 space-y-3.5">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">
+            Essentiality Allocation (50 / 30 / 20 Rule)
+          </span>
 
-          <div className="space-y-2">
-            {[
-              { label: 'Needs', sub: '≤50%', amount: needsTotal, color: '#0D9488' },
-              { label: 'Wants', sub: '≤30%', amount: wantsTotal, color: '#D97706' },
-              { label: 'Fixed & EMIs', sub: '≤20%', amount: fixedTotal, color: '#0284C7' },
-            ].map(item => {
-              const pct = totalIncome > 0 ? Math.round((item.amount / totalIncome) * 100) : 0;
-              return (
-                <div key={item.label} className="flex items-center gap-3">
-                  <div className="w-28 shrink-0">
-                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300">{item.label}</div>
-                    <div className="text-[10px] text-slate-400">{item.sub}</div>
-                  </div>
-                  <div className="flex-1 bg-slate-100 dark:bg-[#060811] h-1.5 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, backgroundColor: item.color }} />
-                  </div>
-                  <div className="text-right w-28 shrink-0">
-                    <div className="text-xs font-mono font-semibold text-slate-900 dark:text-white">{formatCurrency(item.amount)}</div>
-                    <div className="text-[10px] text-slate-400">{pct}%</div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
+              <span className="text-[10.5px] text-[#00D4AA] font-bold block uppercase">NEEDS (CORE)</span>
+              <div className="text-base font-black text-white font-mono">{formatCurrency(needsTotal)}</div>
+              <div className="text-[11px] text-[#8A94A6]">
+                {totalIncome > 0 ? Math.round((needsTotal / totalIncome) * 100) : 0}% (≤50%)
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
+              <span className="text-[10.5px] text-amber-400 font-bold block uppercase">WANTS (DISCRETIONARY)</span>
+              <div className="text-base font-black text-white font-mono">{formatCurrency(wantsTotal)}</div>
+              <div className="text-[11px] text-[#8A94A6]">
+                {totalIncome > 0 ? Math.round((wantsTotal / totalIncome) * 100) : 0}% (≤30%)
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
+              <span className="text-[10.5px] text-[#8B5CF6] font-bold block uppercase">FIXED & EMIS</span>
+              <div className="text-base font-black text-white font-mono">{formatCurrency(fixedTotal)}</div>
+              <div className="text-[11px] text-[#8A94A6]">
+                {totalIncome > 0 ? Math.round((fixedTotal / totalIncome) * 100) : 0}% (≤20%)
+              </div>
+            </div>
           </div>
 
+          {/* 20-Year Compounding Leak Analysis */}
           {wantsTotal > 0 && (
-            <div className="pt-2 border-t border-slate-100 dark:border-white/[0.04] text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#0D9488] shrink-0 mt-0.5" />
-              <span>
-                Trim discretionary by 25% ({formatCurrency(potentialMonthlySaved)}/mo) → <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(futureCorpus20Yr)}</strong> in 20yr at 13.5% CAGR.
-              </span>
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.06] flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-[#00D4AA] shrink-0 mt-0.5" />
+              <div className="text-xs text-[#8A94A6] leading-relaxed">
+                <strong className="text-white">Compounding Opportunity:</strong> Trimming discretionary spend by 25% ({formatCurrency(potentialMonthlySaved)}/mo) and redirecting into a 13.5% CAGR allocation could yield <strong className="text-[#00D4AA] font-mono">{formatCurrency(futureCorpus20Yr)}</strong> in 20 years.
+              </div>
             </div>
           )}
         </div>
@@ -199,43 +218,46 @@ export const ExpenseTrackerView: React.FC = () => {
       </div>
 
       {/* Category Breakdown */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
-        <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wide block">By Category</span>
-        <div className="space-y-2">
-          {(Object.keys(categoryMeta) as ExpenseItem['category'][]).filter(cat => (categoryTotals[cat] || 0) > 0).map((cat) => {
+      <div style={{ ...cardStyle, padding: '20px 22px' }} className="space-y-3.5">
+        <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">
+          Outflow by Expenditure Category
+        </span>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {(Object.keys(categoryMeta) as ExpenseItem['category'][]).map((cat) => {
             const meta = categoryMeta[cat];
             const catAmt = categoryTotals[cat] || 0;
             const pct = totalExpenses > 0 ? Math.round((catAmt / totalExpenses) * 100) : 0;
 
             return (
-              <div key={cat} className="flex items-center gap-3">
-                <div className="w-32 shrink-0">
-                  <div className="text-xs font-medium text-slate-700 dark:text-slate-300">{meta.label}</div>
-                  <div className="text-[10px] text-slate-400">{meta.group}</div>
+              <div key={cat} className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white font-medium">{meta.label}</span>
+                  <span className="font-mono font-bold text-white">{formatCurrency(catAmt)}</span>
                 </div>
-                <div className="flex-1 bg-slate-100 dark:bg-[#060811] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[#101827] h-1.5 rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
                 </div>
-                <div className="text-right w-24 shrink-0">
-                  <div className="text-xs font-mono font-semibold text-slate-900 dark:text-white">{formatCurrency(catAmt)}</div>
-                  <div className="text-[10px] text-slate-400">{pct}%</div>
+                <div className="flex justify-between text-[10.5px] text-[#8A94A6]">
+                  <span>{meta.group}</span>
+                  <span className="font-mono font-bold">{pct}%</span>
                 </div>
               </div>
             );
           })}
-          {Object.keys(categoryTotals).length === 0 && (
-            <p className="text-xs text-slate-400 py-2">No expenses logged yet.</p>
-          )}
         </div>
       </div>
 
       {/* Recent Transactions List */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/[0.04]">
-          <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Logged Transactions ({expenses.length})</h3>
+      <div style={{ ...cardStyle, padding: '20px 22px' }} className="space-y-4">
+        <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <Receipt className="w-4 h-4 text-[#00D4AA]" />
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Logged Outflows ({expenses.length})</h3>
+          </div>
           <button
             onClick={handleOpenAddModal}
-            className="text-xs text-[#0D9488] dark:text-[#00D4AA] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
+            className="text-xs text-[#00D4AA] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Transaction</span>
@@ -243,39 +265,39 @@ export const ExpenseTrackerView: React.FC = () => {
         </div>
 
         {expenses.length === 0 ? (
-          <div className="p-8 text-center space-y-2 bg-slate-50 dark:bg-[#060811] rounded-lg">
-            <Receipt className="w-6 h-6 text-slate-400 mx-auto" />
-            <p className="text-xs text-slate-500 dark:text-slate-400">No expenditure logged yet. Add your living costs to compute cashflow surplus.</p>
+          <div className="p-8 text-center space-y-2 bg-[#0A1022] rounded-lg">
+            <Receipt className="w-8 h-8 text-[#5A667A] mx-auto" />
+            <p className="text-xs text-[#8A94A6]">No expenditure logged yet. Add your living costs to compute cashflow surplus.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+          <div className="divide-y divide-white/[0.04]">
             {expenses.map((item) => {
               const meta = categoryMeta[item.category] || categoryMeta.Other;
               return (
-                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] px-2 rounded-lg transition-colors text-xs">
+                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-white/[0.02] px-2 rounded-md transition-colors text-xs">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs bg-slate-100 dark:bg-[#060811]" style={{ color: meta.color }}>
+                    <div className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-[11px] bg-[#0A1022] border border-white/[0.06]" style={{ color: meta.color }}>
                       {item.category.charAt(0)}
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">{item.description}</div>
-                      <div className="text-[11px] text-slate-400">{item.date} • {meta.label}</div>
+                      <div className="font-semibold text-white">{item.description}</div>
+                      <div className="text-[11px] text-[#8A94A6]">{item.date} • {meta.label}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(item.amount)}</span>
+                    <span className="font-mono font-bold text-white">{formatCurrency(item.amount)}</span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleOpenEditModal(item)}
-                        className="p-1 rounded text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+                        className="p-1 rounded text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
                         title="Edit Expense"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => deleteExpense(item.id)}
-                        className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                        className="p-1 rounded text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer"
                         title="Delete Expense"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -289,83 +311,80 @@ export const ExpenseTrackerView: React.FC = () => {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-xl p-6 space-y-4 font-sans animate-fade-in">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-white/[0.06]">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                {editingId ? 'Edit Expenditure' : 'Log New Outflow'}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-[#101827] border border-white/[0.12] rounded-xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+              <h3 className="text-base font-bold text-white uppercase tracking-wider">
+                {editingId ? 'Edit Expenditure Record' : 'Add Expenditure Record'}
               </h3>
-              <button 
-                onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-              >
+              <button onClick={() => setShowModal(false)} className="text-[#8A94A6] hover:text-white cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitExpense} className="space-y-3.5 text-xs">
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Category</label>
+            <form onSubmit={handleSubmitExpense} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ExpenseItem['category'])}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA]"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none"
                 >
-                  {(Object.keys(categoryMeta) as ExpenseItem['category'][]).map((c) => (
-                    <option key={c} value={c}>{categoryMeta[c].label} ({categoryMeta[c].group})</option>
+                  {(Object.keys(categoryMeta) as ExpenseItem['category'][]).map((cat) => (
+                    <option key={cat} value={cat} className="bg-[#0A1022] text-white">{categoryMeta[cat].label} ({categoryMeta[cat].group})</option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Monthly Amount</label>
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Monthly Amount (₹)</label>
                 <input
                   type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="e.g. 15000"
                   required
                   min="1"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA] font-mono"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none font-mono"
                 />
               </div>
 
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Description</label>
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Description</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Flat rent / Groceries"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA]"
+                  placeholder="e.g. Groceries and weekly dining"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Date</label>
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Date</label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA]"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg text-[#8A94A6] hover:text-white text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#00D4AA] text-[#060811] text-xs font-bold hover:bg-[#00BFA5] cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs cursor-pointer"
                 >
-                  {editingId ? 'Save Changes' : 'Record Expense'}
+                  {editingId ? 'Update Record' : 'Save Record'}
                 </button>
               </div>
             </form>

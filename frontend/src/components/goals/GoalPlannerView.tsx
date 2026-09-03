@@ -29,7 +29,49 @@ const CATEGORY_CONFIG: Record<GoalItem['category'] | string, {
   Other: { icon: Target, color: '#8A94A6' },
 };
 
+// Circular Progress Component
+const CircularProgress: React.FC<{ pct: number; size?: number; color?: string; label?: string }> = ({ 
+  pct, 
+  size = 56, 
+  color = '#00D4AA',
+  label 
+}) => {
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth * 2) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, pct)) / 100) * circumference;
 
+  return (
+    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.08)"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-bold font-mono text-white text-[12px] leading-none">
+          {label || `${pct}%`}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export const GoalPlannerView: React.FC = () => {
   const { 
@@ -67,6 +109,13 @@ export const GoalPlannerView: React.FC = () => {
   const totalProgressPct = totalTargetAmount > 0 ? Math.min(100, Math.round((totalCurrentSaved / totalTargetAmount) * 100)) : 0;
   const totalRemaining = Math.max(0, totalTargetAmount - totalCurrentSaved);
   const isSurplusDeficit = totalRequiredSIP > surplus;
+
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  };
 
   const handleOpenAddModal = () => {
     setEditingId(null);
@@ -130,68 +179,80 @@ export const GoalPlannerView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto">
+    <div className="space-y-6 pb-12">
       
-      {/* Page Header (no card wrapper — just text + button) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Milestone Roadmaps</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Set financial milestones and model required monthly SIP allocations.
+      {/* Top Header Banner */}
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-[#00D4AA]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Lifecycle Milestone Roadmaps</h1>
+          </div>
+          <p className="text-xs text-[#8A94A6]">
+            Quantify capital required for primary milestones and model monthly SIP allocations.
           </p>
         </div>
+
         <button
           onClick={handleOpenAddModal}
-          className="px-3.5 py-1.5 rounded-lg bg-[#0D9488] text-white font-medium text-xs hover:bg-[#0F766E] transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+          className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs hover:bg-[#00D4AA]/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Goal</span>
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>Add New Goal</span>
         </button>
       </div>
 
-      {/* Metrics: flat unified band */}
-      {goals.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-x divide-slate-100 dark:divide-white/[0.06] border border-slate-100 dark:border-white/[0.06] rounded-xl bg-white dark:bg-[#0B1120]">
-          <div className="px-5 py-4 space-y-1">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide block">Total Target</span>
-            <div className="text-base font-semibold text-slate-900 dark:text-white font-mono">{formatCurrency(totalTargetAmount)}</div>
-            <div className="text-xs text-slate-400">{totalProgressPct}% funded · {formatCurrency(totalCurrentSaved)} saved</div>
+      {/* 3 Summary Metric Tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div style={{ ...cardStyle, padding: '18px 20px' }} className="space-y-1">
+          <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">Total Milestone Target</span>
+          <div className="text-2xl font-black text-white font-mono leading-tight">
+            {formatCurrency(totalTargetAmount)}
           </div>
-
-          <div className="px-5 py-4 space-y-1">
-            <span className={`text-[11px] font-medium uppercase tracking-wide block ${isSurplusDeficit ? 'text-rose-500' : 'text-[#0D9488] dark:text-[#00D4AA]'}`}>Monthly SIP Needed</span>
-            <div className={`text-base font-semibold font-mono ${isSurplusDeficit ? 'text-rose-600' : 'text-[#0D9488] dark:text-[#00D4AA]'}`}>{formatCurrency(totalRequiredSIP)}/mo</div>
-            <div className="text-xs text-slate-400">
-              {isSurplusDeficit ? `Shortfall: ${formatCurrency(totalRequiredSIP - surplus)}` : `Within ${formatCurrency(surplus)} surplus`}
-            </div>
-          </div>
-
-          <div className="px-5 py-4 space-y-1">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide block">Remaining Gap</span>
-            <div className="text-base font-semibold text-slate-900 dark:text-white font-mono">{formatCurrency(totalRemaining)}</div>
-            <div className="text-xs text-slate-400">{goals.length} active {goals.length === 1 ? 'goal' : 'goals'}</div>
+          <div className="flex justify-between text-xs text-[#8A94A6] pt-1">
+            <span>Saved: <strong className="text-white font-mono">{formatCurrency(totalCurrentSaved)}</strong></span>
+            <span className="font-semibold text-[#00D4AA]">{totalProgressPct}% Funded</span>
           </div>
         </div>
-      )}
+
+        <div style={{ ...cardStyle, padding: '18px 20px' }} className="space-y-1">
+          <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">Required Monthly Deployment</span>
+          <div className={`text-2xl font-black font-mono leading-tight ${isSurplusDeficit ? 'text-[#FF5252]' : 'text-[#00D4AA]'}`}>
+            {formatCurrency(totalRequiredSIP)}/mo
+          </div>
+          <div className="text-xs text-[#8A94A6] pt-1">
+            {isSurplusDeficit ? `Exceeds monthly surplus by ${formatCurrency(totalRequiredSIP - surplus)}` : `Comfortably funded from ${formatCurrency(surplus)} surplus`}
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, padding: '18px 20px' }} className="space-y-1">
+          <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">Remaining Funding Gap</span>
+          <div className="text-2xl font-black text-white font-mono leading-tight">
+            {formatCurrency(totalRemaining)}
+          </div>
+          <div className="text-xs text-[#8A94A6] pt-1">
+            Across {goals.length} Defined Goals
+          </div>
+        </div>
+      </div>
 
       {/* Goals List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/[0.04]">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">Active Goals</span>
-          {goals.length > 0 && <span className="text-xs text-slate-400">{goals.length} registered</span>}
+        <div className="flex items-center justify-between text-xs text-[#8A94A6] pb-2 border-b border-white/[0.06]">
+          <span className="font-bold uppercase tracking-wider text-white">Active Milestone Portfolios</span>
+          <span>{goals.length} Goals Registered</span>
         </div>
 
         {goals.length === 0 ? (
-          <div className="py-10 text-center space-y-2">
-            <Target className="w-7 h-7 mx-auto text-slate-300 dark:text-slate-600" />
-            <div className="text-sm text-slate-500 dark:text-slate-400">No goals yet</div>
-            <p className="text-xs text-slate-400">Set a target amount and timeline to model your SIP plan.</p>
+          <div style={{ ...cardStyle, padding: '36px 20px' }} className="text-center space-y-3">
+            <Target className="w-8 h-8 text-[#5A667A] mx-auto" />
+            <p className="text-sm text-[#8A94A6]">No milestone portfolios configured yet.</p>
             <button
               onClick={handleOpenAddModal}
-              className="mt-1 px-3.5 py-1.5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-medium text-xs inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Goal</span>
+              <Plus className="w-4 h-4" />
+              <span>Create First Milestone</span>
             </button>
           </div>
         ) : (
@@ -201,63 +262,78 @@ export const GoalPlannerView: React.FC = () => {
               const Icon = cfg.icon;
               const progressPct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
               const remainingAmt = Math.max(0, g.targetAmount - g.currentAmount);
+              const isFeasible = (g.monthlySipRequired || 0) <= surplus;
 
               return (
                 <div 
                   key={g.id}
-                  className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 flex flex-col justify-between space-y-3 min-w-0 overflow-hidden"
+                  style={{ ...cardStyle, padding: '18px 20px' }}
+                  className="flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-[#060811] border border-slate-200/60 dark:border-white/[0.06] flex items-center justify-center" style={{ color: cfg.color }}>
-                          <Icon className="w-3.5 h-3.5" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-[#0A1022] border border-white/[0.08] flex items-center justify-center" style={{ color: cfg.color }}>
+                          <Icon className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{g.title}</h3>
-                          <span className="text-[11px] text-slate-400">Target: {g.targetDate}</span>
+                          <h3 className="text-base font-bold text-white">{g.title}</h3>
+                          <span className="text-xs text-[#8A94A6]">Target Date: {g.targetDate}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleOpenEditModal(g)}
-                          className="p-1 rounded text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+                          className="p-1 rounded text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => deleteGoal(g.id)}
-                          className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          className="p-1 rounded text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Target Amount & SIP */}
-                    <div className="flex items-baseline justify-between pt-1 border-t border-slate-100 dark:border-white/[0.04]">
+                    {/* Dominant Target Amount & SIP */}
+                    <div className="flex items-baseline justify-between pt-2 border-t border-white/[0.06]">
                       <div>
-                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Target Corpus</span>
-                        <span className="text-base font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(g.targetAmount)}</span>
+                        <span className="text-[10.5px] text-[#8A94A6] font-bold block uppercase">Target Corpus</span>
+                        <span className="text-xl font-black text-white font-mono">{formatCurrency(g.targetAmount)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Required Monthly SIP</span>
-                        <span className="text-xs font-bold font-mono text-[#0D9488] dark:text-[#00D4AA]">{formatCurrency(g.monthlySipRequired || 0)}/mo</span>
+                        <span className="text-[10.5px] text-[#8A94A6] font-bold block uppercase">Required Monthly SIP</span>
+                        <span className="text-sm font-bold font-mono text-[#00D4AA]">{formatCurrency(g.monthlySipRequired || 0)}/mo</span>
                       </div>
                     </div>
 
-                    {/* Progress */}
-                    <div className="space-y-1 text-xs pt-1">
-                      <div className="flex justify-between text-[11px] text-slate-400">
-                        <span>Saved: <strong className="text-slate-700 dark:text-slate-200 font-mono">{formatCurrency(g.currentAmount)}</strong></span>
-                        <span>{progressPct}% ({formatCurrency(remainingAmt)} gap)</span>
-                      </div>
-                      <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#0D9488] rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+                    {/* Visual Progress Gauge */}
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1022] border border-white/[0.04]">
+                      <CircularProgress pct={progressPct} size={50} color={cfg.color} label={`${progressPct}%`} />
+                      <div className="flex-1 space-y-1 text-xs">
+                        <div className="flex justify-between text-[11.5px]">
+                          <span className="text-[#8A94A6]">Funded: <strong className="text-white font-mono">{formatCurrency(g.currentAmount)}</strong></span>
+                          <span className="text-[#8A94A6]">Gap: <strong className="text-[#8A94A6] font-mono">{formatCurrency(remainingAmt)}</strong></span>
+                        </div>
+                        <div className="w-full bg-[#101827] h-1.5 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${progressPct}%`, backgroundColor: cfg.color }} />
+                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Feasibility Indicator */}
+                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                    <span className="text-[#8A94A6]">Feasibility Status:</span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                      isFeasible ? 'bg-[#00C853]/10 text-[#00C853] border border-[#00C853]/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    }`}>
+                      {isFeasible ? '✓ FEASIBLE FROM SURPLUS' : '⚠ ADJUST CASH FLOW'}
+                    </span>
                   </div>
                 </div>
               );
@@ -268,46 +344,46 @@ export const GoalPlannerView: React.FC = () => {
 
       {/* Add / Edit Goal Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-xl p-6 space-y-4 font-sans animate-fade-in">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/[0.06]">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-[#101827] border border-white/[0.12] rounded-xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <h3 className="text-base font-bold text-white uppercase tracking-wider">
                 {editingId ? 'Edit Milestone Portfolio' : 'Configure Milestone Portfolio'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
+              <button onClick={() => setShowModal(false)} className="text-[#8A94A6] hover:text-white cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitGoal} className="space-y-3.5 text-xs">
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Milestone Name</label>
+            <form onSubmit={handleSubmitGoal} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Milestone Name</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Dream Home Downpayment"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA]"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Category</label>
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as GoalItem['category'])}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA]"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
                 >
                   {Object.keys(CATEGORY_CONFIG).map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat} className="bg-[#0A1022] text-white">{cat}</option>
                   ))}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Target Corpus (₹)</label>
+                <div className="space-y-1">
+                  <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Target Corpus (₹)</label>
                   <input
                     type="number"
                     required
@@ -315,45 +391,45 @@ export const GoalPlannerView: React.FC = () => {
                     value={targetAmount}
                     onChange={(e) => setTargetAmount(e.target.value)}
                     placeholder="e.g. 2500000"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA] font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
                   />
                 </div>
 
-                <div>
-                  <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Current Saved (₹)</label>
+                <div className="space-y-1">
+                  <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Current Saved (₹)</label>
                   <input
                     type="number"
                     min="0"
                     value={currentAmount}
                     onChange={(e) => setCurrentAmount(e.target.value)}
                     placeholder="0"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA] font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-slate-500 dark:text-slate-400 font-semibold block mb-1">Target Deadline Date</label>
+              <div className="space-y-1">
+                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Target Deadline Date</label>
                 <input
                   type="date"
                   required
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-[#00D4AA]"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg text-[#8A94A6] hover:text-white text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#00D4AA] text-[#060811] text-xs font-bold hover:bg-[#00BFA5] cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs cursor-pointer"
                 >
                   {editingId ? 'Update Milestone' : 'Save Milestone'}
                 </button>

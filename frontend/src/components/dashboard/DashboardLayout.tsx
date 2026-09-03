@@ -8,13 +8,11 @@ import {
   User, 
   FileText, 
   RefreshCw,
-  TrendingUp,
+  BarChart3,
   Menu,
   X,
   Layers,
-  LogOut,
-  Moon,
-  Sun
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isAuthEnabled } from '../../services/firebase';
@@ -39,9 +37,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     setCurrency, 
     isAdvisorOpen, 
     setAdvisorOpen,
-    runAiAnalysis,
-    theme,
-    toggleTheme
+    runAiAnalysis
   } = useFintechStore();
 
   const { signOut } = useAuth();
@@ -50,13 +46,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
 
-  const navItems: { id: ActiveNavTab; label: string; icon: React.ElementType }[] = [
-    { id: 'dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
-    { id: 'market',          label: 'Market',           icon: TrendingUp },
-    { id: 'expenses',        label: 'Expense Tracker',  icon: Receipt },
-    { id: 'recommendations', label: 'Recommendations',  icon: Layers },
-    { id: 'goals',           label: 'Goals',            icon: Target },
-    { id: 'profile',         label: 'Profile',          icon: User },
+  const navItems: { id: ActiveNavTab; label: string; icon: React.ElementType; desc: string }[] = [
+    { id: 'dashboard',       label: 'Wealth Overview',  icon: LayoutDashboard, desc: 'Portfolio & KPIs' },
+    { id: 'market',          label: 'Market Terminal',  icon: BarChart3,        desc: 'Global Quotes'   },
+    { id: 'recommendations', label: 'Asset Allocation', icon: Layers,           desc: 'Strategy Blueprint' },
+    { id: 'goals',           label: 'Goal Roadmaps',    icon: Target,           desc: 'Milestones'      },
+    { id: 'expenses',        label: 'Cash Flow & Surplus', icon: Receipt,       desc: 'Inflow & Expenses' },
+    { id: 'profile',         label: 'Investor Mandate', icon: User,             desc: 'Risk & Profile'  },
   ];
 
   const handleExportPdf = () => {
@@ -75,40 +71,36 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   };
 
   const pageTitleMap: Partial<Record<ActiveNavTab, { title: string; subtitle: string }>> = {
-    dashboard:       { title: 'Strategic Wealth Overview',     subtitle: 'Real-time asset allocation & financial runway analytics' },
-    market:          { title: 'Global Market Terminal',        subtitle: 'NSE · NASDAQ · Global ETFs · Commodities & NAV Feeds' },
-    recommendations: { title: 'Asset Allocation Blueprint',    subtitle: 'Quantitative multi-asset strategy & direct execution guide' },
-    goals:           { title: 'Goal Roadmaps & Milestones',    subtitle: 'Target probability modeling & inflation-adjusted SIP plans' },
-    expenses:        { title: 'Cash Flow & Capital Surplus',   subtitle: 'Income allocation, fixed expenditure, and investable surplus' },
-    profile:         { title: 'Investor Mandate & Governance', subtitle: 'Risk capacity scores and portfolio settings' },
-    ai:              { title: 'VestIQ Financial AI',           subtitle: 'AI financial intelligence workspace' },
-    vestiq:          { title: 'VestIQ Financial AI',           subtitle: 'AI financial intelligence workspace' },
-    onboarding:      { title: 'Wealth Discovery',              subtitle: 'Complete your investment profile' },
+    dashboard:       { title: 'Portfolio Overview',     subtitle: 'Institutional capital analytics & real-time financial health' },
+    market:          { title: 'Global Market Terminal', subtitle: 'NSE · NASDAQ · Global ETFs · Commodities & NAV Feeds' },
+    recommendations: { title: 'Asset Allocation Blueprint', subtitle: 'Quantitative multi-asset strategy & direct execution guide' },
+    goals:           { title: 'Goal Roadmaps & Milestones', subtitle: 'Target probability modeling & inflation-adjusted SIP plans' },
+    expenses:        { title: 'Cash Flow & Capital Surplus', subtitle: 'Income allocation, fixed expenditure, and investable surplus' },
+    profile:         { title: 'Investor Mandate & Governance', subtitle: 'Risk capacity scores, lifecycle parameters, and demographic settings' },
+    onboarding:      { title: 'Wealth Discovery',       subtitle: 'Complete your investment profile' },
   };
 
   const currentMeta = pageTitleMap[activeView] || pageTitleMap.dashboard!;
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'R';
-  const userName = user?.name || 'ravi';
-  const userRisk = user?.riskTolerance || user?.riskCategory || 'Conservative';
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#F8FAFC] dark:bg-[#060811] text-slate-900 dark:text-white font-sans">
+    <div className="h-screen flex overflow-hidden bg-[#050816] text-[#FFFFFF] font-sans">
       
       {/* ================================================================
-          MINIMAL SAAS SIDEBAR — Desktop (~260px)
+          INSTITUTIONAL SIDEBAR — Desktop
       ================================================================ */}
       <aside
-        className="hidden lg:flex flex-col w-[260px] shrink-0 h-full bg-white dark:bg-[#0B1120] border-r border-slate-200/80 dark:border-white/[0.06]"
+        className="hidden lg:flex flex-col w-[240px] shrink-0 h-full bg-[#0A1022] border-r border-white/[0.08]"
       >
         {/* Brand Header */}
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04]">
-          <BrandLogo size="md" subtitleText="STRATEGIC ADVISOR" />
+        <div className="px-5 py-5 border-b border-white/[0.06]">
+          <BrandLogo size="md" subtitleText="CAPITAL ADVISORY" />
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1 scrollbar-none">
-          <div className="text-[10px] font-bold tracking-wider uppercase px-2 mb-2 text-slate-400">
-            MENU
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-none">
+          <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[#5A667A]">
+            PORTFOLIO MODULES
           </div>
 
           {navItems.map((item) => {
@@ -118,109 +110,63 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <button
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
                   isActive 
-                    ? 'bg-[#E6FDF7] dark:bg-[#00D4AA]/15 text-[#0D9488] dark:text-[#00D4AA] border border-[#0D9488]/30 dark:border-[#00D4AA]/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                    ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]' 
+                    : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-slate-400'}`} />
-                <span className="truncate">{item.label}</span>
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#00D4AA]' : 'text-[#8A94A6]'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate">{item.label}</div>
+                </div>
+                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]" />}
               </button>
             );
           })}
 
-          {/* VestIQ AI Workspace Card in Sidebar */}
-          <div className="pt-3">
-            <div className="p-3.5 bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl shadow-2xs space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
-                  <Sparkles className="w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA]" />
-                  <span>VestIQ AI</span>
-                </div>
-                <span className="bg-[#0D9488] dark:bg-[#00D4AA] text-white dark:text-[#060811] text-[9px] font-black px-1.5 py-0.5 rounded">
-                  NEW
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                Financial research & intelligence workspace
-              </p>
-              <button 
-                onClick={() => setActiveView('ai')}
-                className="text-xs font-bold text-[#0D9488] dark:text-[#00D4AA] hover:underline flex items-center gap-1 cursor-pointer pt-0.5"
-              >
-                <span>Launch Workspace</span>
-                <span>→</span>
-              </button>
+          {/* AI Intelligence Workspace Link */}
+          <div className="pt-4 mt-4 border-t border-white/[0.06]">
+            <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[#5A667A]">
+              INTELLIGENCE
             </div>
+            <button
+              onClick={() => setActiveView('ai')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+                activeView === 'ai' || activeView === 'vestiq'
+                  ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]'
+                  : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-[#00D4AA]" />
+              <span>VestIQ Strategic AI</span>
+            </button>
           </div>
         </nav>
 
-        {/* Sidebar Footer Controls */}
-        <div className="p-3.5 border-t border-slate-100 dark:border-white/[0.04] space-y-2.5 bg-white dark:bg-[#0B1120]">
-          
-          {/* Theme & Currency Row */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs px-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">THEME</span>
-              <button
-                onClick={toggleTheme}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 hover:bg-slate-50 text-[11px] font-semibold cursor-pointer shadow-2xs"
-                title="Toggle Theme"
-              >
-                {theme === 'dark' ? <Sun className="w-3 h-3 text-amber-400" /> : <Sun className="w-3 h-3 text-amber-500" />}
-                <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
-              </button>
+        {/* Sidebar Footer — Client Account Card */}
+        <div className="p-3 border-t border-white/[0.06] bg-[#050816]/60 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#101827] border border-white/[0.06] min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-md bg-[#00D4AA]/15 text-[#00D4AA] border border-[#00D4AA]/30 flex items-center justify-center font-bold text-xs shrink-0">
+              {userInitial}
             </div>
-
-            <div className="flex items-center justify-between text-xs px-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CURRENCY</span>
-              <div className="flex items-center bg-slate-100 dark:bg-[#0F172A] p-0.5 rounded-lg border border-slate-200/70 dark:border-white/[0.06] text-[11px]">
-                <button
-                  onClick={() => setCurrency('INR')}
-                  className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
-                    currency === 'INR' ? 'bg-[#0D9488] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  ₹ INR
-                </button>
-                <button
-                  onClick={() => setCurrency('USD')}
-                  className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
-                    currency === 'USD' ? 'bg-[#0D9488] text-white shadow-2xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  $ USD
-                </button>
-              </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-white truncate">{user?.name || 'Investor'}</div>
+              <div className="text-[10px] text-[#8A94A6] truncate">{user?.riskTolerance ? `${user.riskTolerance} Mandate` : 'Moderate Mandate'}</div>
             </div>
           </div>
-
-          {/* User Profile Card */}
-          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0F172A] border border-slate-200/70 dark:border-white/[0.06] flex items-center justify-between gap-2 shadow-2xs">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="w-7 h-7 rounded-lg bg-[#0D9488]/15 dark:bg-[#00D4AA]/20 text-[#0D9488] dark:text-[#00D4AA] border border-[#0D9488]/30 flex items-center justify-center font-black text-xs shrink-0">
-                {userInitial}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">{userName}</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{userRisk} Risk</div>
-              </div>
-            </div>
-            {authActive && (
-              <button
-                onClick={async () => {
-                  await signOut();
-                  setActiveView('landing');
-                }}
-                title="Sign Out"
-                className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shrink-0"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
+          {authActive && (
+            <button
+              onClick={async () => {
+                await signOut();
+                setActiveView('landing');
+              }}
+              title="Sign Out"
+              className="p-2 rounded-lg bg-[#101827] hover:bg-[#1f293d] border border-white/[0.08] text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </aside>
 
@@ -229,22 +175,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       ================================================================ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        {/* TopBar */}
-        <header className="h-14 shrink-0 bg-white dark:bg-[#0B1120] border-b border-slate-200/80 dark:border-white/[0.06] px-4 lg:px-8 flex items-center justify-between gap-4 z-20">
+        {/* Institutional TopBar */}
+        <header className="h-14 shrink-0 bg-[#0A1022] border-b border-white/[0.08] px-4 lg:px-8 flex items-center justify-between gap-4 z-20">
           {/* Mobile Menu Toggle & Title */}
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 rounded-md bg-slate-100 dark:bg-[#0F172A] text-slate-600 dark:text-slate-400 hover:text-slate-900 cursor-pointer"
+              className="lg:hidden p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
 
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              <h1 className="text-sm sm:text-base font-bold text-white tracking-tight truncate leading-none">
                 {currentMeta.title}
               </h1>
-              <p className="text-[11px] text-slate-400 hidden sm:block truncate">
+              <p className="text-[11px] text-[#8A94A6] hidden sm:block truncate mt-0.5">
                 {currentMeta.subtitle}
               </p>
             </div>
@@ -252,51 +198,61 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
           {/* Right Action Tools */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <span className="text-xs text-slate-400 hidden md:inline">Last analyzed: Today</span>
+            {/* Currency Selector */}
+            <div className="flex items-center bg-[#101827] border border-white/[0.08] rounded-md p-0.5 text-xs">
+              <button
+                onClick={() => setCurrency('INR')}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                  currency === 'INR' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
+                }`}
+              >
+                ₹ INR
+              </button>
+              <button
+                onClick={() => setCurrency('USD')}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                  currency === 'USD' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
+                }`}
+              >
+                $ USD
+              </button>
+            </div>
 
-            {/* Theme Toggle Icon */}
-            <button
-              onClick={toggleTheme}
-              title="Toggle Theme"
-              className="p-1.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs"
-            >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
-            </button>
-
-            {/* Re-analyze Button */}
+            {/* Recalculate Button */}
             <button
               onClick={handleReanalyze}
               disabled={isReanalyzing}
-              className="px-3.5 py-1.5 rounded-xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#0F172A] text-slate-700 dark:text-slate-200 hover:bg-slate-50 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-60"
+              title="Recalculate Multi-Asset Blueprint"
+              className="p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white transition-colors cursor-pointer text-xs flex items-center gap-1.5"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA] ${isReanalyzing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Re-analyze</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-[#00D4AA]' : ''}`} />
+              <span className="hidden sm:inline text-[11px] font-semibold">Recalculate</span>
             </button>
 
-            {/* Export PDF Button */}
+            {/* PDF Export Button */}
             <button
               onClick={handleExportPdf}
               disabled={isExportingPdf}
-              className="px-3.5 py-1.5 rounded-xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#0F172A] text-slate-700 dark:text-slate-200 hover:bg-slate-50 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-60"
+              className="px-3 py-1.5 rounded-md bg-[#101827] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <FileText className="w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA]" />
+              <FileText className="w-3.5 h-3.5 text-[#00D4AA]" />
               <span className="hidden sm:inline">Export PDF</span>
             </button>
 
-            {/* Ask VestIQ Primary CTA Button */}
+            {/* VestIQ Assistant Trigger */}
             <button
               onClick={() => setActiveView('ai')}
-              className="px-4 py-1.5 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] dark:bg-[#00D4AA] dark:hover:bg-[#00D4AA]/90 text-white dark:text-[#060811] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded-md bg-[#00D4AA] text-[#050816] text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Ask VestIQ</span>
+              <span>VestIQ AI</span>
             </button>
           </div>
         </header>
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-white dark:bg-[#0B1120] border-b border-slate-200 dark:border-white/[0.08] p-4 space-y-1.5 z-30">
+          <div className="lg:hidden bg-[#0A1022] border-b border-white/[0.08] p-4 space-y-1 z-30">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -307,10 +263,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                     setActiveView(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                    isActive 
-                      ? 'bg-[#E6FDF7] dark:bg-[#00D4AA]/15 text-[#0F766E] dark:text-[#00D4AA] border border-[#00D4AA]' 
-                      : 'text-slate-600 dark:text-slate-400'
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold ${
+                    isActive ? 'bg-[#101827] text-[#00D4AA]' : 'text-[#8A94A6]'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -322,8 +276,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         )}
 
         {/* Dynamic View Scroll Container */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#F8FAFC] dark:bg-[#060811] p-4 lg:p-7 min-w-0">
-          <div className="max-w-7xl mx-auto w-full min-w-0 space-y-5">
+        <main className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 bg-[#050816]">
+          <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>

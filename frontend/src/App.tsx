@@ -11,7 +11,7 @@ import { GoalPlannerView } from './components/goals/GoalPlannerView';
 import { InvestmentRecommendationsView } from './components/recommendations/InvestmentRecommendationsView';
 import { MarketExplorerView } from './components/market/MarketExplorerView';
 import { ProfileView } from './components/profile/ProfileView';
-import { AIAssistantView } from './components/assistant/AIAssistantView';
+import { VestiqShell } from './components/vestiq/VestiqShell';
 
 export const App: React.FC = () => {
   const { 
@@ -141,6 +141,15 @@ export const App: React.FC = () => {
     );
   }
 
+  // Dedicated Full-Page AI Intelligence Workspace (VestIQ by SmartVest)
+  if (activeView === 'ai' || activeView === 'vestiq') {
+    return (
+      <ProtectedRoute>
+        <VestiqShell />
+      </ProtectedRoute>
+    );
+  }
+
   // Core Dashboard views (Protected Route enforcement)
   return (
     <ProtectedRoute>
@@ -151,7 +160,6 @@ export const App: React.FC = () => {
         {activeView === 'goals' && <GoalPlannerView />}
         {activeView === 'recommendations' && <InvestmentRecommendationsView />}
         {activeView === 'profile' && <ProfileView />}
-        {(activeView === 'ai' || activeView === 'vestiq') && <AIAssistantView />}
 
         {/* Fallback */}
         {activeView !== 'dashboard' && 
@@ -160,8 +168,6 @@ export const App: React.FC = () => {
          activeView !== 'goals' && 
          activeView !== 'recommendations' && 
          activeView !== 'profile' && 
-         activeView !== 'ai' &&
-         activeView !== 'vestiq' &&
          <OverviewDashboard />}
       </DashboardLayout>
     </ProtectedRoute>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Sparkles, Mic } from 'lucide-react';
+import { Send, Mic, CornerDownLeft } from 'lucide-react';
 
 interface VestiqInputProps {
   onSend: (text: string) => void;
@@ -11,7 +11,7 @@ interface VestiqInputProps {
 export const VestiqInput: React.FC<VestiqInputProps> = ({
   onSend,
   loading,
-  placeholder = 'Best mutual fund',
+  placeholder = 'Ask VestIQ anything about markets, funds, goals, or affordability...',
   autoFocus = false,
 }) => {
   const [query, setQuery] = useState('');
@@ -91,54 +91,57 @@ export const VestiqInput: React.FC<VestiqInputProps> = ({
     <div className="w-full space-y-2 font-sans">
       
       {speechError && (
-        <div className="text-[12px] text-amber-700 px-3.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 animate-fade-in">
+        <div className="text-[12px] text-amber-800 px-3.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 animate-fade-in">
           {speechError}
         </div>
       )}
 
-      {/* Main Clean Prompt Card */}
-      <div className="relative rounded-xl bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] p-4 flex flex-col justify-between min-h-[130px]">
-        
-        <div className="flex items-start gap-2.5">
-          <Sparkles className="w-4 h-4 text-slate-400 mt-1 shrink-0" />
-          <textarea
-            ref={textareaRef}
-            autoFocus={autoFocus}
-            rows={2}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="w-full bg-transparent text-slate-800 dark:text-white placeholder:text-slate-400 text-[15px] resize-none outline-none focus:outline-none font-normal leading-relaxed"
-          />
-        </div>
+      <div className="relative rounded-2xl bg-white border border-[#E7EAF0] shadow-sm hover:border-teal-400 focus-within:border-teal-500 focus-within:ring-3 focus-within:ring-teal-500/10 transition-all p-2.5 sm:p-3">
+        <textarea
+          ref={textareaRef}
+          autoFocus={autoFocus}
+          rows={2}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="w-full bg-transparent text-[#172033] placeholder:text-[#98A2B3] text-[15px] sm:text-[16px] resize-none outline-none focus:outline-none p-1 font-normal leading-relaxed"
+        />
 
-        <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-100 dark:border-white/[0.04]">
+        <div className="flex items-center justify-between pt-1 border-t border-[#F8FAFC]">
           
+          <div className="flex items-center gap-2 text-[11.5px] text-[#98A2B3]">
+            <span className="hidden sm:inline-flex items-center gap-1 font-mono">
+              <CornerDownLeft className="w-3 h-3" /> Enter to send
+            </span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline">Shift+Enter for new line</span>
+          </div>
+
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleToggleVoice}
-              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+              className={`p-2 rounded-xl border transition-colors cursor-pointer ${
                 isListening 
-                  ? 'bg-rose-50 text-rose-600 border-rose-200 animate-pulse' 
-                  : 'bg-slate-50 dark:bg-[#0F172A] text-slate-400 border-slate-200 dark:border-white/[0.06] hover:text-slate-700'
+                  ? 'bg-rose-50 text-rose-600 border-rose-300 animate-pulse' 
+                  : 'bg-[#F8FAFC] text-[#667085] border-[#E7EAF0] hover:text-[#172033]'
               }`}
               title={isListening ? 'Stop listening' : 'Voice Input'}
             >
-              <Mic className="w-3.5 h-3.5" />
+              <Mic className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!query.trim() || loading}
+              className="glow-btn-primary px-4 py-2 rounded-xl text-white font-bold text-[13.5px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span>Ask VestIQ</span>
+              <Send className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!query.trim() || loading}
-            className="px-4 py-2 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Ask VestIQ</span>
-          </button>
 
         </div>
       </div>

@@ -23,26 +23,26 @@ interface InstrumentDetailModalProps {
 }
 
 const StatCell: React.FC<{ label: string; value: string; sub?: string; positive?: boolean; negative?: boolean }> = ({ label, value, sub, positive, negative }) => (
-  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] space-y-0.5">
-    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{label}</span>
-    <div className={`text-sm sm:text-base font-bold font-mono ${positive ? "text-[#0D9488] dark:text-[#00D4AA]" : negative ? "text-[#FF5252]" : "text-slate-900 dark:text-white"}`}>{value}</div>
-    {sub && <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block truncate">{sub}</span>}
+  <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.06] space-y-0.5">
+    <span className="text-[10px] text-[#8A94A6] font-bold uppercase tracking-wider block">{label}</span>
+    <div className={`text-sm sm:text-base font-bold font-mono ${positive ? "text-[#00C853]" : negative ? "text-[#FF5252]" : "text-white"}`}>{value}</div>
+    {sub && <span className="text-[10.5px] text-[#8A94A6] block truncate">{sub}</span>}
   </div>
 );
 
 const SectionHeader: React.FC<{ icon: React.ReactNode; title: string; badge?: string; source?: string | null }> = ({ icon, title, badge, source }) => (
-  <div className="flex items-center gap-2 pb-2 border-b border-slate-200/80 dark:border-white/[0.06]">
-    <span className="text-[#0D9488] dark:text-[#00D4AA]">{icon}</span>
-    <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex-1">{title}</h3>
-    {badge && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-[#00D4AA]/10 dark:text-[#00D4AA] dark:border-[#00D4AA]/30">{badge}</span>}
-    {source && <span className="text-[10px] text-slate-400 dark:text-slate-500">via {source}</span>}
+  <div className="flex items-center gap-2 pb-2 border-b border-white/[0.06]">
+    <span className="text-[#00D4AA]">{icon}</span>
+    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex-1">{title}</h3>
+    {badge && <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#00D4AA]/10 text-[#00D4AA] border border-[#00D4AA]/30">{badge}</span>}
+    {source && <span className="text-[10px] text-[#8A94A6]">via {source}</span>}
   </div>
 );
 
 const Row: React.FC<{ label: string; value: string | React.ReactNode; mono?: boolean }> = ({ label, value, mono }) => (
-  <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/[0.04] last:border-0">
-    <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
-    <span className={`text-xs font-semibold text-slate-900 dark:text-white ${mono ? "font-mono" : ""}`}>{value}</span>
+  <div className="flex items-center justify-between py-1.5 border-b border-white/[0.04] last:border-0">
+    <span className="text-xs text-[#8A94A6]">{label}</span>
+    <span className={`text-xs font-semibold text-white ${mono ? "font-mono" : ""}`}>{value}</span>
   </div>
 );
 
@@ -97,26 +97,26 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-fade-in font-sans">
-      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/[0.1] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 dark:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-fade-in font-sans">
+      <div className="bg-[#101827] border border-white/[0.1] rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-white">
         
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50 dark:bg-[#0B1120] flex items-center justify-between gap-4">
+        <div className="px-5 py-4 border-b border-white/[0.06] bg-[#0A1022] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="space-y-1 min-w-0">
+            <div className="space-y-0.5 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-[#0F172A] dark:border-white/[0.08] dark:text-[#00D4AA]">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-[#101827] border border-white/[0.08] text-[#00D4AA]">
                   {instrument.assetType.replace('_', ' ')}
                 </span>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 uppercase">{instrument.exchange}</span>
+                <span className="text-xs font-mono text-[#8A94A6] uppercase">{instrument.exchange}</span>
               </div>
-              <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate max-w-md" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+              <h2 className="text-base sm:text-lg font-bold text-white truncate max-w-md">
                 {instrument.name}
               </h2>
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+              <div className="flex items-center gap-2 text-xs text-[#8A94A6] font-mono">
                 <span>{instrument.symbol}</span>
                 <span>•</span>
-                <span className="text-[#0D9488] dark:text-[#00D4AA] font-bold">{instrument.currency}</span>
+                <span className="text-[#00D4AA]">{instrument.currency}</span>
               </div>
             </div>
           </div>
@@ -126,10 +126,10 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               <button 
                 type="button" 
                 onClick={() => onToggleWatchlist(instrument.canonicalId)}
-                className={`p-2.5 rounded-xl border cursor-pointer transition-colors ${
+                className={`p-2 rounded-lg border cursor-pointer transition-colors ${
                   isWatchlisted 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#00D4AA]/10 dark:border-[#00D4AA]/30 dark:text-[#00D4AA]' 
-                    : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-white/[0.08] text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-[#00D4AA]/10 border-[#00D4AA]/30 text-[#00D4AA]' 
+                    : 'bg-[#101827] border-white/[0.08] text-[#8A94A6] hover:text-white'
                 }`}
               >
                 {isWatchlisted ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
@@ -138,7 +138,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
             <button 
               type="button" 
               onClick={onClose} 
-              className="p-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/[0.08] text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+              className="p-2 rounded-lg bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -147,15 +147,15 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
 
         <div className="flex-1 overflow-y-auto">
           {/* Top Live Quote Strip */}
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-[#0B1120]/60">
+          <div className="px-5 py-3.5 border-b border-white/[0.06] bg-[#0A1022]/60">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] col-span-2 sm:col-span-1 space-y-0.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{isMF ? 'Latest NAV' : 'Price'}</span>
-                <div className="text-xl font-black text-slate-900 dark:text-white font-mono leading-tight">
-                  {quote?.price != null ? (curSym + quote.price.toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:2})) : <span className="text-slate-400 text-xs">Loading…</span>}
+              <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.06] col-span-2 sm:col-span-1 space-y-0.5">
+                <span className="text-[10px] text-[#8A94A6] font-bold uppercase tracking-wider block">{isMF ? 'Latest NAV' : 'Price'}</span>
+                <div className="text-xl font-bold text-white font-mono leading-tight">
+                  {quote?.price != null ? (curSym + quote.price.toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:2})) : <span className="text-slate-500 text-xs">Loading…</span>}
                 </div>
                 {quote?.changePct != null && (
-                  <div className={`flex items-center gap-1 text-xs font-mono font-bold ${isPositive ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-[#FF5252]'}`}>
+                  <div className={`flex items-center gap-1 text-xs font-mono font-bold ${isPositive ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
                     {isPositive ? '+' : ''}{quote.changePct.toFixed(2)}%
                   </div>
                 )}
@@ -172,32 +172,32 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               </>}
             </div>
 
-            <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-              <span className={`w-1.5 h-1.5 rounded-full ${quote?.freshness === 'REALTIME' ? 'bg-[#00D4AA] animate-pulse' : 'bg-slate-400'}`} />
-              <span className="uppercase text-[10px] font-semibold">{quote?.freshness ?? 'n/a'}</span>
+            <div className="mt-2.5 flex items-center gap-2 text-[11px] text-[#8A94A6]">
+              <span className={`w-1.5 h-1.5 rounded-full ${quote?.freshness === 'REALTIME' ? 'bg-[#00C853] animate-pulse' : 'bg-slate-500'}`} />
+              <span className="uppercase text-[10px]">{quote?.freshness ?? 'n/a'}</span>
               <span>•</span>
               <span>Provider: {quote?.source ?? instrument.provider}</span>
-              {isLoadingResearch && <><RefreshCw className="w-3 h-3 animate-spin text-[#00D4AA] ml-1" /><span className="text-[#0D9488] dark:text-[#00D4AA] text-[10px] font-semibold">Loading research…</span></>}
+              {isLoadingResearch && <><RefreshCw className="w-3 h-3 animate-spin text-[#00D4AA] ml-1" /><span className="text-[#00D4AA] text-[10px]">Loading research…</span></>}
             </div>
           </div>
 
           {/* Interactive Chart */}
-          <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.06]">
+          <div className="px-5 py-4 border-b border-white/[0.06]">
             <UniversalInstrumentChart symbol={instrument.symbol} assetType={instrument.assetType} currency={curSym} defaultPeriod="1Y" />
           </div>
 
           {/* Tabs */}
           {tabs.length > 1 && (
-            <div className="px-6 pt-3.5 pb-2 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2 overflow-x-auto shrink-0 bg-slate-50 dark:bg-[#0B1120]">
+            <div className="px-5 pt-3 pb-2 border-b border-white/[0.06] flex items-center gap-1.5 overflow-x-auto shrink-0 bg-[#0A1022]">
               {tabs.map(t => (
                 <button 
                   key={t.key} 
                   type="button" 
                   onClick={() => setActiveTab(t.key)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                     activeTab === t.key 
-                      ? 'bg-[#00D4AA] text-[#060811] font-bold shadow-xs' 
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-[#00D4AA] text-[#050816] font-bold shadow-xs' 
+                      : 'text-[#8A94A6] hover:text-white'
                   }`}
                 >
                   {t.label}
@@ -207,12 +207,12 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
           )}
 
           {/* Tab Content */}
-          <div className="px-6 py-5 space-y-4">
+          <div className="px-5 py-4 space-y-4">
             {activeTab === 'overview' && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <SectionHeader icon={<Info className="w-3.5 h-3.5" />} title="Instrument Specifications" />
-                  <div className="bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-4 space-y-1">
+                  <div className="bg-[#0A1022] border border-white/[0.06] rounded-lg p-3.5 space-y-1">
                     <Row label="Symbol" value={instrument.symbol} mono />
                     <Row label="Asset Class" value={instrument.assetClass} />
                     <Row label="Exchange" value={instrument.exchange} />
@@ -227,7 +227,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                 {instrument.name && (
                   <div className="space-y-2">
                     <SectionHeader icon={<Building2 className="w-3.5 h-3.5" />} title="About Company / Issuer" />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-4">
+                    <p className="text-xs text-[#8A94A6] leading-relaxed bg-[#0A1022] border border-white/[0.06] rounded-lg p-3.5">
                       {instrument.name} ({instrument.symbol}) listed on {instrument.exchange} in {instrument.country || 'Global'} market.
                     </p>
                   </div>
@@ -238,11 +238,11 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.06] bg-slate-50 dark:bg-[#0B1120] flex items-center justify-between gap-3">
+        <div className="px-5 py-3 border-t border-white/[0.06] bg-[#0A1022] flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={handleAskIQ}
-            className="px-4 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25 hover:bg-[#00BFA5] transition-all"
+            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Consult VestIQ on {instrument.symbol}</span>
@@ -251,7 +251,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/[0.08] text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+            className="px-4 py-2 rounded-lg bg-[#101827] border border-white/[0.08] text-xs font-semibold text-[#8A94A6] hover:text-white cursor-pointer"
           >
             Close
           </button>

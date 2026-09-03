@@ -5,10 +5,13 @@ import {
   BookmarkCheck, 
   Activity, 
   Layers, 
+  Globe, 
   RefreshCw, 
   AlertCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Clock
 } from 'lucide-react';
 import { 
   marketApi, 
@@ -48,6 +51,13 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
   // Selected Instrument Modal
   const [selectedInstrument, setSelectedInstrument] = useState<MarketInstrument | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  };
 
   // Debounce search query (300ms)
   useEffect(() => {
@@ -212,16 +222,29 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
     { id: 'WATCHLIST', label: `Watchlist (${watchlist.length})` },
   ];
 
+  const formatSyncTime = (isoString?: string) => {
+    if (!isoString) return 'Realtime';
+    try {
+      const dt = new Date(isoString);
+      return dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return 'Realtime';
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto">
+    <div className="space-y-6 pb-12 font-sans">
       
-      {/* 1. TOP HEADER & SEARCH BAR */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Market Universe & Explorer</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Research stocks, ETFs, mutual funds, and market benchmarks across verified feeds.
+      {/* 1. Header & Live Universe Overview */}
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-[#00D4AA]" />
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Market Universe & Explorer</h1>
+            </div>
+            <p className="text-xs text-[#8A94A6] max-w-xl">
+              Research stocks, ETFs, mutual funds, and global market instruments across verified institutional data feeds.
             </p>
           </div>
 
@@ -232,28 +255,53 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 fetchInstruments();
               }}
               disabled={isLoading}
-              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#0D9488] ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Refresh Feeds</span>
+              <RefreshCw className={`w-3 h-3 text-[#00D4AA] ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </button>
           </div>
         </div>
 
+        {/* Dynamic Coverage Status Metadata Bar */}
+        {coverageData && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2.5 border-t border-white/[0.06] text-xs text-[#8A94A6]">
+            <div className="flex items-center gap-1.5 text-[#00D4AA] font-semibold">
+              <Database className="w-3.5 h-3.5" />
+              <span>{coverageData.total_instruments} Instruments Available</span>
+            </div>
+            <span className="text-white/[0.1]">•</span>
+            <div>
+              <span>Coverage: </span>
+              <strong className="text-white">{coverageData.exchanges_count} Exchanges</strong>
+              <span className="text-[#8A94A6]"> ({coverageData.exchanges.join(', ')})</span>
+            </div>
+            <span className="text-white/[0.1]">•</span>
+            <div>
+              <strong className="text-white">{coverageData.countries_count} Countries</strong>
+            </div>
+            <span className="text-white/[0.1]">•</span>
+            <div className="flex items-center gap-1 text-[#8A94A6]">
+              <Clock className="w-3 h-3 text-[#5A667A]" />
+              <span>Last synchronized: {formatSyncTime(coverageData.last_synced_at)}</span>
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A667A]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by company, ticker, fund name, ETF, index, or keyword..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#0D9488] transition-colors placeholder:text-slate-400"
+            placeholder="Search by company, ticker, fund name, ETF, index, or keyword (e.g. TSMC, Nvidia, Microsoft, Parag Parikh, SPY, Nifty 50)..."
+            className="w-full pl-10 pr-4 py-2.5 bg-[#0A1022] border border-white/[0.08] rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-[#00D4AA] placeholder:text-[#5A667A]"
           />
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -262,10 +310,10 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 setSelectedCategory(cat.id);
                 setPage(1);
               }}
-              className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                 selectedCategory === cat.id
-                  ? 'bg-[#0D9488] text-white font-semibold'
-                  : 'bg-slate-100 dark:bg-[#0B1120] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-[#00D4AA] text-[#050816] font-bold shadow-xs'
+                  : 'bg-[#0A1022] border border-white/[0.06] text-[#8A94A6] hover:text-white'
               }`}
             >
               {cat.label}
@@ -278,24 +326,24 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
       {!debouncedQuery && selectedCategory === 'ALL' && overview && !error && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-[#0D9488] dark:text-[#00D4AA]" />
+            <h2 className="text-xs font-bold text-[#8A94A6] uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-[#00D4AA]" />
               <span>Key Benchmarks & Indices</span>
             </h2>
-            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-3 text-xs text-[#8A94A6]">
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00C853]" />
                 <span>NSE: {overview?.india_status?.status || 'OPEN'}</span>
               </span>
-              <span className="text-slate-300 dark:text-white/[0.1]">•</span>
+              <span className="text-white/[0.1]">•</span>
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#1E88E5]" />
                 <span>NASDAQ: {overview?.us_status?.status || 'OPEN'}</span>
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {overview?.indices?.india?.slice(0, 2).map((idx: any) => (
               <div 
                 key={idx.symbol}
@@ -312,16 +360,17 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-4 space-y-1 cursor-pointer hover:border-[#0D9488]/50 dark:hover:border-[#00D4AA]/50 transition-all min-w-0 overflow-hidden"
+                style={{ ...cardStyle, padding: 14 }}
+                className="space-y-1 cursor-pointer hover:border-[#00D4AA]/40 transition-all"
               >
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">{idx.symbol}</span>
-                  <span className="text-[9.5px] uppercase px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-400 font-mono">NSE</span>
+                  <span className="text-xs font-bold text-white">{idx.symbol}</span>
+                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] font-mono">NSE</span>
                 </div>
-                <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono">
+                <div className="text-base sm:text-lg font-bold text-white font-mono">
                   ₹{idx.price?.toLocaleString('en-IN', { maximumFractionDigits: 1 }) || '—'}
                 </div>
-                <div className={`text-xs font-mono font-bold ${(idx.changePct ?? 0) >= 0 ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-[#FF5252]'}`}>
+                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
                   {(idx.changePct ?? 0) >= 0 ? '+' : ''}{idx.changePct?.toFixed(2)}%
                 </div>
               </div>
@@ -343,16 +392,17 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-4 space-y-1 cursor-pointer hover:border-[#38BDF8]/50 transition-all min-w-0 overflow-hidden"
+                style={{ ...cardStyle, padding: 14 }}
+                className="space-y-1 cursor-pointer hover:border-[#1E88E5]/40 transition-all"
               >
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">{idx.symbol}</span>
-                  <span className="text-[9.5px] uppercase px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 dark:bg-[#38BDF8]/10 border border-sky-200 dark:border-[#38BDF8]/30 dark:text-[#38BDF8] font-mono">US</span>
+                  <span className="text-xs font-bold text-white">{idx.symbol}</span>
+                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-[#1E88E5]/10 border border-[#1E88E5]/30 text-[#1E88E5] font-mono">US</span>
                 </div>
-                <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono">
+                <div className="text-base sm:text-lg font-bold text-white font-mono">
                   ${idx.price?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '—'}
                 </div>
-                <div className={`text-xs font-mono font-bold ${(idx.changePct ?? 0) >= 0 ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-[#FF5252]'}`}>
+                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
                   {(idx.changePct ?? 0) >= 0 ? '+' : ''}{idx.changePct?.toFixed(2)}%
                 </div>
               </div>
@@ -374,16 +424,17 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-4 space-y-1 cursor-pointer hover:border-amber-500/50 transition-all min-w-0 overflow-hidden"
+                style={{ ...cardStyle, padding: 14 }}
+                className="space-y-1 cursor-pointer hover:border-amber-500/40 transition-all"
               >
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">{idx.symbol}</span>
-                  <span className="text-[9.5px] uppercase px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 dark:text-amber-400 font-mono">MCX</span>
+                  <span className="text-xs font-bold text-white">{idx.symbol}</span>
+                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono">MCX</span>
                 </div>
-                <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono">
+                <div className="text-base sm:text-lg font-bold text-white font-mono">
                   ₹{idx.price?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '—'}
                 </div>
-                <div className={`text-xs font-mono font-bold ${(idx.changePct ?? 0) >= 0 ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-[#FF5252]'}`}>
+                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
                   {(idx.changePct ?? 0) >= 0 ? '+' : ''}{idx.changePct?.toFixed(2)}%
                 </div>
               </div>
@@ -396,12 +447,12 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#0D9488] dark:text-[#00D4AA]" />
-            <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+            <Layers className="w-4 h-4 text-[#00D4AA]" />
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
               {selectedCategory === 'WATCHLIST' ? 'Saved Watchlist' : (debouncedQuery ? `Search Results for "${debouncedQuery}"` : 'Market Directory')}
             </h2>
             {!error && !isLoading && instrumentsData && (
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+              <span className="text-xs text-[#8A94A6] font-mono">
                 ({instrumentsData.total} Instruments)
               </span>
             )}
@@ -409,33 +460,33 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
         </div>
 
         {isLoading ? (
-          <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-12 flex flex-col items-center justify-center gap-2">
+          <div style={{ ...cardStyle, padding: '48px 24px' }} className="flex flex-col items-center justify-center gap-2">
             <RefreshCw className="w-5 h-5 animate-spin text-[#00D4AA]" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Scanning live market feeds & providers...</span>
+            <span className="text-xs font-medium text-[#8A94A6]">Scanning live market feeds & providers...</span>
           </div>
         ) : error ? (
-          <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 text-center space-y-2">
+          <div style={{ ...cardStyle, padding: 24 }} className="text-center space-y-2">
             <AlertCircle className="w-5 h-5 text-[#FF5252] mx-auto" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Market Directory Unavailable</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">{error}</p>
+            <h3 className="text-sm font-bold text-white">Market Directory Unavailable</h3>
+            <p className="text-xs text-[#8A94A6] max-w-sm mx-auto">{error}</p>
             <button
               type="button"
               onClick={() => fetchInstruments()}
-              className="px-4 py-2 bg-[#00D4AA] text-[#060811] rounded-xl text-xs font-bold cursor-pointer"
+              className="px-3.5 py-1.5 bg-[#00D4AA] text-[#050816] rounded-lg text-xs font-bold cursor-pointer"
             >
               Retry Connection
             </button>
           </div>
         ) : !instrumentsData?.items || instrumentsData.items.length === 0 ? (
-          <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-12 text-center space-y-2">
-            <Search className="w-6 h-6 mx-auto text-slate-400" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">No matching instruments found.</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+          <div style={{ ...cardStyle, padding: '48px 24px' }} className="text-center space-y-2">
+            <Search className="w-6 h-6 mx-auto text-[#5A667A]" />
+            <h3 className="text-sm font-bold text-white">No matching instruments found.</h3>
+            <p className="text-xs text-[#8A94A6] max-w-sm mx-auto">
               Try another symbol, company name, exchange or spelling (e.g. TSMC, Nvidia, Microsoft, Parag Parikh, SPY, Nifty 50).
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {instrumentsData.items.map((item) => {
               const quote = item.quote;
               const isWatchlisted = watchlistIds.has(item.canonicalId);
@@ -447,28 +498,29 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 <div
                   key={item.canonicalId}
                   onClick={() => handleOpenDetail(item)}
-                  className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-xl p-5 flex flex-col justify-between gap-3 cursor-pointer hover:border-[#0D9488]/50 dark:hover:border-[#00D4AA]/50 transition-all min-w-0 overflow-hidden"
+                  style={{ ...cardStyle, padding: '16px 18px' }}
+                  className="flex flex-col justify-between gap-3 cursor-pointer hover:border-[#00D4AA]/40 transition-all"
                 >
                   {/* Top Row: Symbol, Asset Type, Watchlist */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-[#0B1120] dark:border-white/[0.08] dark:text-[#00D4AA]">
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-[#0A1022] border border-white/[0.08] text-[#00D4AA]">
                           {item.assetType.replace('_', ' ')}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">
+                        <span className="text-[10px] font-mono text-[#8A94A6] uppercase">
                           {item.exchange}
                         </span>
                         {item.country && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400">
+                          <span className="text-[9px] font-mono px-1 rounded bg-white/[0.04] text-[#8A94A6]">
                             {item.country}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[190px]">
+                      <h3 className="text-sm font-bold text-white truncate max-w-[190px]">
                         {item.name}
                       </h3>
-                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 block">
+                      <span className="text-xs font-mono text-[#8A94A6] block">
                         {item.symbol}
                       </span>
                     </div>
@@ -479,10 +531,10 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                         e.stopPropagation();
                         handleToggleWatchlist(item.canonicalId);
                       }}
-                      className={`p-1.5 rounded-lg border text-xs cursor-pointer transition-all ${
+                      className={`p-1.5 rounded-md border text-xs cursor-pointer transition-all ${
                         isWatchlisted
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#00D4AA]/10 dark:border-[#00D4AA]/30 dark:text-[#00D4AA]'
-                          : 'bg-slate-50 dark:bg-[#0B1120] border-slate-200 dark:border-white/[0.06] text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          ? 'bg-[#00D4AA]/10 border-[#00D4AA]/30 text-[#00D4AA]'
+                          : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6] hover:text-white'
                       }`}
                       title={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
                     >
@@ -491,12 +543,12 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   </div>
 
                   {/* Price & Change Row */}
-                  <div className="flex items-baseline justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                  <div className="flex items-baseline justify-between pt-2 border-t border-white/[0.06]">
                     <div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                      <span className="text-[10px] text-[#8A94A6] font-bold uppercase tracking-wider block">
                         {isMf ? 'Latest NAV' : 'Price'}
                       </span>
-                      <div className="text-base font-black text-slate-900 dark:text-white font-mono">
+                      <div className="text-base font-bold text-white font-mono">
                         {quote?.price !== null && quote?.price !== undefined
                           ? `${curr}${quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                           : 'Available on request'}
@@ -505,20 +557,20 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
 
                     <div className="text-right">
                       {quote?.changePct !== null && quote?.changePct !== undefined ? (
-                        <div className={`text-xs font-mono font-bold ${isPos ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-[#FF5252]'}`}>
+                        <div className={`text-xs font-mono font-bold ${isPos ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
                           {isPos ? '+' : ''}{quote.changePct.toFixed(2)}%
                         </div>
                       ) : (
-                        <span className="text-[10px] font-mono text-slate-400">HISTORICAL</span>
+                        <span className="text-[10px] font-mono text-[#5A667A]">HISTORICAL</span>
                       )}
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate max-w-[130px]">
+                      <span className="text-[10px] text-[#8A94A6] block truncate max-w-[130px]">
                         {item.category || item.sector || item.fundHouse || 'Market Asset'}
                       </span>
                     </div>
                   </div>
 
                   {/* Footer Action */}
-                  <div className="flex items-center justify-between text-xs text-[#0D9488] dark:text-[#00D4AA] font-semibold pt-1 border-t border-slate-100 dark:border-white/[0.04]">
+                  <div className="flex items-center justify-between text-xs text-[#00D4AA] font-semibold pt-1 border-t border-white/[0.04]">
                     <span>Inspect & Research</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </div>
@@ -530,9 +582,9 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
 
         {/* 4. PAGINATION CONTROLS */}
         {!error && !isLoading && instrumentsData && (instrumentsData.totalPages ?? 1) > 1 && selectedCategory !== 'WATCHLIST' && (
-          <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 dark:border-white/[0.06] text-xs">
-            <span className="text-slate-500 dark:text-slate-400">
-              Showing page <strong className="text-slate-900 dark:text-white font-mono">{instrumentsData.page}</strong> of <strong className="text-slate-900 dark:text-white font-mono">{instrumentsData.totalPages ?? 1}</strong> ({instrumentsData.total} items)
+          <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-xs">
+            <span className="text-[#8A94A6]">
+              Showing page <strong className="text-white font-mono">{instrumentsData.page}</strong> of <strong className="text-white font-mono">{instrumentsData.totalPages ?? 1}</strong> ({instrumentsData.total} items)
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -540,9 +592,9 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-40 cursor-pointer flex items-center gap-1 shadow-xs"
+                className="px-2.5 py-1 rounded bg-[#0A1022] border border-white/[0.08] text-xs font-semibold text-[#8A94A6] hover:text-white disabled:opacity-40 cursor-pointer flex items-center gap-1"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-3 h-3" />
                 <span>Prev</span>
               </button>
 
@@ -550,10 +602,10 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                 type="button"
                 disabled={!instrumentsData.hasMore}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-40 cursor-pointer flex items-center gap-1 shadow-xs"
+                className="px-2.5 py-1 rounded bg-[#0A1022] border border-white/[0.08] text-xs font-semibold text-[#8A94A6] hover:text-white disabled:opacity-40 cursor-pointer flex items-center gap-1"
               >
                 <span>Next</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </button>
             </div>
           </div>

@@ -6,14 +6,17 @@ export const FloatingAIAssistantButton: React.FC = () => {
   const { setActiveView } = useFintechStore();
 
   return (
-    <div className="fixed bottom-5 right-5 z-40">
+    <div className="fixed bottom-5 right-5 z-40 animate-fade-in">
       <button
         onClick={() => setActiveView('ai')}
-        className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#0D9488] hover:bg-[#0F766E] dark:bg-[#00D4AA] dark:hover:bg-[#00D4AA]/90 text-white dark:text-[#060811] text-xs font-bold shadow-lg shadow-[#0D9488]/20 transition-all cursor-pointer"
-        title="Open VestIQ"
+        className="group relative flex items-center gap-2 px-3.5 py-2.5 rounded-full glow-btn-primary text-white font-bold text-xs shadow-lg shadow-teal-900/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+        title="Open VestIQ Financial Intelligence Workspace"
       >
-        <Sparkles className="w-3.5 h-3.5" />
-        <span>Open VestIQ</span>
+        <div className="w-5 h-5 rounded-full bg-black/30 text-teal-300 flex items-center justify-center">
+          <Sparkles className="w-3 h-3 stroke-[2.5]" />
+        </div>
+        <span className="tracking-tight">Open VestIQ</span>
+        <Sparkles className="w-3.5 h-3.5 text-teal-200 group-hover:rotate-12 transition-transform" />
       </button>
     </div>
   );

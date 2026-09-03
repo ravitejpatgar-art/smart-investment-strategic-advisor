@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { 
+  User, 
   CheckCircle2, 
   RefreshCw,
   AlertCircle,
@@ -29,6 +30,13 @@ export const ProfileView: React.FC = () => {
     runAiAnalysis,
     expenses
   } = useFintechStore();
+
+  const cardStyle = {
+    background: '#101827',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  };
 
   // Helper to extract form data from user object (clean empty state for new users)
   const getInitialForm = (u: typeof user): ProfileFormData => ({
@@ -159,21 +167,22 @@ export const ProfileView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans max-w-7xl mx-auto w-full min-w-0">
+    <div className="space-y-6 pb-12 font-sans">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+      {/* Top Banner Header */}
+      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Investor Mandate & Profile</h1>
+            <User className="w-5 h-5 text-[#00D4AA]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Investor Mandate & Profile</h1>
             {isDirty && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+              <span className="text-[10.5px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
                 Unsaved Edits
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Configure capital parameters, risk tolerance, and investment horizon to recalibrate strategy.
+          <p className="text-xs text-[#8A94A6]">
+            Configure your capital parameters, volatility tolerances, and lifecycle horizon to recalibrate portfolio strategy.
           </p>
         </div>
 
@@ -183,7 +192,7 @@ export const ProfileView: React.FC = () => {
               type="button"
               onClick={handleReset}
               disabled={isSaving}
-              className="px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -194,7 +203,7 @@ export const ProfileView: React.FC = () => {
             type="button"
             onClick={handleSaveProfile}
             disabled={isSaving}
-            className="px-4 py-2 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
             <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate'}</span>
@@ -204,80 +213,78 @@ export const ProfileView: React.FC = () => {
 
       {/* Success Notification */}
       {savedSuccess && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-[#00D4AA]/10 border border-emerald-200 dark:border-[#00D4AA]/30 text-emerald-800 dark:text-[#00D4AA] text-xs font-medium flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-[#0D9488] shrink-0" />
-          <span>Profile parameters updated. Multi-asset strategy successfully recalibrated.</span>
+        <div className="p-3.5 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA] text-xs font-semibold flex items-center gap-2.5 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+          <span>Profile parameters updated. Multi-asset investment strategy successfully recalibrated.</span>
         </div>
       )}
 
       {/* Error Notification */}
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 text-xs font-medium flex items-center justify-between gap-2">
+        <div className="p-3.5 rounded-lg bg-[#FF5252]/10 border border-[#FF5252]/30 text-[#FF5252] text-xs font-semibold flex items-center justify-between gap-2.5 shadow-xs">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-[#FF5252] shrink-0" />
             <span>{errorMessage}</span>
           </div>
           <button
             type="button"
             onClick={handleSaveProfile}
-            className="px-2.5 py-1 bg-rose-600 text-white rounded text-xs font-semibold cursor-pointer"
+            className="px-2.5 py-0.5 bg-[#FF5252] text-white rounded text-xs font-bold cursor-pointer"
           >
             Retry
           </button>
         </div>
       )}
 
-      {/* Summary Metrics (Unified 4-Column Section) */}
-      <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 sm:divide-x sm:divide-slate-100 dark:sm:divide-white/[0.06]">
-          <div className="sm:px-4 space-y-1">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Monthly Inflow</span>
-            <div className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(totalInflow)}</div>
-            <span className="text-xs text-slate-400 truncate block">{form.occupation || 'Active Inflow'}</span>
-          </div>
+      {/* Summary Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Monthly Inflow</span>
+          <div className="text-xl font-bold text-white font-mono">{formatCurrency(totalInflow)}</div>
+          <span className="text-xs text-[#8A94A6] truncate block">{form.occupation || 'Active Inflow'}</span>
+        </div>
 
-          <div className="sm:px-4 space-y-1">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Monthly Outflow</span>
-            <div className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(totalOutflows)}</div>
-            <span className="text-xs text-slate-400 block">{expenses.length} Logged Categories</span>
-          </div>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Monthly Outflow</span>
+          <div className="text-xl font-bold text-white font-mono">{formatCurrency(totalOutflows)}</div>
+          <span className="text-xs text-[#8A94A6] block">{expenses.length} Logged Categories</span>
+        </div>
 
-          <div className="sm:px-4 space-y-1">
-            <span className="text-[11px] text-[#0D9488] dark:text-[#00D4AA] font-semibold uppercase tracking-wider block">Investable Surplus</span>
-            <div className="text-xl font-bold text-[#0D9488] dark:text-[#00D4AA] font-mono">{formatCurrency(surplus)}</div>
-            <span className="text-xs text-slate-400 block">Deployable surplus</span>
-          </div>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Investable Surplus</span>
+          <div className="text-xl font-bold text-[#00D4AA] font-mono">{formatCurrency(surplus)}</div>
+          <span className="text-xs text-[#00D4AA]/80 block">Capacity to deploy</span>
+        </div>
 
-          <div className="sm:px-4 space-y-1">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Emergency Reserve</span>
-            <div className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCurrency(numericEmergency)}</div>
-            <span className="text-xs text-slate-400 block">Liquid Reserves</span>
-          </div>
+        <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
+          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Emergency Reserve</span>
+          <div className="text-xl font-bold text-white font-mono">{formatCurrency(numericEmergency)}</div>
+          <span className="text-xs text-[#8A94A6] block">Liquid Reserves</span>
         </div>
       </div>
 
       <form onSubmit={handleSaveProfile} className="space-y-6">
         
         {/* 1. PERSONAL INFORMATION */}
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
-          <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-white/[0.04]">
+        <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
             1. Investor Demographics
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Full Legal Name</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Full Legal Name</label>
               <input
                 type="text"
                 value={form.fullName}
                 onChange={(e) => updateField('fullName', e.target.value)}
                 placeholder="Investor Name"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Age (Years)</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Age (Years)</label>
               <input
                 type="number"
                 value={form.age}
@@ -285,90 +292,90 @@ export const ProfileView: React.FC = () => {
                 placeholder="e.g. 28"
                 min="18"
                 max="100"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Occupation</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Occupation</label>
               <input
                 type="text"
                 value={form.occupation}
                 onChange={(e) => updateField('occupation', e.target.value)}
                 placeholder="e.g. Software Engineer"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* 2. FINANCIAL PARAMETERS */}
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 space-y-4">
-          <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-white/[0.06]">
+        <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
             2. Capital Inflows & Assets
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Monthly Take-Home Salary (₹)</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Monthly Take-Home Salary (₹)</label>
               <input
                 type="number"
                 value={form.salaryIncome}
                 onChange={(e) => updateField('salaryIncome', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Other Monthly Cash Inflows (₹)</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Other Monthly Cash Inflows (₹)</label>
               <input
                 type="number"
                 value={form.otherIncome}
                 onChange={(e) => updateField('otherIncome', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Emergency Cash Reserves (₹)</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Emergency Cash Reserves (₹)</label>
               <input
                 type="number"
                 value={form.emergencyFund}
                 onChange={(e) => updateField('emergencyFund', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Existing Investments Portfolio (₹)</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Existing Investments Portfolio (₹)</label>
               <input
                 type="number"
                 value={form.existingInvestments}
                 onChange={(e) => updateField('existingInvestments', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
               />
             </div>
           </div>
         </div>
 
         {/* 3. RISK TOLERANCE & STRATEGY PREFERENCES */}
-        <div className="bg-white dark:bg-[#0B1120] border border-slate-200/90 dark:border-white/[0.08] shadow-xs rounded-2xl p-6 space-y-4">
-          <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-white/[0.06]">
+        <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
             3. Risk Mandate & Governance
           </h2>
 
           <div className="space-y-4">
             {/* Segmented Risk Selector */}
             <div className="space-y-2">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Risk Profile Strategy</label>
+              <label className="block text-[#8A94A6] text-xs font-semibold uppercase tracking-wider">Risk Profile Strategy</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { id: 'Conservative', label: 'Conservative', desc: 'Focus on capital safety and high-yield fixed debt' },
@@ -379,57 +386,57 @@ export const ProfileView: React.FC = () => {
                     key={item.id}
                     type="button"
                     onClick={() => updateField('riskTolerance', item.id as any)}
-                    className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
                       form.riskTolerance === item.id 
-                        ? 'bg-[#E6FDF7] dark:bg-[#00D4AA]/10 border-[#00D4AA] dark:border-[#00D4AA]/40 text-slate-900 dark:text-white shadow-xs' 
-                        : 'bg-slate-50 dark:bg-[#060811] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/[0.14]'
+                        ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white' 
+                        : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6] hover:border-white/[0.14]'
                     }`}
                   >
-                    <span className={`font-bold text-sm block mb-1 ${form.riskTolerance === item.id ? 'text-[#0D9488] dark:text-[#00D4AA]' : 'text-slate-900 dark:text-white'}`}>{item.label}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed block">{item.desc}</span>
+                    <span className={`font-bold text-sm block mb-0.5 ${form.riskTolerance === item.id ? 'text-[#00D4AA]' : 'text-white'}`}>{item.label}</span>
+                    <span className="text-xs text-[#8A94A6] leading-relaxed block">{item.desc}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div className="space-y-1.5">
-                <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Investment Horizon</label>
+              <div>
+                <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Investment Horizon</label>
                 <select
                   value={form.investmentHorizon}
                   onChange={(e) => updateField('investmentHorizon', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
                 >
-                  <option value="1 to 3 years">Short Term (1 to 3 years)</option>
-                  <option value="3 to 5 years">Medium Term (3 to 5 years)</option>
-                  <option value="5 to 10 years">Long Term (5 to 10 years)</option>
-                  <option value="10 to 20 years">Extended Growth (10 to 20 years)</option>
-                  <option value="20+ years">Multi-Decade (20+ years)</option>
+                  <option value="1 to 3 years" className="bg-[#0A1022] text-white">Short Term (1 to 3 years)</option>
+                  <option value="3 to 5 years" className="bg-[#0A1022] text-white">Medium Term (3 to 5 years)</option>
+                  <option value="5 to 10 years" className="bg-[#0A1022] text-white">Long Term (5 to 10 years)</option>
+                  <option value="10 to 20 years" className="bg-[#0A1022] text-white">Extended Growth (10 to 20 years)</option>
+                  <option value="20+ years" className="bg-[#0A1022] text-white">Multi-Decade (20+ years)</option>
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Market Experience</label>
+              <div>
+                <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Market Experience</label>
                 <select
                   value={form.investmentExperience}
                   onChange={(e) => updateField('investmentExperience', e.target.value as any)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
                 >
-                  <option value="Beginner">Beginner (Index funds & SIP focus)</option>
-                  <option value="Intermediate">Intermediate (Multi-asset & ETFs)</option>
-                  <option value="Advanced">Advanced (Global allocation & hedging)</option>
+                  <option value="Beginner" className="bg-[#0A1022] text-white">Beginner (Index funds & SIP focus)</option>
+                  <option value="Intermediate" className="bg-[#0A1022] text-white">Intermediate (Multi-asset & ETFs)</option>
+                  <option value="Advanced" className="bg-[#0A1022] text-white">Advanced (Global allocation & hedging)</option>
                 </select>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Primary Financial Mandate</label>
+            <div>
+              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Primary Financial Mandate</label>
               <input
                 type="text"
                 value={form.financialGoal}
                 onChange={(e) => updateField('financialGoal', e.target.value)}
                 placeholder="e.g. Wealth Creation & Early Independence"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#060811] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white text-sm focus:border-[#00D4AA] focus:outline-none placeholder:text-slate-400"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
               />
             </div>
           </div>
@@ -437,9 +444,9 @@ export const ProfileView: React.FC = () => {
 
         {/* Bottom Action Footer */}
         <div className="flex items-center justify-between pt-2">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-xs text-[#8A94A6]">
             {isDirty ? (
-              <span className="text-amber-600 dark:text-amber-400 font-medium">Unsaved parameters detected.</span>
+              <span className="text-amber-400 font-medium">Unsaved parameters detected.</span>
             ) : (
               <span>Profile parameters are synchronized.</span>
             )}
@@ -451,7 +458,7 @@ export const ProfileView: React.FC = () => {
                 type="button"
                 onClick={handleReset}
                 disabled={isSaving}
-                className="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -460,7 +467,7 @@ export const ProfileView: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-xl bg-[#00D4AA] text-[#060811] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm hover:shadow-[#00D4AA]/25 transition-all hover:bg-[#00BFA5] disabled:opacity-50"
+              className="px-5 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
               <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate Strategy'}</span>
