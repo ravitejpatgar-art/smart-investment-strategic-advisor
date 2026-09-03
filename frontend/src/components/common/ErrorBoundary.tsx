@@ -1,5 +1,6 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { logger } from '../../services/logger';
+import { auditLogger } from '../../services/auditLogger';
 import { captureSentryException } from '../../services/sentry';
 import { ShieldAlert, RefreshCw, Home } from 'lucide-react';
 
@@ -34,6 +35,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       service: 'ErrorBoundary',
       operation: 'render',
       error: error.message
+    });
+
+    auditLogger.system('SYSTEM_ERROR_BOUNDARY_TRIGGERED', 'error', {
+      errorType: error.name || 'RenderError'
     });
 
     captureSentryException(error, {

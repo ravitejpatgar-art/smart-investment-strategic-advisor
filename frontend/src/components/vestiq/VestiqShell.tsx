@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
+import { auditLogger } from '../../services/auditLogger';
 import { buildUserContext } from '../../services/userProfileRepository';
 import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
 import { VestiqHeader } from './VestiqHeader';
@@ -226,6 +227,8 @@ export const VestiqShell: React.FC = () => {
     const reqId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     latestRequestIdRef.current = reqId;
 
+    auditLogger.ai('VESTIQ_REQUEST_INITIATED', 'info', { requestId: reqId, isRetry });
+
     const tempUserMsgId = `usr_${Date.now()}`;
     const userMsg: VestiqChatMessage = {
       id: tempUserMsgId,
@@ -321,12 +324,15 @@ export const VestiqShell: React.FC = () => {
         }
       }
 
+      auditLogger.ai('VESTIQ_REQUEST_COMPLETED', 'success', { requestId: reqId, hasCalculations: !!calcData });
+
       // 5. Update messages and refresh conversation list
       setMessages((prev) => [...prev, assistantMsg]);
       await fetchConversations();
 
     } catch (err: any) {
       console.error('[VestIQ] Error during message exchange:', err);
+      auditLogger.ai('VESTIQ_REQUEST_FAILED', 'warning', { requestId: reqId, status: err?.response?.status || 'OFFLINE' });
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail;
       

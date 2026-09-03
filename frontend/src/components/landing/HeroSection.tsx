@@ -107,7 +107,7 @@ export const HeroSection: React.FC = () => {
               <span>•</span>
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-[#1E88E5]" />
-                <span>SEBI & Global Benchmarks</span>
+                <span>Multi-Asset Allocation Models</span>
               </div>
               <span>•</span>
               <div className="flex items-center gap-1.5">

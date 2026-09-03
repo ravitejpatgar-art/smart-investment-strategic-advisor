@@ -9,6 +9,7 @@ import {
   subscribeToAuthState,
   isAuthEnabled
 } from '../services/firebase';
+import { auditLogger } from '../services/auditLogger';
 
 export interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -44,20 +45,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [authEnabled]);
 
   const signUp = async (email: string, password: string, name: string): Promise<FirebaseUser> => {
-    return await registerWithEmail(email, password, name);
+    try {
+      const user = await registerWithEmail(email, password, name);
+      auditLogger.auth('AUTH_SIGNUP_SUCCESS', 'success');
+      return user;
+    } catch (err: any) {
+      auditLogger.auth('AUTH_SIGNUP_FAILURE', 'error', { errorType: err?.code || 'SIGNUP_ERROR' });
+      throw err;
+    }
   };
 
   const signIn = async (email: string, password: string): Promise<FirebaseUser> => {
-    return await loginWithEmail(email, password);
+    try {
+      const user = await loginWithEmail(email, password);
+      auditLogger.auth('AUTH_LOGIN_SUCCESS', 'success');
+      return user;
+    } catch (err: any) {
+      auditLogger.auth('AUTH_LOGIN_FAILURE', 'error', { errorType: err?.code || 'LOGIN_ERROR' });
+      throw err;
+    }
   };
 
   const signInWithGoogle = async (): Promise<FirebaseUser> => {
-    return await loginWithGoogle();
+    try {
+      const user = await loginWithGoogle();
+      auditLogger.auth('AUTH_LOGIN_SUCCESS', 'success', { provider: 'google' });
+      return user;
+    } catch (err: any) {
+      auditLogger.auth('AUTH_LOGIN_FAILURE', 'error', { provider: 'google', errorType: err?.code || 'GOOGLE_AUTH_ERROR' });
+      throw err;
+    }
   };
 
   const signOut = async (): Promise<void> => {
     if (authEnabled) {
       await logoutFirebase();
+      auditLogger.auth('AUTH_LOGOUT', 'info');
     }
   };
 

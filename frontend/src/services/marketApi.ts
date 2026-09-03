@@ -1,4 +1,6 @@
 import { apiClient } from './api';
+import { logger } from './logger';
+import { auditLogger } from './auditLogger';
 import {
   isDemoMode,
   DEMO_COVERAGE,
@@ -448,7 +450,12 @@ export const marketApi = {
         };
       }
     } catch (err: any) {
-      console.info(`[MARKET_FALLBACK] Backend quote unreachable for ${symbol}; switching to secondary provider:`, err?.message || err);
+      logger.info('Backend quote unreachable, switching to secondary/fallback provider', {
+        service: 'marketApi',
+        operation: 'getQuote',
+        symbol,
+        error: err?.message || String(err)
+      });
     }
 
     // 2. Secondary: Direct Mutual Fund AMFI / MFAPI Provider
@@ -515,6 +522,7 @@ export const marketApi = {
     // 5. General Demo Data Fallback
     const demoQ = getDemoQuote(symbol);
     if (demoQ && demoQ.price !== null) {
+      auditLogger.market('MARKET_FALLBACK_ACTIVATED', 'warning', { symbol, status: 'FALLBACK' });
       return {
         ...demoQ,
         status: 'FALLBACK',
@@ -524,6 +532,7 @@ export const marketApi = {
     }
 
     // 6. Graceful Unavailable State (Zero Crashes)
+    auditLogger.market('MARKET_DATA_UNAVAILABLE', 'warning', { symbol, status: 'UNAVAILABLE' });
     return {
       symbol,
       name: symbol,
@@ -566,8 +575,13 @@ export const marketApi = {
       if (res.data && typeof res.data === 'object') {
         liveQuotes = res.data;
       }
-    } catch {
-      // Fallback to individual resilient resolution
+    } catch (err: any) {
+      logger.info('Batch quotes endpoint unreachable, resolving individually', {
+        service: 'marketApi',
+        operation: 'getQuotes',
+        count: symbols.length,
+        error: err?.message || String(err)
+      });
     }
 
     await Promise.all(
@@ -638,7 +652,12 @@ export const marketApi = {
         }
       }
     } catch (err: any) {
-      console.info(`[MARKET_FALLBACK] Backend candles unreachable for ${symbol}; switching to fallback provider:`, err?.message || err);
+      logger.info('Backend candles unreachable, switching to fallback provider', {
+        service: 'marketApi',
+        operation: 'getCandles',
+        symbol,
+        error: err?.message || String(err)
+      });
     }
 
     // 2. Secondary: Direct Mutual Fund AMFI / MFAPI Feed

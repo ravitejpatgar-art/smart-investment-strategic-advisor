@@ -51,7 +51,7 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-4">Regulatory Notice</h4>
             <p className="text-xs text-[#8A94A6] leading-relaxed">
-              SmartVest provides automated quantitative financial strategic planning. SmartVest does not execute securities transactions, accept customer deposits, or receive distributor commissions.
+              SmartVest is an independent strategic wealth planning and quantitative decision-support tool. SmartVest is not a registered broker-dealer, investment custodian, or depository participant, and does not execute securities transactions, hold customer deposits, or guarantee investment returns. All projections and compounding models are estimates for planning purposes.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-6">
             <span>Non-Custodial Architecture</span>
             <span>256-Bit SSL Encryption</span>
-            <span>SEBI & Global Benchmarks</span>
+            <span>Independent Strategic Advisory</span>
           </div>
         </div>
 

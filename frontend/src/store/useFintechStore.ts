@@ -10,6 +10,7 @@ import { calculateInvestmentStrategy } from '../services/strategyEngine';
 import { authApi } from '../services/api';
 import { userProfileRepo } from '../services/userProfileRepository';
 import { subscribeToAuthState, isAuthEnabled } from '../services/firebase';
+import { auditLogger } from '../services/auditLogger';
 
 export type ActiveNavTab = 
   | 'landing' 
@@ -230,6 +231,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
       if (token) localStorage.setItem('smartvest_token', token);
       const computedStrategy = calculateInvestmentStrategy(user, get().expenses, get().goals);
       localStorage.setItem('smartvest_recommendations', JSON.stringify(computedStrategy));
+      auditLogger.profile(user.onboardingCompleted ? 'ONBOARDING_COMPLETED' : 'PROFILE_SAVED', 'success');
       set({ 
         user, 
         isAuthenticated: true, 
@@ -257,6 +259,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveProfile(updatedUser);
     const computedStrategy = calculateInvestmentStrategy(updatedUser, get().expenses, get().goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(computedStrategy));
+    auditLogger.profile('PROFILE_UPDATED', 'success');
     
     set({
       user: updatedUser,
@@ -343,6 +346,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     } catch {
       //
     }
+    auditLogger.financialPlanning('STRATEGY_ANALYSIS_REQUESTED', 'info');
     set({ isAnalyzing: true, strategy: updatedStrategy, activeView: 'analysis' });
     setTimeout(() => {
       set({ isAnalyzing: false, activeView: 'dashboard' });
@@ -359,6 +363,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveExpenses(newExpenses, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, newExpenses, state.goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    auditLogger.financialPlanning('EXPENSE_CREATED', 'success', { category: expense.category });
     return { expenses: newExpenses, strategy: updatedStrategy };
   }),
   editExpense: (id, updated) => set((state) => {
@@ -366,6 +371,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveExpenses(newExpenses, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, newExpenses, state.goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    auditLogger.financialPlanning('EXPENSE_UPDATED', 'success', { expenseId: id });
     return { expenses: newExpenses, strategy: updatedStrategy };
   }),
   deleteExpense: (id) => set((state) => {
@@ -373,6 +379,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveExpenses(newExpenses, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, newExpenses, state.goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    auditLogger.financialPlanning('EXPENSE_DELETED', 'info', { expenseId: id });
     return { expenses: newExpenses, strategy: updatedStrategy };
   }),
 
@@ -383,6 +390,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveGoals(newGoals, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, state.expenses, newGoals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    auditLogger.financialPlanning('GOAL_CREATED', 'success', { category: goal.category });
     return { goals: newGoals, strategy: updatedStrategy };
   }),
   editGoal: (id, updated) => set((state) => {
@@ -390,6 +398,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveGoals(newGoals, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, state.expenses, newGoals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    auditLogger.financialPlanning('GOAL_UPDATED', 'success', { goalId: id });
     return { goals: newGoals, strategy: updatedStrategy };
   }),
   deleteGoal: (id) => set((state) => {
@@ -397,6 +406,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     userProfileRepo.saveGoals(newGoals, state.user?.id);
     const updatedStrategy = calculateInvestmentStrategy(state.user, state.expenses, newGoals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(updatedStrategy));
+    auditLogger.financialPlanning('GOAL_DELETED', 'info', { goalId: id });
     return { goals: newGoals, strategy: updatedStrategy };
   }),
 }));

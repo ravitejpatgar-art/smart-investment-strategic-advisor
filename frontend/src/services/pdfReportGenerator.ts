@@ -206,7 +206,7 @@ export function generateAdvisoryPdfReport({
       <span class="logo-badge">SmartVest</span>
       <div>
         <h1>SmartVest AI Advisory Blueprint</h1>
-        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">SEBI/SEC Compliant Strategic Investment Advisory Matrix</div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Quantitative Multi-Asset Strategic Allocation Blueprint</div>
       </div>
     </div>
     <div class="meta-info">
@@ -381,8 +381,8 @@ export function generateAdvisoryPdfReport({
 
   <!-- DISCLAIMER -->
   <div class="disclaimer">
-    <strong>⚖️ Regulatory Compliance & Advisory Disclosure:</strong><br>
-    SmartVest AI is an educational and independent strategic financial advisory platform. SmartVest is <strong>NOT a broker</strong> and does <strong>NOT execute trades</strong> or custody client funds. All investment recommendations should be executed directly through SEBI/SEC registered third-party brokerages (e.g. Groww, Zerodha, INDmoney, Upstox). Past market performance and CAGR compounding models do not guarantee future returns.
+    <strong>⚖️ Regulatory Notice & Non-Guarantee Advisory Disclosure:</strong><br>
+    SmartVest is an educational and strategic financial planning decision-support platform. SmartVest is <strong>NOT a broker-dealer</strong>, does <strong>NOT execute securities transactions</strong>, and does <strong>NOT custody client assets</strong> or accept deposits. All strategic allocations and mathematical simulations are for planning purposes. Investments must be evaluated independently and executed through third-party registered brokerages. Past market performance and CAGR compounding models are estimates and do not guarantee future returns.
   </div>
 
   <div class="no-print" style="margin-top: 30px; text-align: center;">

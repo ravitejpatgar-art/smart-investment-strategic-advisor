@@ -482,10 +482,10 @@ export const InvestmentRecommendationsView: React.FC = () => {
       <div style={{ ...cardStyle, padding: '20px 24px' }}>
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
           <div>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Zero-Commission Direct Platforms</h3>
-            <p className="text-xs text-[#8A94A6] mt-0.5">Execute direct mutual funds and ETFs without intermediary distributor fees.</p>
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Independent Direct Platforms</h3>
+            <p className="text-xs text-[#8A94A6] mt-0.5">SmartVest provides decision-support models and does not execute trades or hold funds. Execute directly through registered third-party platforms.</p>
           </div>
-          <span className="text-[10.5px] font-bold text-[#00D4AA] uppercase tracking-wider">Fiduciary Execution</span>
+          <span className="text-[10.5px] font-bold text-[#00D4AA] uppercase tracking-wider">Non-Broker Disclosure</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
