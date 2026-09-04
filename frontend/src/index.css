@@ -796,16 +796,56 @@ input::placeholder, textarea::placeholder {
 }
 
 /* =========================================================================
-   P2.2 MICRO-INTERACTIONS & RESPONSIVE POLISH
+   P6.4 MICRO-INTERACTIONS & MOTION (INSTITUTIONAL FINTECH)
    ========================================================================= */
 
+@keyframes terminalEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-entrance-1 {
+  animation: terminalEntrance 180ms ease-out both;
+  animation-delay: 0ms;
+}
+
+.animate-entrance-2 {
+  animation: terminalEntrance 180ms ease-out both;
+  animation-delay: 40ms;
+}
+
+.animate-entrance-3 {
+  animation: terminalEntrance 180ms ease-out both;
+  animation-delay: 80ms;
+}
+
+.animate-entrance-4 {
+  animation: terminalEntrance 180ms ease-out both;
+  animation-delay: 120ms;
+}
+
+.animate-entrance-5 {
+  animation: terminalEntrance 180ms ease-out both;
+  animation-delay: 160ms;
+}
+
 /* Subtle card & interactive element elevation transitions */
-button, a, [role="button"] {
+button,
+a,
+[role="button"] {
   transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
   touch-action: manipulation;
 }
 
-button:active, a:active {
+button:active:not(:disabled),
+a:active:not([aria-disabled="true"]) {
   transform: scale(0.98);
 }
 
@@ -817,8 +857,9 @@ button:active, a:active {
   }
 }
 
-/* Respect user preference for reduced motion */
+/* Respect user preference for reduced motion (P6.4 Strict Accessibility) */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -826,6 +867,6 @@ button:active, a:active {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    transform: none !important;
   }
 }
-

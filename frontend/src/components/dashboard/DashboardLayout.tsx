@@ -110,13 +110,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <button
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-1 focus-visible:ring-[#00D4AA] ${
                   isActive 
-                    ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]' 
-                    : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
+                    ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08] shadow-xs'
+                    : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#00D4AA]' : 'text-[#8A94A6]'}`} />
+                <Icon className={`w-4 h-4 shrink-0 transition-colors duration-150 ${isActive ? 'text-[#00D4AA]' : 'text-[#8A94A6]'}`} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate">{item.label}</div>
                 </div>
@@ -132,10 +132,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </div>
             <button
               onClick={() => setActiveView('ai')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-1 focus-visible:ring-[#00D4AA] ${
                 activeView === 'ai' || activeView === 'vestiq'
-                  ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08]'
-                  : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
+                  ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08] shadow-xs'
+                  : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Sparkles className="w-4 h-4 text-[#00D4AA]" />
@@ -146,7 +146,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
         {/* Sidebar Footer — Client Account Card */}
         <div className="p-3 border-t border-white/[0.06] bg-[#050816]/60 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#101827] border border-white/[0.06] min-w-0 flex-1">
+          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#101827] border border-white/[0.06] hover:border-white/[0.12] transition-colors duration-150 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-md bg-[#00D4AA]/15 text-[#00D4AA] border border-[#00D4AA]/30 flex items-center justify-center font-bold text-xs shrink-0">
               {userInitial}
             </div>
@@ -162,7 +162,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 setActiveView('landing');
               }}
               title="Sign Out"
-              className="p-2 rounded-lg bg-[#101827] hover:bg-[#1f293d] border border-white/[0.08] text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer shrink-0"
+              className="p-2 rounded-lg bg-[#101827] hover:bg-[#1f293d] border border-white/[0.08] text-[#8A94A6] hover:text-[#FF5252] transition-all duration-150 active:scale-95 cursor-pointer shrink-0"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -182,7 +182,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
-              className="lg:hidden p-2 rounded-lg bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer active:scale-95 transition-all"
+              className="lg:hidden p-2 rounded-lg bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white cursor-pointer active:scale-95 transition-all duration-150"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
@@ -203,16 +203,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <div className="flex items-center bg-[#101827] border border-white/[0.08] rounded-md p-0.5 text-xs">
               <button
                 onClick={() => setCurrency('INR')}
-                className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer ${
-                  currency === 'INR' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
+                className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
+                  currency === 'INR' ? 'bg-[#0A1022] text-white shadow-xs' : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
                 ₹ INR
               </button>
               <button
                 onClick={() => setCurrency('USD')}
-                className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer ${
-                  currency === 'USD' ? 'bg-[#0A1022] text-white' : 'text-[#8A94A6] hover:text-white'
+                className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
+                  currency === 'USD' ? 'bg-[#0A1022] text-white shadow-xs' : 'text-[#8A94A6] hover:text-white'
                 }`}
               >
                 $ USD
@@ -224,7 +224,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               onClick={handleReanalyze}
               disabled={isReanalyzing}
               title="Recalculate Multi-Asset Blueprint"
-              className="p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white transition-colors cursor-pointer text-xs flex items-center gap-1.5 active:scale-95"
+              className="p-1.5 rounded-md bg-[#101827] border border-white/[0.08] text-[#8A94A6] hover:text-white hover:bg-white/[0.04] transition-all duration-150 cursor-pointer text-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-[#00D4AA]' : ''}`} />
               <span className="hidden sm:inline text-[11px] font-semibold">Recalculate</span>
@@ -235,7 +235,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               onClick={handleExportPdf}
               disabled={isExportingPdf}
               title="Export PDF Report"
-              className="p-1.5 sm:px-3 sm:py-1.5 rounded-md bg-[#101827] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              className="p-1.5 sm:px-3 sm:py-1.5 rounded-md bg-[#101827] hover:bg-[#141F36] border border-white/[0.08] text-[#8A94A6] hover:text-white text-[11px] font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <FileText className="w-3.5 h-3.5 text-[#00D4AA]" />
               <span className="hidden sm:inline">Export PDF</span>
@@ -244,7 +244,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             {/* VestIQ Assistant Trigger */}
             <button
               onClick={() => setActiveView('ai')}
-              className="px-2.5 sm:px-3 py-1.5 rounded-md bg-[#00D4AA] text-[#050816] text-[10.5px] sm:text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+              className="px-2.5 sm:px-3 py-1.5 rounded-md bg-[#00D4AA] hover:brightness-105 text-[#050816] text-[10.5px] sm:text-[11px] font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>VestIQ AI</span>

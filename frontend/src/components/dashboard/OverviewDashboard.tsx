@@ -1,27 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
-import { 
-  Target, 
-  ShieldCheck, 
-  ArrowRight, 
-  RefreshCw, 
-  Sparkles, 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  Layers, 
-  Zap 
+import {
+  Target,
+  ShieldCheck,
+  ArrowRight,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Layers,
+  Zap
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  PieChart, 
-  Pie, 
-  Cell 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { useMarketQuotes } from '../../hooks/useMarketQuotes';
 import { Skeleton, EmptyState, Button } from '../common';
@@ -59,11 +59,11 @@ const AllocationTooltip = ({ active, payload }: any) => {
 };
 
 export const OverviewDashboard: React.FC = () => {
-  const { 
-    user, 
-    strategy, 
-    formatCurrency, 
-    setActiveView, 
+  const {
+    user,
+    strategy,
+    formatCurrency,
+    setActiveView,
     expenses,
     goals
   } = useFintechStore();
@@ -177,10 +177,10 @@ export const OverviewDashboard: React.FC = () => {
       {/* ================================================================
           1. COMPACT CLIENT CONTEXT BAR
       ================================================================ */}
-      <section className="bg-[#0A1022] border border-white/[0.08] rounded-xl p-3.5 sm:p-4.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-md">
+      <section className="animate-entrance-1 bg-[#0A1022] border border-white/[0.08] rounded-xl p-3.5 sm:p-4.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-md">
         <div className="space-y-1.5 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className={`text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${riskBadgeStyle}`}>
+            <span className={`text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border transition-colors duration-150 ${riskBadgeStyle}`}>
               {effectiveRiskCategory} Mandate
             </span>
             <span className="text-[10px] sm:text-[10.5px] font-medium px-2 py-0.5 rounded bg-white/[0.04] text-[#A0AEC0] border border-white/[0.06]">
@@ -206,21 +206,21 @@ export const OverviewDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 pt-1 lg:pt-0">
-          <Button 
+          <Button
             variant="secondary"
             size="sm"
-            onClick={() => setActiveView('recommendations')} 
-            rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-            className="flex-1 lg:flex-initial"
+            onClick={() => setActiveView('recommendations')}
+            rightIcon={<ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-150" />}
+            className="flex-1 lg:flex-initial group"
           >
             View Allocation
           </Button>
-          <Button 
+          <Button
             variant="primary"
             size="sm"
-            onClick={() => setActiveView('ai')} 
-            leftIcon={<Sparkles className="w-3.5 h-3.5" />}
-            className="flex-1 lg:flex-initial"
+            onClick={() => setActiveView('ai')}
+            leftIcon={<Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-180" />}
+            className="flex-1 lg:flex-initial group"
           >
             Ask VestIQ
           </Button>
@@ -230,7 +230,7 @@ export const OverviewDashboard: React.FC = () => {
       {/* ================================================================
           2. COMPACT MARKET RADAR STRIP
       ================================================================ */}
-      <section className="bg-[#0A1022] border border-white/[0.06] rounded-lg py-2 px-3 sm:px-4 flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs min-w-0">
+      <section className="animate-entrance-2 bg-[#0A1022] border border-white/[0.06] rounded-lg py-2 px-3 sm:px-4 flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs min-w-0">
         <div className="flex items-center gap-5 sm:gap-6 min-w-max">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#00D4AA] animate-pulse" />
@@ -263,23 +263,23 @@ export const OverviewDashboard: React.FC = () => {
             );
           })}
         </div>
-        <button 
-          onClick={() => refetchMarket()} 
-          className="text-[#8A94A6] hover:text-white p-1 shrink-0 cursor-pointer active:scale-95 transition-colors" 
+        <button
+          onClick={() => refetchMarket()}
+          className="text-[#8A94A6] hover:text-white hover:bg-white/[0.06] p-1 rounded shrink-0 cursor-pointer active:scale-90 transition-all duration-150 group"
           title="Refresh Live Data"
           aria-label="Refresh Market Data"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isMarketLoading ? 'animate-spin text-[#00D4AA]' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isMarketLoading ? 'animate-spin text-[#00D4AA]' : 'group-hover:rotate-45 transition-transform duration-200'}`} />
         </button>
       </section>
 
       {/* ================================================================
           3. PRIMARY FINANCIAL + RISK SECTION (Asymmetric Grouping)
       ================================================================ */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
-        
+      <section className="animate-entrance-3 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
+
         {/* LEFT COLUMN (7 COLS): Cashflow & Surplus Group (Dominant Financial Section) */}
-        <div className="lg:col-span-7 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg">
+        <div className="lg:col-span-7 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg hover:border-white/[0.12] transition-colors duration-150">
           <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
             <div>
               <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -295,7 +295,7 @@ export const OverviewDashboard: React.FC = () => {
 
           {/* Dual Inflow / Outflow Secondary Cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] hover:border-white/[0.10] transition-colors duration-150 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider">Monthly Inflow</span>
                 <TrendingUp className="w-3.5 h-3.5 text-[#00C853]" />
@@ -306,7 +306,7 @@ export const OverviewDashboard: React.FC = () => {
               <span className="text-[10.5px] text-[#8A94A6] truncate block">Gross Liquidity</span>
             </div>
 
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] hover:border-white/[0.10] transition-colors duration-150 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider">Monthly Outflow</span>
                 <TrendingDown className="w-3.5 h-3.5 text-[#FF5252]" />
@@ -319,7 +319,7 @@ export const OverviewDashboard: React.FC = () => {
           </div>
 
           {/* PRIMARY HERO NUMBER: Investable Surplus */}
-          <div className="p-4 rounded-lg bg-[#0A1022] border border-[#00D4AA]/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
+          <div className="p-4 rounded-lg bg-[#0A1022] border border-[#00D4AA]/25 hover:border-[#00D4AA]/40 transition-colors duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
             <div className="space-y-1">
               <span className="text-[10.5px] font-bold text-[#8A94A6] uppercase tracking-wider block">
                 {isDeficit ? 'Operating Deficit' : 'Investable Monthly Surplus'}
@@ -342,7 +342,7 @@ export const OverviewDashboard: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN (5 COLS): Risk, Emergency Runway & Safety Group */}
-        <div className="lg:col-span-5 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg">
+        <div className="lg:col-span-5 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg hover:border-white/[0.12] transition-colors duration-150">
           <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
             <div>
               <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -358,15 +358,15 @@ export const OverviewDashboard: React.FC = () => {
 
           <div className="space-y-3">
             {/* Emergency Runway Buffer */}
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1.5">
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] hover:border-white/[0.10] transition-colors duration-150 space-y-1.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-[#8A94A6] font-semibold">Emergency Runway</span>
                 <span className="font-mono font-bold text-white">{formatCurrency(emergencyFund)}</span>
               </div>
               <div className="w-full bg-[#101827] h-1.5 rounded-full overflow-hidden">
-                <div 
-                  className="bg-[#1E88E5] h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.max(5, emergencyFundedPct)}%` }} 
+                <div
+                  className="bg-[#1E88E5] h-full rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${Math.max(5, emergencyFundedPct)}%` }}
                 />
               </div>
               <div className="flex justify-between text-[10.5px] text-[#8A94A6]">
@@ -376,7 +376,7 @@ export const OverviewDashboard: React.FC = () => {
             </div>
 
             {/* Risk Governance & Capacity */}
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] flex items-center justify-between gap-3 text-xs">
+            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] hover:border-white/[0.10] transition-colors duration-150 flex items-center justify-between gap-3 text-xs">
               <div>
                 <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider block">Risk Mandate</span>
                 <span className="font-bold text-white text-sm mt-0.5 block">{effectiveRiskCategory}</span>
@@ -390,16 +390,16 @@ export const OverviewDashboard: React.FC = () => {
 
           <div className="flex items-center justify-between pt-1 border-t border-white/[0.04] text-[11px] text-[#8A94A6]">
             <span>Audit Score: <strong className="text-white font-mono">{healthFactors.overall}/100</strong></span>
-            <button 
+            <button
               onClick={() => setShowHealthFactors(!showHealthFactors)}
-              className="text-[#00D4AA] hover:underline cursor-pointer"
+              className="text-[#00D4AA] hover:text-[#14F1D9] transition-colors duration-150 cursor-pointer"
             >
               {showHealthFactors ? 'Hide Details' : 'View Health Breakdown'}
             </button>
           </div>
 
           {showHealthFactors && (
-            <div className="space-y-1.5 p-2.5 rounded-lg bg-[#0A1022] text-[11px] border border-white/[0.04] animate-fade-in">
+            <div className="space-y-1.5 p-2.5 rounded-lg bg-[#0A1022] text-[11px] border border-white/[0.04] animate-entrance-1">
               <div className="flex justify-between text-[#8A94A6]">
                 <span>Savings Discipline:</span>
                 <strong className="text-white font-mono">{healthFactors.savings}/100</strong>
@@ -420,10 +420,10 @@ export const OverviewDashboard: React.FC = () => {
       {/* ================================================================
           4. ASSET ALLOCATION PANEL + ACTIVE MILESTONE GOALS
       ================================================================ */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
-        
+      <section className="animate-entrance-4 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
+
         {/* LEFT (7 COLS): Asset Allocation Panel */}
-        <div className="lg:col-span-7 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg">
+        <div className="lg:col-span-7 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg hover:border-white/[0.12] transition-colors duration-150">
           <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
             <div>
               <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -439,7 +439,7 @@ export const OverviewDashboard: React.FC = () => {
 
           {/* Allocation Donut + Legend Layout */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-            
+
             {/* Donut Chart (5 cols) */}
             <div className="sm:col-span-5 h-44 relative flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
@@ -452,6 +452,8 @@ export const OverviewDashboard: React.FC = () => {
                     outerRadius={70}
                     paddingAngle={3}
                     dataKey="value"
+                    animationDuration={350}
+                    animationEasing="ease-out"
                   >
                     {allocationPieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="#101827" strokeWidth={2} />
@@ -469,7 +471,7 @@ export const OverviewDashboard: React.FC = () => {
             {/* Legend List (7 cols) */}
             <div className="sm:col-span-7 space-y-1.5">
               {allocationPieData.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-md bg-[#0A1022] border border-white/[0.04] text-xs">
+                <div key={idx} className="flex items-center justify-between p-2 rounded-md bg-[#0A1022] border border-white/[0.04] hover:border-white/[0.10] hover:bg-[#0E172A] transition-all duration-150 text-xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                     <span className="font-semibold text-white truncate max-w-[140px]">{item.name}</span>
@@ -487,15 +489,15 @@ export const OverviewDashboard: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={() => setActiveView('recommendations')}
-            rightIcon={<ArrowRight className="w-3.5 h-3.5 text-[#00D4AA]" />}
-            className="w-full justify-center"
+            rightIcon={<ArrowRight className="w-3.5 h-3.5 text-[#00D4AA] group-hover:translate-x-0.5 transition-transform duration-150" />}
+            className="w-full justify-center group"
           >
             Inspect Strategy Blueprint & Underlying Holdings
           </Button>
         </div>
 
         {/* RIGHT (5 COLS): Active Financial Milestone Goals */}
-        <div className="lg:col-span-5 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg">
+        <div className="lg:col-span-5 bg-[#101827] border border-white/[0.08] rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg hover:border-white/[0.12] transition-colors duration-150">
           <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
             <div>
               <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -504,9 +506,9 @@ export const OverviewDashboard: React.FC = () => {
               </h2>
               <p className="text-[11px] text-[#8A94A6] mt-0.5">Capital roadmaps and funding schedules</p>
             </div>
-            <button 
-              onClick={() => setActiveView('goals')} 
-              className="text-xs font-semibold text-[#00D4AA] hover:underline cursor-pointer"
+            <button
+              onClick={() => setActiveView('goals')}
+              className="text-xs font-semibold text-[#00D4AA] hover:text-[#14F1D9] transition-colors duration-150 cursor-pointer"
             >
               Manage Goals →
             </button>
@@ -526,13 +528,13 @@ export const OverviewDashboard: React.FC = () => {
               {goals.slice(0, 3).map((g) => {
                 const pct = Math.min(100, Math.round(((g.currentAmount || 0) / (g.targetAmount || 1)) * 100));
                 return (
-                  <div key={g.id} className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1.5">
+                  <div key={g.id} className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] hover:border-white/[0.10] transition-colors duration-150 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-white truncate max-w-[150px]">{g.title}</span>
                       <span className="font-mono text-[#00D4AA] font-semibold">{formatCurrency(g.targetAmount)} ({g.targetDate})</span>
                     </div>
                     <div className="w-full bg-[#101827] h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-[#00D4AA] h-full rounded-full" style={{ width: `${Math.max(5, pct)}%` }} />
+                      <div className="bg-[#00D4AA] h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${Math.max(5, pct)}%` }} />
                     </div>
                     <div className="flex justify-between text-[10.5px] text-[#8A94A6]">
                       <span>Funded: <strong className="text-white font-mono">{formatCurrency(g.currentAmount || 0)}</strong></span>
@@ -554,8 +556,8 @@ export const OverviewDashboard: React.FC = () => {
       {/* ================================================================
           5. PROJECTED WEALTH TRAJECTORY (Dominant Visual Hero)
       ================================================================ */}
-      <section className="bg-[#101827] border border-white/[0.10] rounded-xl p-5 sm:p-6 space-y-4 shadow-xl">
-        
+      <section className="animate-entrance-5 bg-[#101827] border border-white/[0.10] rounded-xl p-5 sm:p-6 space-y-4 shadow-xl hover:border-white/[0.14] transition-colors duration-150">
+
         {/* Trajectory Header & Toggles */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
           <div>
@@ -575,8 +577,8 @@ export const OverviewDashboard: React.FC = () => {
                 <button
                   key={sc}
                   onClick={() => setSelectedScenario(sc)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                    selectedScenario === sc ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08] shadow-xs' : 'text-[#8A94A6] hover:text-white'
+                  className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all duration-150 ease-out active:scale-95 focus-visible:ring-1 focus-visible:ring-[#00D4AA] cursor-pointer ${
+                    selectedScenario === sc ? 'bg-[#101827] text-[#00D4AA] border border-white/[0.08] shadow-xs' : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
                   {sc}
@@ -590,8 +592,8 @@ export const OverviewDashboard: React.FC = () => {
                 <button
                   key={hz}
                   onClick={() => setSelectedHorizon(hz)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold cursor-pointer transition-all ${
-                    selectedHorizon === hz ? 'bg-[#00D4AA] text-[#050816]' : 'text-[#8A94A6] hover:text-white'
+                  className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold cursor-pointer transition-all duration-150 ease-out active:scale-95 focus-visible:ring-1 focus-visible:ring-[#00D4AA] ${
+                    selectedHorizon === hz ? 'bg-[#00D4AA] text-[#050816] shadow-xs' : 'text-[#8A94A6] hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
                   {hz}Y
@@ -618,15 +620,15 @@ export const OverviewDashboard: React.FC = () => {
               <XAxis dataKey="label" stroke="#5A667A" fontSize={11} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} />
               <YAxis stroke="#5A667A" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatCurrency(v).slice(0, 5)} />
               <Tooltip content={<PremiumTooltip formatCurrency={formatCurrency} />} />
-              <Area type="monotone" dataKey="corpus" stroke="#00D4AA" strokeWidth={2.5} fillOpacity={1} fill="url(#corpusGrad)" name="Corpus" />
-              <Area type="monotone" dataKey="invested" stroke="#1E88E5" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#investedGrad)" name="Invested" />
+              <Area type="monotone" dataKey="corpus" stroke="#00D4AA" strokeWidth={2.5} fillOpacity={1} fill="url(#corpusGrad)" name="Corpus" animationDuration={350} animationEasing="ease-out" />
+              <Area type="monotone" dataKey="invested" stroke="#1E88E5" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#investedGrad)" name="Invested" animationDuration={350} animationEasing="ease-out" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Final Projected Target Summary Strip with End-Value Callout */}
         {finalProjection && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-[#0A1022] border border-white/[0.06] text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-[#0A1022] border border-white/[0.06] hover:border-white/[0.10] transition-colors duration-150 text-xs">
             <div className="space-y-0.5">
               <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider block">Estimated Year {selectedHorizon} Corpus</span>
               <div className="text-xl sm:text-2xl font-black text-[#00D4AA] font-mono leading-tight">
