@@ -307,8 +307,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         />
       )}
 
-      {/* Floating Assistant Trigger */}
-      <FloatingAIAssistantButton />
+      {/* Floating Assistant Trigger (outside dashboard) */}
+      {activeView !== 'dashboard' && <FloatingAIAssistantButton />}
 
     </div>
   );
