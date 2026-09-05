@@ -40,12 +40,12 @@ function fmtLabel(d: string, p: string): string {
 const CustomTooltip = ({ active, payload, label, currency, isMF }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#101827] border border-white/[0.1] rounded-lg shadow-xl px-3 py-2 text-xs space-y-0.5 pointer-events-none">
-      <div className="text-[10.5px] text-[#8A94A6] font-semibold">{label}</div>
-      <div className="text-sm font-bold font-mono text-white">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-xl px-3 py-2 text-xs space-y-0.5 pointer-events-none">
+      <div className="text-[10.5px] text-slate-500 font-semibold">{label}</div>
+      <div className="text-sm font-bold font-mono text-slate-900">
         {currency}{Number(payload[0].value).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:4})}
       </div>
-      <div className="text-[10px] text-[#00D4AA] font-bold uppercase">{isMF ? "NAV" : "Close"}</div>
+      <div className="text-[10px] text-teal-700 font-bold uppercase">{isMF ? "NAV" : "Price"}</div>
     </div>
   );
 };
@@ -110,7 +110,7 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
   const startVal = data.length > 0 ? data[0].value : null;
   const endVal   = data.length > 0 ? data[data.length-1].value : null;
   const isPos    = startVal != null && endVal != null ? endVal >= startVal : true;
-  const color    = isPos ? "#00D4AA" : "#FF5252";
+  const color    = isPos ? "#10B981" : "#EF4444";
   const gid      = "cg" + symbol.replace(/[^a-zA-Z0-9]/g,"").slice(0,8) + period;
 
   return (
@@ -123,10 +123,10 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
               type="button" 
               disabled={isLoading} 
               onClick={() => setPeriod(p)}
-              className={`px-2.5 py-1 rounded text-xs font-mono font-bold cursor-pointer transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors ${
                 period === p 
-                  ? 'bg-[#00D4AA] text-[#050816] shadow-xs' 
-                  : 'text-[#8A94A6] bg-[#0A1022] border border-white/[0.06] hover:text-white'
+                  ? 'bg-[#00D4AA] text-[#0F172A] shadow-xs' 
+                  : 'text-slate-600 bg-slate-100 border border-slate-200 hover:text-slate-900 hover:bg-slate-200'
               }`}
             >
               {PERIODS[p].label}
@@ -134,7 +134,7 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
           ))}
         </div>
         {endVal != null && startVal != null && (
-          <div className={`text-xs font-mono font-bold ${isPos ? "text-[#00C853]" : "text-[#FF5252]"}`}>
+          <div className={`text-xs font-mono font-bold ${isPos ? "text-emerald-600" : "text-red-600"}`}>
             {currency}{endVal.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
             <span className="ml-1 text-[11px]">
               ({(((endVal-startVal)/startVal)*100 >= 0 ? "+" : "") + ((endVal-startVal)/startVal*100).toFixed(2) + "%"})
@@ -145,29 +145,29 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
 
       <div className="h-[200px] sm:h-[230px] w-full">
         {isLoading && (
-          <div className="h-full flex items-center justify-center gap-2 text-[#8A94A6] text-xs">
-            <RefreshCw className="w-4 h-4 animate-spin text-[#00D4AA]" /><span>Loading chart...</span>
+          <div className="h-full flex items-center justify-center gap-2 text-slate-500 text-xs">
+            <RefreshCw className="w-4 h-4 animate-spin text-teal-600" /><span>Loading chart...</span>
           </div>
         )}
         {!isLoading && error === "backend" && (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-center">
-            <AlertCircle className="w-5 h-5 text-[#FF5252]" />
-            <p className="text-xs text-[#8A94A6]">Unable to connect to SmartVest market data service.</p>
-            <button type="button" onClick={() => load(period)} className="text-xs text-[#00D4AA] underline cursor-pointer">Retry</button>
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <p className="text-xs text-slate-600">Unable to connect to SmartVest market data service.</p>
+            <button type="button" onClick={() => load(period)} className="text-xs text-teal-700 underline font-semibold cursor-pointer">Retry</button>
           </div>
         )}
         {!isLoading && error === "provider" && (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-center">
-            <AlertCircle className="w-5 h-5 text-amber-400" />
-            <p className="text-xs text-[#8A94A6]">Historical market data is temporarily unavailable.</p>
-            <button type="button" onClick={() => load(period)} className="text-xs text-[#00D4AA] underline cursor-pointer">Retry</button>
+            <AlertCircle className="w-5 h-5 text-amber-500" />
+            <p className="text-xs text-slate-600">Historical market data is temporarily unavailable.</p>
+            <button type="button" onClick={() => load(period)} className="text-xs text-teal-700 underline font-semibold cursor-pointer">Retry</button>
           </div>
         )}
         {!isLoading && error === "unsupported" && (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-center">
-            <Info className="w-5 h-5 text-[#8A94A6]" />
-            <p className="text-xs text-[#8A94A6]">Historical data is unavailable for this instrument ({period}).</p>
-            <button type="button" onClick={() => load(period)} className="text-xs text-[#00D4AA] underline cursor-pointer">Retry</button>
+            <Info className="w-5 h-5 text-slate-400" />
+            <p className="text-xs text-slate-600">Historical data is unavailable for this instrument ({period}).</p>
+            <button type="button" onClick={() => load(period)} className="text-xs text-teal-700 underline font-semibold cursor-pointer">Retry</button>
           </div>
         )}
         {!isLoading && !error && data.length >= 2 && (
@@ -175,13 +175,13 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
             <AreaChart data={data} margin={{top:4,right:4,bottom:0,left:0}}>
               <defs>
                 <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={color} stopOpacity={0.2}/>
+                  <stop offset="5%"  stopColor={color} stopOpacity={0.15}/>
                   <stop offset="95%" stopColor={color} stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false}/>
-              <XAxis dataKey="label" tick={{fontSize:10,fill:"#8A94A6"}} tickLine={false} axisLine={false} interval="preserveStartEnd"/>
-              <YAxis domain={["auto","auto"]} tick={{fontSize:10,fill:"#8A94A6"}} tickLine={false} axisLine={false}
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false}/>
+              <XAxis dataKey="label" tick={{fontSize:10,fill:"#64748B"}} tickLine={false} axisLine={false} interval="preserveStartEnd"/>
+              <YAxis domain={["auto","auto"]} tick={{fontSize:10,fill:"#64748B"}} tickLine={false} axisLine={false}
                 tickFormatter={v => v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?(v/1e3).toFixed(1)+"K":v.toFixed(2)} width={54}/>
               <Tooltip content={<CustomTooltip currency={currency} isMF={isMF}/>}/>
               <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2}
@@ -192,8 +192,8 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
       </div>
 
       {!isLoading && !error && data.length >= 2 && (
-        <div className="flex items-center justify-between text-[11px] text-[#5A667A] flex-wrap gap-1 pt-1 border-t border-white/[0.04]">
-          <span>Source: {source} • <span className="uppercase font-semibold">{freshness}</span> • {isMF ? "NAV" : "Close"} History</span>
+        <div className="flex items-center justify-between text-[11px] text-slate-500 flex-wrap gap-1 pt-1 border-t border-slate-100">
+          <span>Source: {source} • <span className="uppercase font-semibold">{freshness}</span> • {isMF ? "NAV" : "Price"} History</span>
           <span className="font-mono">{data[0].date.slice(0,10)} to {data[data.length-1].date.slice(0,10)}</span>
         </div>
       )}

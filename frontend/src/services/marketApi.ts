@@ -226,8 +226,20 @@ export interface MarketInstrument {
 }
 
 export interface InstrumentResearchBundle {
+  instrument?: MarketInstrument | null;
   quote?: MarketQuote | null;
   fundamentals?: any;
+  valuation?: any;
+  dividends?: any;
+  risk?: any;
+  etfData?: any;
+  mfData?: any;
+  capabilities?: Record<string, boolean>;
+  sources?: {
+    quote?: string | null;
+    research?: string | null;
+    freshness?: FreshnessType | string;
+  };
   technicals?: {
     rsi?: number;
     macd?: { macd: number; signal: number; hist: number };
@@ -937,6 +949,14 @@ export const marketApi = {
   getResearch: async (symbol: string): Promise<InstrumentResearchBundle> => {
     if (isDemoMode()) {
       return getDemoResearch(symbol);
+    }
+    try {
+      const res = await apiClient.get<InstrumentResearchBundle>(`/market/research/${encodeURIComponent(symbol)}`);
+      if (res.data) {
+        return res.data;
+      }
+    } catch {
+      // Backend /market/research route failed, fallback to individual endpoints
     }
     try {
       const [quote, fundamentals] = await Promise.all([
