@@ -113,7 +113,7 @@ class MarketDataProviderRegistry:
             return self.gold_provider
 
         # 4. Direct Mutual Fund Candidates
-        if s.isdigit() or s in ["NIFTY50_INDEX", "FLEXICAP_FUND", "LIQUID_FUND", "SHORT_DEBT_FUND", "SMALLCAP_FUND", "CONSERVATIVE_HYBRID", "120716", "122639", "120586", "119062", "125354", "120616", "PPFCF", "PPFAS", "ICICILIQ", "HDFCSHORT", "NIPPSMALL", "NIFTY50", "ICICISAVE", "REGULAR_SAVINGS"]:
+        if s.startswith("AMFI:") or s.startswith("MF:") or s.isdigit() or s in ["NIFTY50_INDEX", "FLEXICAP_FUND", "LIQUID_FUND", "SHORT_DEBT_FUND", "SMALLCAP_FUND", "CONSERVATIVE_HYBRID", "120716", "122639", "120586", "119062", "125354", "120616", "PPFCF", "PPFAS", "ICICILIQ", "HDFCSHORT", "NIPPSMALL", "NIFTY50", "ICICISAVE", "REGULAR_SAVINGS"]:
             return self.mf_provider
 
         if any(w in s for w in ["UTI", "PARAG", "FLEXI", "LIQUID", "FUND", "DIRECT", "GROWTH", "MF", "INDEX FUND", "SMALLCAP", "DEBT", "HYBRID", "SAVINGS", "SAVE"]):

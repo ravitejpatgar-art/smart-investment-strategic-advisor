@@ -103,13 +103,24 @@ class MutualFundsProvider(BaseMarketDataProvider):
         )
 
     def resolve_scheme(self, symbol: str) -> Optional[Dict[str, str]]:
-        s_clean = symbol.upper().strip().replace("-", "_").replace(" ", "_")
+        clean_raw = symbol.strip()
+        s_clean = clean_raw.upper().replace("-", "_").replace(" ", "_")
         
-        if symbol.strip() in MF_SCHEME_MAP:
-            return MF_SCHEME_MAP[symbol.strip()]
+        # Check direct prefix stripped code (e.g. AMFI:122639 -> 122639)
+        code_candidate = clean_raw
+        if code_candidate.upper().startswith("AMFI:"):
+            code_candidate = code_candidate[5:].strip()
+        elif code_candidate.upper().startswith("MF:"):
+            code_candidate = code_candidate[3:].strip()
+
+        if code_candidate in MF_SCHEME_MAP:
+            return MF_SCHEME_MAP[code_candidate]
+
+        if clean_raw in MF_SCHEME_MAP:
+            return MF_SCHEME_MAP[clean_raw]
             
-        if symbol.strip().isdigit():
-            return {"code": symbol.strip(), "name": f"Direct Mutual Fund ({symbol.strip()})", "category": "Mutual Fund"}
+        if code_candidate.isdigit():
+            return {"code": code_candidate, "name": f"Mutual Fund Scheme ({code_candidate})", "category": "Mutual Fund"}
 
         for k, v in MF_SCHEME_MAP.items():
             if k.replace(" ", "_").upper() in s_clean or s_clean in k.replace(" ", "_").upper():

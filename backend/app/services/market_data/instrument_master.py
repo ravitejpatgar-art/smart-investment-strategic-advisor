@@ -16,14 +16,17 @@ class GlobalInstrumentMasterRegistry:
     """
 
     def __init__(self):
-        # Auto-seed database if empty on initialization
-        try:
-            with SessionLocal() as db:
-                if db.query(Instrument).count() == 0:
-                    from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
-                    universe_sync_engine.run_full_sync(db=db, sync_eodhd=False, sync_nse=True, sync_amfi=True)
-        except Exception:
-            pass
+        # Auto-seed database in background if empty or containing only minimal seeds
+        import threading
+        def _bg_seed():
+            try:
+                with SessionLocal() as db:
+                    if db.query(Instrument).count() <= 60:
+                        from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
+                        universe_sync_engine.run_full_sync(db=db, sync_eodhd=False, sync_nse=True, sync_amfi=True)
+            except Exception:
+                pass
+        threading.Thread(target=_bg_seed, daemon=True, name="InstrumentMasterAutoSeed").start()
 
     def get_instrument_by_id(self, identifier: str, db: Optional[Session] = None) -> Optional[Dict[str, Any]]:
         clean_id = identifier.strip()
@@ -133,34 +136,78 @@ class GlobalInstrumentMasterRegistry:
             # Parallel quote enrichment
             def fetch_quote(it: Dict[str, Any]) -> Dict[str, Any]:
                 item_copy = dict(it)
-                # If mutual fund and NAV is known, populate official NAV quote
-                if it.get("assetType") == "MUTUAL_FUND" and it.get("nav") is not None:
+                is_mf = it.get("assetType") == "MUTUAL_FUND" or it.get("asset_type") == "MUTUAL_FUND"
+                
+                if is_mf:
+                    nav_val = it.get("nav")
+                    if nav_val is not None:
+                        try:
+                            nav_float = float(nav_val)
+                            if nav_float > 0:
+                                item_copy["quote"] = {
+                                    "symbol": it["symbol"],
+                                    "name": it["name"],
+                                    "exchange": it.get("exchange") or "AMFI",
+                                    "assetType": "MUTUAL_FUND",
+                                    "price": nav_float,
+                                    "currency": it.get("currency") or "INR",
+                                    "change": 0.0,
+                                    "changePct": 0.0,
+                                    "volume": 0,
+                                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                                    "marketStatus": "PUBLISHED",
+                                    "freshness": "LATEST_AVAILABLE",
+                                    "status": "FALLBACK",
+                                    "source": "AMFI Official NAV Feed",
+                                    "asOf": it.get("navDate") or "Latest Published NAV",
+                                    "navDate": it.get("navDate"),
+                                    "message": "Latest published scheme NAV shown"
+                                }
+                                item_copy["price"] = nav_float
+                                return item_copy
+                        except (ValueError, TypeError):
+                            pass
+
+                    # If nav not stored in db, query MF adapter
+                    target_sym = it.get("schemeCode") or it.get("scheme_code") or it["symbol"]
+                    try:
+                        q = market_registry.get_quote(target_sym)
+                        if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
+                            item_copy["quote"] = q
+                            item_copy["price"] = q.get("price")
+                            return item_copy
+                    except Exception:
+                        pass
+
                     item_copy["quote"] = {
                         "symbol": it["symbol"],
                         "name": it["name"],
                         "exchange": it.get("exchange") or "AMFI",
                         "assetType": "MUTUAL_FUND",
-                        "price": it["nav"],
+                        "price": None,
                         "currency": it.get("currency") or "INR",
-                        "change": 0.0,
-                        "changePct": 0.0,
-                        "volume": 0,
+                        "change": None,
+                        "changePct": None,
+                        "volume": None,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "marketStatus": "PUBLISHED",
-                        "freshness": "LATEST_AVAILABLE",
-                        "status": "FALLBACK",
+                        "marketStatus": "CLOSED",
+                        "freshness": "UNAVAILABLE",
+                        "status": "UNAVAILABLE",
                         "source": "AMFI Official NAV Feed",
-                        "asOf": it.get("navDate") or "Latest Published NAV",
-                        "navDate": it.get("navDate"),
-                        "message": "Latest published scheme NAV shown"
+                        "asOf": "Unavailable",
+                        "message": "NAV not currently published"
                     }
+                    item_copy["price"] = None
                     return item_copy
 
-                # For equities / ETFs, fetch live or fallback quote
+                # For equities / ETFs / Indices / Commodities, fetch live or fallback quote
                 try:
                     q = market_registry.get_quote(it["symbol"])
-                    if q and q.get("price") is not None:
+                    if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
                         item_copy["quote"] = q
+                        item_copy["price"] = q.get("price")
+                        item_copy["change"] = q.get("change")
+                        item_copy["changePct"] = q.get("changePct")
                     else:
                         item_copy["quote"] = {
                             "symbol": it["symbol"],
@@ -180,8 +227,10 @@ class GlobalInstrumentMasterRegistry:
                             "asOf": "Unavailable",
                             "message": "Quote not currently available"
                         }
+                        item_copy["price"] = None
                 except Exception:
                     item_copy["quote"] = None
+                    item_copy["price"] = None
                 return item_copy
 
             if serialized:

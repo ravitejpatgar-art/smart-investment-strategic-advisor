@@ -1170,7 +1170,14 @@ class GlobalUniverseManager:
         last_inst = db.query(Instrument).order_by(Instrument.updated_at.desc()).first()
         last_synced = last_inst.updated_at.isoformat() if last_inst and last_inst.updated_at else datetime.now(timezone.utc).isoformat()
 
+        # Geographic distribution breakdown
+        in_count = db.query(Instrument).filter(Instrument.is_active == True, Instrument.country == "IN").count()
+        us_count = db.query(Instrument).filter(Instrument.is_active == True, Instrument.country == "US").count()
+        gb_count = db.query(Instrument).filter(Instrument.is_active == True, Instrument.country == "GB").count()
+        other_count = max(0, total - (in_count + us_count + gb_count))
+
         return {
+            # Legacy snake_case keys for strict contract preservation
             "total_instruments": total,
             "stocks_count": stocks,
             "etfs_count": etfs,
@@ -1180,7 +1187,23 @@ class GlobalUniverseManager:
             "exchanges": exchanges,
             "countries_count": len(countries),
             "countries": countries,
-            "last_synced_at": last_synced
+            "last_synced_at": last_synced,
+            # Enhanced camelCase & breakdown telemetry
+            "instrumentCount": total,
+            "stockCount": stocks,
+            "etfCount": etfs,
+            "mutualFundCount": mutual_funds,
+            "indexCount": indices,
+            "geographicCounts": {
+                "IN": in_count,
+                "US": us_count,
+                "GB": gb_count,
+                "OTHER": other_count
+            },
+            "inCount": in_count,
+            "usCount": us_count,
+            "gbCount": gb_count,
+            "otherCount": other_count
         }
 
     @classmethod
