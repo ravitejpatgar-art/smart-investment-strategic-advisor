@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends, HTTPException, status
+from fastapi import APIRouter, Query, Depends, HTTPException, status, Header
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -33,13 +33,28 @@ def trigger_universe_sync(
     sync_eodhd: bool = Query(True, description="Sync EODHD global universe if configured"),
     sync_nse: bool = Query(True, description="Sync NSE listed equities & ETFs"),
     sync_amfi: bool = Query(True, description="Sync AMFI Indian mutual fund schemes"),
-    current_user: User = Depends(get_current_user),
+    sync_secret: Optional[str] = Header(None, alias="X-Sync-Secret"),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
-    Triggers an authenticated synchronization of the global instrument master.
+    Triggers an authenticated or secret-protected synchronization of the global instrument master.
     Protected against unrestricted public scraping.
     """
+    from app.core.config import settings
+    # Verify authorization: current logged-in user OR valid sync secret OR dev environment
+    is_authorized = (
+        current_user is not None
+        or (sync_secret and (sync_secret == settings.UNIVERSE_SYNC_SECRET or sync_secret == settings.SECRET_KEY))
+        or (settings.ENVIRONMENT == "development" and not settings.UNIVERSE_SYNC_SECRET)
+    )
+
+    if not is_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized. Provide a valid authentication token or X-Sync-Secret header."
+        )
+
     stats = universe_sync_engine.run_full_sync(
         db=db,
         sync_eodhd=sync_eodhd,

@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     EODHD_API_KEY: str = os.getenv("EODHD_API_KEY", "")
     EODHD_API_URL: str = os.getenv("EODHD_API_URL", "https://eodhd.com/api")
     UNIVERSE_SYNC_SECRET: str = os.getenv("UNIVERSE_SYNC_SECRET", "")
+    MARKET_UNIVERSE_AUTO_SYNC: bool = os.getenv("MARKET_UNIVERSE_AUTO_SYNC", "true").lower() in ("true", "1", "yes")
+    MARKET_UNIVERSE_SYNC_COOLDOWN_MINUTES: int = int(os.getenv("MARKET_UNIVERSE_SYNC_COOLDOWN_MINUTES", "360"))
     
     MARKET_DATA_CACHE_TTL_SECONDS: int = int(os.getenv("MARKET_DATA_CACHE_TTL_SECONDS", "30"))
     
