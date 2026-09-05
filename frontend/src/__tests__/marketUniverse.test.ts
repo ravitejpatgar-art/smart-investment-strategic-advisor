@@ -231,4 +231,53 @@ describe('Global Market Universe & Explorer API (P7.0B)', () => {
     expect(result.items[0].symbol).toBe('AAPL');
     expect(result.total).toBeGreaterThan(0);
   });
+
+  // 8. Currency filtering (P7.3)
+  it('supports currency filtering in query parameters', async () => {
+    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
+      data: {
+        items: [
+          { symbol: 'AAPL', name: 'Apple Inc.', asset_type: 'STOCK', currency: 'USD' }
+        ],
+        total: 1,
+        page: 1,
+        limit: 25
+      }
+    });
+
+    const result = await marketApi.getInstruments({ currency: 'USD' });
+    const calledUrl = getSpy.mock.calls[0][0];
+    expect(calledUrl).toContain('currency=USD');
+    expect(result.items[0].currency).toBe('USD');
+  });
+
+  // 9. Market Coverage Telemetry (P7.3)
+  it('fetches institutional market coverage statistics', async () => {
+    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
+      data: {
+        total_instruments: 16921,
+        stocks_count: 2562,
+        etfs_count: 24,
+        mutual_funds_count: 14329,
+        indices_count: 6,
+        by_asset_type: {
+          STOCK: 2562,
+          ETF: 24,
+          MUTUAL_FUND: 14329,
+          INDEX: 4,
+          COMMODITY: 2
+        },
+        exchanges_count: 8,
+        countries_count: 7,
+        last_synced_at: '2026-09-05T12:00:00Z'
+      }
+    });
+
+    const coverage = await marketApi.getCoverage();
+    expect(getSpy).toHaveBeenCalledWith('/market/coverage');
+    expect(coverage.total_instruments).toBe(16921);
+    expect(coverage.stocks_count).toBe(2562);
+    expect(coverage.mutual_funds_count).toBe(14329);
+    expect(coverage.exchanges_count).toBe(8);
+  });
 });

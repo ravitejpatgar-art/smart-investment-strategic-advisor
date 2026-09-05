@@ -271,6 +271,7 @@ export interface MarketCoverageResponse {
   etfs_count: number;
   mutual_funds_count: number;
   indices_count: number;
+  by_asset_type?: Record<string, number>;
   exchanges_count: number;
   exchanges: string[];
   countries_count: number;
@@ -783,6 +784,7 @@ export const marketApi = {
     market?: string;
     exchange?: string;
     country?: string;
+    currency?: string;
     page?: number;
     limit?: number;
   } = {}): Promise<MarketInstrumentsResponse> => {
@@ -798,6 +800,7 @@ export const marketApi = {
       if (params.market && params.market !== 'ALL') queryParts.push(`market=${encodeURIComponent(params.market)}`);
       if (params.exchange && params.exchange !== 'ALL') queryParts.push(`exchange=${encodeURIComponent(params.exchange)}`);
       if (params.country && params.country !== 'ALL') queryParts.push(`country=${encodeURIComponent(params.country)}`);
+      if (params.currency && params.currency !== 'ALL') queryParts.push(`currency=${encodeURIComponent(params.currency)}`);
       if (params.page) queryParts.push(`page=${params.page}`);
       if (params.limit) queryParts.push(`limit=${params.limit}`);
 
