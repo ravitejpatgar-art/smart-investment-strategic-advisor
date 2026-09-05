@@ -1,8 +1,9 @@
 from typing import Dict, Any, List, Optional
+from concurrent.futures import ThreadPoolExecutor
 from app.core.config import settings
 from app.services.market_data.base import BaseMarketDataProvider
 from app.services.market_data.freshness import DataFreshness
-from app.services.market_data.normalizer import create_unavailable_quote
+from app.services.market_data.normalizer import create_unavailable_quote, normalize_global_symbol
 from app.services.market_data.indian_equities import IndianEquitiesProvider
 from app.services.market_data.us_equities import USEquitiesProvider
 from app.services.market_data.etfs import ETFProvider
@@ -94,16 +95,16 @@ class MarketDataProviderRegistry:
         ]
 
     def resolve_provider(self, symbol: str) -> BaseMarketDataProvider:
-        s = symbol.upper().strip()
+        norm = normalize_global_symbol(symbol)
+        s = norm["canonical_symbol"].upper().strip()
+        asset_type = norm.get("asset_type")
         
         # 1. Direct Indian Market Index overrides
         if s in ["NIFTY 50", "NIFTY_50", "NIFTY", "^NSEI", "SENSEX", "^BSESN", "BANKNIFTY", "^NSEBANK", "NIFTY IT", "^CNXIT", "NIFTY AUTO", "NIFTY MIDCAP"]:
             return self.india_provider
 
         # 2. ETFs (MON100, NiftyBeES, JuniorBeES, etc.)
-        if s in ["NASDAQ_ETF", "MON100", "MON100.NS", "NIFTYBEES", "NIFTYBEES.NS", "JUNIORBEES", "BANKBEES", "ITBEES"]:
-            return self.etf_provider
-        if ("BEES" in s or "MON100" in s) and "GOLD" not in s:
+        if asset_type == "ETF" or s in ["NASDAQ_ETF", "MON100", "MON100.NS", "NIFTYBEES", "NIFTYBEES.NS", "JUNIORBEES", "BANKBEES", "ITBEES"]:
             return self.etf_provider
 
         # 3. Gold & SGB
@@ -113,7 +114,7 @@ class MarketDataProviderRegistry:
             return self.gold_provider
 
         # 4. Direct Mutual Fund Candidates
-        if s.startswith("AMFI:") or s.startswith("MF:") or s.isdigit() or s in ["NIFTY50_INDEX", "FLEXICAP_FUND", "LIQUID_FUND", "SHORT_DEBT_FUND", "SMALLCAP_FUND", "CONSERVATIVE_HYBRID", "120716", "122639", "120586", "119062", "125354", "120616", "PPFCF", "PPFAS", "ICICILIQ", "HDFCSHORT", "NIPPSMALL", "NIFTY50", "ICICISAVE", "REGULAR_SAVINGS"]:
+        if asset_type == "MUTUAL_FUND" or s.startswith("AMFI:") or s.startswith("MF:") or s.isdigit():
             return self.mf_provider
 
         if any(w in s for w in ["UTI", "PARAG", "FLEXI", "LIQUID", "FUND", "DIRECT", "GROWTH", "MF", "INDEX FUND", "SMALLCAP", "DEBT", "HYBRID", "SAVINGS", "SAVE"]):
@@ -133,7 +134,7 @@ class MarketDataProviderRegistry:
         if provider.name in ["MutualFunds", "MutualFundsProvider", "Gold", "GoldProvider"]:
             try:
                 q = provider.get_quote(symbol)
-                if q and q.get("price") is not None:
+                if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
                     return q
             except Exception:
                 pass
@@ -142,18 +143,35 @@ class MarketDataProviderRegistry:
         return self.router.get_quote(symbol)
 
     def get_quotes(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
-        """Batch quotes fetch."""
-        results = {}
-        for s in symbols:
-            if s and s.strip():
-                results[s.strip()] = self.get_quote(s.strip())
+        """
+        Bounded concurrent batch quote fetcher with individual error isolation.
+        Partial successes are returned without blocking or throwing errors.
+        """
+        clean_symbols = [s.strip() for s in symbols if s and s.strip()]
+        if not clean_symbols:
+            return {}
+
+        results: Dict[str, Dict[str, Any]] = {}
+        max_workers = min(len(clean_symbols), 12)
+
+        def _fetch_single(sym: str) -> tuple:
+            try:
+                q = self.get_quote(sym)
+                return sym, q
+            except Exception as e:
+                return sym, create_unavailable_quote(sym, message=f"Quote fetch error: {str(e)[:100]}")
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for sym, q in executor.map(_fetch_single, clean_symbols):
+                results[sym] = q
+
         return results
 
     def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo") -> Dict[str, Any]:
         """Fetches historical observations using multi-provider router."""
         # For Mutual Funds, try MF provider first
         provider = self.resolve_provider(symbol)
-        if provider.name == "MutualFundsProvider":
+        if provider.name in ["MutualFunds", "MutualFundsProvider"]:
             try:
                 c = provider.get_candles(symbol, interval=interval, range_period=range_period)
                 if c and c.get("observations"):
@@ -221,7 +239,7 @@ class MarketDataProviderRegistry:
         return {
             "status": "HEALTHY",
             "market_data_mode": settings.MARKET_DATA_MODE,
-            "cache_entries": market_cache.size(),
+            "cache": router_health.get("cache", market_cache.get_stats()),
             "providers": router_health.get("providers", []),
             "market_hours": {
                 "india": get_indian_market_status().get("status"),

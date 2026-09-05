@@ -1215,6 +1215,7 @@ class GlobalUniverseManager:
         market: Optional[str] = None,
         country: Optional[str] = None,
         exchange: Optional[str] = None,
+        currency: Optional[str] = None,
         page: int = 1,
         limit: int = 25
     ) -> Dict[str, Any]:
@@ -1262,6 +1263,8 @@ class GlobalUniverseManager:
             query_builder = query_builder.filter(Instrument.country == country.upper())
         if exchange and exchange.upper() != "ALL":
             query_builder = query_builder.filter(Instrument.exchange == exchange.upper())
+        if currency and currency.upper() != "ALL":
+            query_builder = query_builder.filter(Instrument.currency == currency.upper())
 
         all_candidates = query_builder.all()
 

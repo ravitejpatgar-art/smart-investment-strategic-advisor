@@ -70,6 +70,7 @@ def list_market_instruments(
     market: Optional[str] = Query(None, description="Filter: INDIA, US, GLOBAL, ALL"),
     exchange: Optional[str] = Query(None, description="Filter: NSE, BSE, NASDAQ, NYSE, AMFI, LSE, MCX, ALL"),
     country: Optional[str] = Query(None, description="Filter: IN, US, TW, GB, NL, JP, ALL"),
+    currency: Optional[str] = Query(None, description="Filter: INR, USD, GBP, EUR, ALL"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(25, ge=1, le=100, description="Items per page (max 100)"),
     db: Session = Depends(get_db)
@@ -90,6 +91,7 @@ def list_market_instruments(
         market=market,
         exchange=exchange,
         country=country,
+        currency=currency,
         page=page,
         limit=limit,
         db=db
@@ -368,3 +370,31 @@ def get_provider_capabilities():
 def get_market_health():
     """Returns market data engine health status."""
     return market_registry.get_health_status()
+
+@router.get("/providers/health")
+def get_provider_health():
+    """Returns granular health metrics across all configured quote providers."""
+    health_data = market_registry.get_health_status()
+    return {
+        "status": health_data.get("status", "HEALTHY"),
+        "providers": health_data.get("providers", []),
+        "cache": health_data.get("cache", {})
+    }
+
+@router.get("/telemetry")
+def get_market_telemetry(db: Session = Depends(get_db)):
+    """
+    Returns unified production market data telemetry:
+    Catalog coverage counts, provider health metrics, cache statistics, sync status, and market hours.
+    """
+    coverage = instrument_master.get_coverage(db=db)
+    sync_status = universe_sync_engine.get_sync_status(db=db)
+    health_data = market_registry.get_health_status()
+
+    return {
+        "catalog": coverage,
+        "sync": sync_status,
+        "health": health_data,
+        "market_hours": health_data.get("market_hours", {}),
+        "cache": health_data.get("cache", {})
+    }

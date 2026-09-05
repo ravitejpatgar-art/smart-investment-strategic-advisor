@@ -99,6 +99,7 @@ class GlobalInstrumentMasterRegistry:
         market: Optional[str] = None,
         exchange: Optional[str] = None,
         country: Optional[str] = None,
+        currency: Optional[str] = None,
         page: int = 1,
         limit: int = 25,
         db: Optional[Session] = None
@@ -124,6 +125,7 @@ class GlobalInstrumentMasterRegistry:
                 market=market,
                 country=country,
                 exchange=exchange,
+                currency=currency,
                 page=safe_page,
                 limit=safe_limit
             )
