@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Database,
-  Clock
+  Clock,
+  Filter
 } from 'lucide-react';
 import { 
   marketApi, 
@@ -23,12 +24,9 @@ import { InstrumentDetailModal } from './InstrumentDetailModal';
 
 type CategoryFilter = 
   | 'ALL' 
-  | 'INDIAN_STOCKS' 
-  | 'US_STOCKS' 
+  | 'STOCKS' 
   | 'ETFS' 
   | 'MUTUAL_FUNDS' 
-  | 'INDICES' 
-  | 'COMMODITIES'
   | 'WATCHLIST';
 
 export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: string) => void }> = ({ onOpenVestIQWithQuery }) => {
@@ -36,8 +34,10 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('ALL');
+  const [selectedExchange, setSelectedExchange] = useState<string>('ALL');
+  const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
   const [page, setPage] = useState(1);
-  const limit = 18;
+  const limit = 24;
 
   // Data State
   const [instrumentsData, setInstrumentsData] = useState<MarketInstrumentsResponse | null>(null);
@@ -67,6 +67,22 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
     }, 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  // Reset page when category, exchange or country filter changes
+  const handleCategoryChange = (cat: CategoryFilter) => {
+    setSelectedCategory(cat);
+    setPage(1);
+  };
+
+  const handleExchangeChange = (ex: string) => {
+    setSelectedExchange(ex);
+    setPage(1);
+  };
+
+  const handleCountryChange = (c: string) => {
+    setSelectedCountry(c);
+    setPage(1);
+  };
 
   // Fetch Market Coverage Metadata
   const fetchCoverage = useCallback(async () => {
@@ -113,8 +129,15 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
             (i) =>
               i.symbol.toLowerCase().includes(q) ||
               i.name.toLowerCase().includes(q) ||
-              (i.category && i.category.toLowerCase().includes(q))
+              (i.category && i.category.toLowerCase().includes(q)) ||
+              (i.isin && i.isin.toLowerCase().includes(q))
           );
+        }
+        if (selectedExchange !== 'ALL') {
+          filtered = filtered.filter((i) => i.exchange.toUpperCase() === selectedExchange.toUpperCase());
+        }
+        if (selectedCountry !== 'ALL') {
+          filtered = filtered.filter((i) => i.country?.toUpperCase() === selectedCountry.toUpperCase());
         }
         setInstrumentsData({
           items: filtered,
@@ -131,20 +154,19 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
           limit
         };
 
-        if (selectedCategory === 'INDIAN_STOCKS') {
-          queryParams.market = 'INDIA';
-          queryParams.assetType = 'STOCK';
-        } else if (selectedCategory === 'US_STOCKS') {
-          queryParams.market = 'US';
+        if (selectedCategory === 'STOCKS') {
           queryParams.assetType = 'STOCK';
         } else if (selectedCategory === 'ETFS') {
           queryParams.assetType = 'ETF';
         } else if (selectedCategory === 'MUTUAL_FUNDS') {
           queryParams.assetType = 'MUTUAL_FUND';
-        } else if (selectedCategory === 'INDICES') {
-          queryParams.assetType = 'INDEX';
-        } else if (selectedCategory === 'COMMODITIES') {
-          queryParams.assetType = 'COMMODITY';
+        }
+
+        if (selectedExchange !== 'ALL') {
+          queryParams.exchange = selectedExchange;
+        }
+        if (selectedCountry !== 'ALL') {
+          queryParams.country = selectedCountry;
         }
 
         const data = await marketApi.getInstruments(queryParams);
@@ -155,7 +177,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedQuery, selectedCategory, page, coverageData]);
+  }, [debouncedQuery, selectedCategory, selectedExchange, selectedCountry, page]);
 
   // Initial load
   useEffect(() => {
@@ -212,14 +234,32 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
   };
 
   const categories: { id: CategoryFilter; label: string }[] = [
-    { id: 'ALL', label: 'All Instruments' },
-    { id: 'INDIAN_STOCKS', label: 'Indian Equities (NSE)' },
-    { id: 'US_STOCKS', label: 'US Equities (NASDAQ/NYSE)' },
+    { id: 'ALL', label: 'All' },
+    { id: 'STOCKS', label: 'Stocks' },
     { id: 'ETFS', label: 'ETFs' },
-    { id: 'MUTUAL_FUNDS', label: 'Mutual Funds (NAV)' },
-    { id: 'INDICES', label: 'Benchmarks & Indices' },
-    { id: 'COMMODITIES', label: 'Commodities (Gold/Silver)' },
+    { id: 'MUTUAL_FUNDS', label: 'Mutual Funds' },
     { id: 'WATCHLIST', label: `Watchlist (${watchlist.length})` },
+  ];
+
+  const exchanges = [
+    { code: 'ALL', label: 'All Exchanges' },
+    { code: 'NSE', label: 'NSE (India)' },
+    { code: 'BSE', label: 'BSE (India)' },
+    { code: 'AMFI', label: 'AMFI (Mutual Funds)' },
+    { code: 'NASDAQ', label: 'NASDAQ (US)' },
+    { code: 'NYSE', label: 'NYSE (US)' },
+    { code: 'LSE', label: 'LSE (UK)' },
+    { code: 'XETRA', label: 'XETRA (Germany)' },
+  ];
+
+  const countries = [
+    { code: 'ALL', label: 'All Countries' },
+    { code: 'IN', label: 'India' },
+    { code: 'US', label: 'United States' },
+    { code: 'GB', label: 'United Kingdom' },
+    { code: 'DE', label: 'Germany' },
+    { code: 'JP', label: 'Japan' },
+    { code: 'TW', label: 'Taiwan' },
   ];
 
   const formatSyncTime = (isoString?: string) => {
@@ -244,7 +284,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
               <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Market Universe & Explorer</h1>
             </div>
             <p className="text-xs text-[#64748B] max-w-xl">
-              Research stocks, ETFs, mutual funds, and global market instruments across verified institutional data feeds.
+              Discover and research global stocks, ETFs, mutual fund schemes, and benchmarks across verified institutional data feeds.
             </p>
           </div>
 
@@ -268,13 +308,12 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2.5 border-t border-[#F1F5F9] text-xs text-[#64748B]">
             <div className="flex items-center gap-1.5 text-teal-800 font-semibold">
               <Database className="w-3.5 h-3.5" />
-              <span>{coverageData.total_instruments} Instruments Available</span>
+              <span>{coverageData.total_instruments.toLocaleString()} Instruments Available</span>
             </div>
             <span className="text-slate-300">•</span>
             <div>
               <span>Coverage: </span>
               <strong className="text-[#0F172A]">{coverageData.exchanges_count} Exchanges</strong>
-              <span className="text-[#64748B]"> ({coverageData.exchanges.join(', ')})</span>
             </div>
             <span className="text-slate-300">•</span>
             <div>
@@ -295,35 +334,64 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by company, ticker, fund name, ETF, index, or keyword (e.g. TSMC, Nvidia, Microsoft, Parag Parikh, SPY, Nifty 50)..."
+            placeholder="Search by symbol, company, mutual fund scheme, ISIN, or ETF (e.g. AAPL, AMD, RELIANCE, SPY, VOO, Nippon India, HDFC Flexi Cap)..."
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-[#E2E8F0] rounded-xl text-[#0F172A] text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white placeholder:text-[#94A3B8] shadow-2xs transition-all"
           />
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => {
-                setSelectedCategory(cat.id);
-                setPage(1);
-              }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                selectedCategory === cat.id
-                  ? 'bg-[#00D4AA] text-[#0F172A] font-bold shadow-xs'
-                  : 'bg-slate-50 border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* Filters Row: Category Pills + Exchange & Country Selectors */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleCategoryChange(cat.id)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#00D4AA] text-[#0F172A] font-bold shadow-xs'
+                    : 'bg-slate-50 border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Secondary Dropdown Filters */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-[#E2E8F0] rounded-xl px-2.5 py-1 text-xs text-[#64748B]">
+              <Filter className="w-3 h-3 text-[#94A3B8]" />
+              <select
+                value={selectedExchange}
+                onChange={(e) => handleExchangeChange(e.target.value)}
+                className="bg-transparent text-[#0F172A] font-medium text-xs focus:outline-none cursor-pointer"
+              >
+                {exchanges.map((ex) => (
+                  <option key={ex.code} value={ex.code}>{ex.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-[#E2E8F0] rounded-xl px-2.5 py-1 text-xs text-[#64748B]">
+              <Globe className="w-3 h-3 text-[#94A3B8]" />
+              <select
+                value={selectedCountry}
+                onChange={(e) => handleCountryChange(e.target.value)}
+                className="bg-transparent text-[#0F172A] font-medium text-xs focus:outline-none cursor-pointer"
+              >
+                {countries.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* 2. MARKET OVERVIEW SECTION (Key Benchmarks & Indices) */}
-      {!debouncedQuery && selectedCategory === 'ALL' && overview && !error && (
+      {!debouncedQuery && selectedCategory === 'ALL' && selectedExchange === 'ALL' && selectedCountry === 'ALL' && overview && !error && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
@@ -449,11 +517,11 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-teal-600" />
             <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">
-              {selectedCategory === 'WATCHLIST' ? 'Saved Watchlist' : (debouncedQuery ? `Search Results for "${debouncedQuery}"` : 'Market Directory')}
+              {selectedCategory === 'WATCHLIST' ? 'Saved Watchlist' : (debouncedQuery ? `Search Results for "${debouncedQuery}"` : 'Market Universe')}
             </h2>
             {!error && !isLoading && instrumentsData && (
               <span className="text-xs text-[#64748B] font-mono">
-                ({instrumentsData.total} Instruments)
+                ({instrumentsData.total.toLocaleString()} Instruments)
               </span>
             )}
           </div>
@@ -462,7 +530,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
         {isLoading ? (
           <div style={{ ...cardStyle, padding: '48px 24px' }} className="flex flex-col items-center justify-center gap-2">
             <RefreshCw className="w-5 h-5 animate-spin text-teal-600" />
-            <span className="text-xs font-medium text-[#64748B]">Scanning live market feeds & providers...</span>
+            <span className="text-xs font-medium text-[#64748B]">Searching global instrument master...</span>
           </div>
         ) : error ? (
           <div style={{ ...cardStyle, padding: 24 }} className="text-center space-y-2">
@@ -482,7 +550,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
             <Search className="w-6 h-6 mx-auto text-[#94A3B8]" />
             <h3 className="text-sm font-bold text-[#0F172A]">No matching instruments found.</h3>
             <p className="text-xs text-[#64748B] max-w-sm mx-auto">
-              Try another symbol, company name, exchange or spelling (e.g. TSMC, Nvidia, Microsoft, Parag Parikh, SPY, Nifty 50).
+              Try searching by ticker (AAPL, AMD, RELIANCE, SPY), fund name (Nippon India, HDFC Flexi Cap), or ISIN.
             </p>
           </div>
         ) : (
@@ -491,8 +559,12 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
               const quote = item.quote;
               const isWatchlisted = watchlistIds.has(item.canonicalId);
               const isPos = (quote?.changePct ?? 0) >= 0;
-              const curr = item.currency === 'USD' ? '$' : (item.currency === 'TWD' ? 'NT$' : '₹');
+              const curr = item.currency === 'USD' ? '$' : (item.currency === 'TWD' ? 'NT$' : (item.currency === 'GBP' ? '£' : (item.currency === 'EUR' ? '€' : '₹')));
               const isMf = item.assetType === 'MUTUAL_FUND';
+              const displayNav = item.nav ?? quote?.price;
+              const displayPrice = quote?.price;
+              const hasPrice = displayPrice !== null && displayPrice !== undefined;
+              const hasNav = displayNav !== null && displayNav !== undefined;
 
               return (
                 <div
@@ -504,7 +576,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                   {/* Top Row: Symbol, Asset Type, Watchlist */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[9.5px] font-bold px-2 py-0.2 rounded-full uppercase tracking-wider bg-teal-50 border border-teal-200 text-teal-800">
                           {item.assetType.replace('_', ' ')}
                         </span>
@@ -516,13 +588,21 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                             {item.country}
                           </span>
                         )}
+                        {item.plan && (
+                          <span className="text-[9px] font-mono px-1 rounded bg-blue-50 text-blue-700 border border-blue-100">
+                            {item.plan}
+                          </span>
+                        )}
                       </div>
-                      <h3 className="text-sm font-bold text-[#0F172A] truncate max-w-[190px]">
+                      <h3 className="text-sm font-bold text-[#0F172A] truncate max-w-[210px]" title={item.name}>
                         {item.name}
                       </h3>
-                      <span className="text-xs font-mono text-[#64748B] block">
-                        {item.symbol}
-                      </span>
+                      <div className="flex items-center gap-2 text-xs font-mono text-[#64748B]">
+                        <span>{item.symbol}</span>
+                        {item.isin && (
+                          <span className="text-[10px] text-[#94A3B8]">ISIN: {item.isin}</span>
+                        )}
+                      </div>
                     </div>
 
                     <button
@@ -549,22 +629,30 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
                         {isMf ? 'Latest NAV' : 'Price'}
                       </span>
                       <div className="text-base font-bold text-[#0F172A] font-mono">
-                        {quote?.price !== null && quote?.price !== undefined
-                          ? `${curr}${quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                          : 'Available on request'}
+                        {isMf ? (
+                          hasNav ? `₹${displayNav?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'NAV Unavailable'
+                        ) : (
+                          hasPrice ? `${curr}${displayPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'On Request'
+                        )}
                       </div>
                     </div>
 
                     <div className="text-right">
-                      {quote?.changePct !== null && quote?.changePct !== undefined ? (
+                      {isMf ? (
+                        <div className="text-[10px] font-mono text-[#64748B]">
+                          {item.navDate || quote?.asOf ? `As of ${item.navDate || quote?.asOf}` : 'AMFI NAV'}
+                        </div>
+                      ) : quote?.changePct !== null && quote?.changePct !== undefined ? (
                         <div className={`text-xs font-mono font-bold ${isPos ? 'text-emerald-600' : 'text-red-600'}`}>
                           {isPos ? '+' : ''}{quote.changePct.toFixed(2)}%
                         </div>
                       ) : (
-                        <span className="text-[10px] font-mono text-[#94A3B8]">HISTORICAL</span>
+                        <span className="text-[10px] font-mono text-[#94A3B8] uppercase">
+                          {quote?.freshness || 'HISTORICAL'}
+                        </span>
                       )}
                       <span className="text-[10px] text-[#64748B] block truncate max-w-[130px]">
-                        {item.category || item.sector || item.fundHouse || 'Market Asset'}
+                        {item.fundHouse || item.sector || item.category || 'Market Asset'}
                       </span>
                     </div>
                   </div>
@@ -584,7 +672,7 @@ export const MarketExplorerView: React.FC<{ onOpenVestIQWithQuery?: (query: stri
         {!error && !isLoading && instrumentsData && (instrumentsData.totalPages ?? 1) > 1 && selectedCategory !== 'WATCHLIST' && (
           <div className="flex items-center justify-between pt-3 border-t border-[#E2E8F0] text-xs">
             <span className="text-[#64748B]">
-              Showing page <strong className="text-[#0F172A] font-mono">{instrumentsData.page}</strong> of <strong className="text-[#0F172A] font-mono">{instrumentsData.totalPages ?? 1}</strong> ({instrumentsData.total} items)
+              Showing page <strong className="text-[#0F172A] font-mono">{instrumentsData.page}</strong> of <strong className="text-[#0F172A] font-mono">{instrumentsData.totalPages ?? 1}</strong> ({instrumentsData.total.toLocaleString()} items)
             </span>
 
             <div className="flex items-center gap-1.5">

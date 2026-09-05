@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     MF_DATA_PROVIDER: str = os.getenv("MF_DATA_PROVIDER", "amfi")
     MF_DATA_API_KEY: str = os.getenv("MF_DATA_API_KEY", "")
     MF_DATA_API_KEY_BACKUP: str = os.getenv("MF_DATA_API_KEY_BACKUP", "")
+
+    # Global Instrument Universe Provider Configuration (EODHD)
+    EODHD_API_KEY: str = os.getenv("EODHD_API_KEY", "")
+    EODHD_API_URL: str = os.getenv("EODHD_API_URL", "https://eodhd.com/api")
+    UNIVERSE_SYNC_SECRET: str = os.getenv("UNIVERSE_SYNC_SECRET", "")
     
     MARKET_DATA_CACHE_TTL_SECONDS: int = int(os.getenv("MARKET_DATA_CACHE_TTL_SECONDS", "30"))
     

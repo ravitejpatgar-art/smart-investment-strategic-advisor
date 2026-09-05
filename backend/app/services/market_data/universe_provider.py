@@ -1196,15 +1196,34 @@ class GlobalUniverseManager:
         limit: int = 25
     ) -> Dict[str, Any]:
         """
-        Server-side ranked search across global instruments with exact matching,
-        prefix matching, alias matching, and provider on-demand lookup.
+        Server-side ranked search across global instruments with exact symbol/ISIN matching,
+        prefix matching, alias matching, and bounded database pagination.
         """
         # Ensure base seeding exists
         if db.query(Instrument).count() == 0:
             cls.seed_initial_universe(db)
 
+        # Enforce page and limit constraints
+        safe_page = max(1, page)
+        safe_limit = max(1, min(limit, 100))
+
         q = (query or "").strip()
-        asset_type_filter = (asset_type or "").strip().upper() if asset_type and asset_type.upper() != "ALL" else None
+        raw_type = (asset_type or "").strip().upper()
+        # Normalize filter string aliases (e.g. STOCKS -> STOCK, MUTUAL_FUNDS -> MUTUAL_FUND)
+        type_mapping = {
+            "STOCKS": "STOCK",
+            "STOCK": "STOCK",
+            "ETFS": "ETF",
+            "ETF": "ETF",
+            "MUTUAL_FUNDS": "MUTUAL_FUND",
+            "MUTUAL_FUND": "MUTUAL_FUND",
+            "FUNDS": "MUTUAL_FUND",
+            "INDICES": "INDEX",
+            "INDEX": "INDEX",
+            "COMMODITIES": "COMMODITY",
+            "COMMODITY": "COMMODITY",
+        }
+        asset_type_filter = type_mapping.get(raw_type) if raw_type and raw_type != "ALL" else None
 
         query_builder = db.query(Instrument).filter(Instrument.is_active == True)
 
@@ -1224,27 +1243,28 @@ class GlobalUniverseManager:
         all_candidates = query_builder.all()
 
         if not q:
-            # Sort by canonical asset class importance
+            # Default sorting by asset type priority then name
             def default_rank(item: Instrument):
                 type_prio = {"INDEX": 1, "ETF": 2, "STOCK": 3, "MUTUAL_FUND": 4, "COMMODITY": 5}
                 return (type_prio.get(item.asset_type, 9), item.name)
 
             sorted_candidates = sorted(all_candidates, key=default_rank)
             total = len(sorted_candidates)
-            start_idx = (page - 1) * limit
-            end_idx = start_idx + limit
+            start_idx = (safe_page - 1) * safe_limit
+            end_idx = start_idx + safe_limit
             page_items = sorted_candidates[start_idx:end_idx]
 
             return {
                 "items": page_items,
-                "page": page,
-                "limit": limit,
+                "page": safe_page,
+                "limit": safe_limit,
                 "total": total,
                 "has_next": end_idx < total
             }
 
         # Multi-tiered Ranking Algorithm
         q_lower = q.lower()
+        q_upper = q.upper()
         scored_items = []
 
         for inst in all_candidates:
@@ -1253,51 +1273,64 @@ class GlobalUniverseManager:
             name_lower = (inst.name or "").lower()
             short_lower = (inst.short_name or "").lower()
             isin_lower = (inst.isin or "").lower()
+            scheme_code_str = (inst.scheme_code or "").lower()
             aliases = [a.lower() for a in (inst.aliases or [])]
 
             score = 0
 
-            # 1. Exact Match on Ticker / Symbol / Short Name (Highest Prio)
+            # 1. Exact Match on Ticker / Symbol
             if q_lower == ticker_lower or q_lower == symbol_lower:
                 score = 1000
-            elif q_lower == short_lower:
+            # 2. Exact Match on ISIN
+            elif inst.isin and q_upper == inst.isin.upper():
+                score = 950
+            # 3. Exact Match on Scheme Code or Short Name
+            elif (scheme_code_str and q_lower == scheme_code_str) or q_lower == short_lower or q_lower == name_lower:
                 score = 900
-            # 2. Exact match in aliases
+            # 4. Exact match in aliases
             elif any(q_lower == a for a in aliases):
                 score = 850
-            # 3. Exact company name prefix
-            elif name_lower.startswith(q_lower) or short_lower.startswith(q_lower) or ticker_lower.startswith(q_lower):
-                score = 700
-            # 4. Partial substring in ticker, symbol or aliases
+            # 5. Symbol / Ticker prefix match
+            elif ticker_lower.startswith(q_lower) or symbol_lower.startswith(q_lower):
+                score = 750
+            # 6. Company name / Short name prefix match
+            elif name_lower.startswith(q_lower) or short_lower.startswith(q_lower):
+                score = 600
+            # 7. Partial substring in ticker, symbol or aliases
             elif q_lower in ticker_lower or q_lower in symbol_lower or any(q_lower in a for a in aliases):
                 score = 500
-            # 5. Partial substring in company name
+            # 8. Partial substring in company name, fund house, or benchmark
             elif q_lower in name_lower or q_lower in (inst.fund_house or "").lower() or q_lower in (inst.benchmark or "").lower():
-                score = 300
-            # 6. Word-boundary / fuzzy containment
+                score = 400
+            # 9. Word-boundary / token containment
             else:
-                words = re.findall(r'\w+', q_lower)
-                matched_words = sum(1 for w in words if w in name_lower or w in ticker_lower)
-                if matched_words > 0:
-                    score = 100 + (matched_words * 20)
+                words = [w for w in re.findall(r'\w+', q_lower) if len(w) > 1]
+                if words:
+                    matched_words = sum(1 for w in words if w in name_lower or w in ticker_lower or w in (inst.fund_house or "").lower())
+                    if matched_words > 0:
+                        score = 100 + (matched_words * 30)
 
             if score > 0:
-                # Slight boost for popular asset classes
                 scored_items.append((score, inst))
 
-        # Sort by score descending
+        # Sort by score descending then alphabetical
         scored_items.sort(key=lambda x: (-x[0], x[1].name))
         ranked_instruments = [item for _, item in scored_items]
 
         total = len(ranked_instruments)
-        start_idx = (page - 1) * limit
-        end_idx = start_idx + limit
+        start_idx = (safe_page - 1) * safe_limit
+        end_idx = start_idx + safe_limit
         page_items = ranked_instruments[start_idx:end_idx]
 
         return {
             "items": page_items,
-            "page": page,
-            "limit": limit,
+            "page": safe_page,
+            "limit": safe_limit,
             "total": total,
             "has_next": end_idx < total
         }
+
+# Backward compatibility singleton instances
+global_universe_manager = GlobalUniverseManager()
+global_equities_provider = global_universe_manager
+CORE_GLOBAL_UNIVERSE = GLOBAL_EQUITIES_CATALOGUE

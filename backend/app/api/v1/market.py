@@ -11,6 +11,8 @@ from app.services.market_data.market_hours import get_indian_market_status, get_
 from app.services.market_data.fundamentals import get_enhanced_fundamentals
 from app.services.market_data.technical_analysis import calculate_technical_indicators
 
+from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
+
 router = APIRouter(prefix="/market", tags=["Production Market Data Engine"])
 
 @router.get("/coverage")
@@ -21,21 +23,52 @@ def get_market_coverage(db: Session = Depends(get_db)):
     """
     return instrument_master.get_coverage(db=db)
 
+@router.get("/sync/status")
+def get_universe_sync_status():
+    """Returns the latest telemetry and statistics from the universe sync engine."""
+    return universe_sync_engine.get_sync_status()
+
+@router.post("/sync")
+def trigger_universe_sync(
+    sync_eodhd: bool = Query(True, description="Sync EODHD global universe if configured"),
+    sync_nse: bool = Query(True, description="Sync NSE listed equities & ETFs"),
+    sync_amfi: bool = Query(True, description="Sync AMFI Indian mutual fund schemes"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Triggers an authenticated synchronization of the global instrument master.
+    Protected against unrestricted public scraping.
+    """
+    stats = universe_sync_engine.run_full_sync(
+        db=db,
+        sync_eodhd=sync_eodhd,
+        sync_nse=sync_nse,
+        sync_amfi=sync_amfi
+    )
+    return stats
+
 @router.get("/instruments")
 def list_market_instruments(
-    q: Optional[str] = Query(None, description="Search query across symbol, name, alias"),
+    q: Optional[str] = Query(None, description="Search query across symbol, name, alias, ISIN"),
     asset_type: Optional[str] = Query(None, description="Filter: STOCK, ETF, MUTUAL_FUND, INDEX, COMMODITY, ALL"),
     market: Optional[str] = Query(None, description="Filter: INDIA, US, GLOBAL, ALL"),
-    exchange: Optional[str] = Query(None, description="Filter: NSE, BSE, NASDAQ, NYSE, AMFI, MCX, ALL"),
+    exchange: Optional[str] = Query(None, description="Filter: NSE, BSE, NASDAQ, NYSE, AMFI, LSE, MCX, ALL"),
     country: Optional[str] = Query(None, description="Filter: IN, US, TW, GB, NL, JP, ALL"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(25, ge=1, le=100, description="Items per page (max 100)"),
     db: Session = Depends(get_db)
 ):
     """
     Broad Marketplace Instrument Directory & Search.
-    Supports full provider-backed universe with real live quote snapshots.
+    Supports full provider-backed universe with real live quote snapshots and server-side pagination.
     """
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Pagination limit must be between 1 and 100."
+        )
+
     return instrument_master.search(
         query=q,
         asset_type=asset_type,

@@ -195,6 +195,7 @@ export interface MarketInstrument {
   status?: string;
   name: string;
   assetType: 'STOCK' | 'ETF' | 'MUTUAL_FUND' | 'INDEX' | 'COMMODITY';
+  instrumentType?: 'STOCK' | 'ETF' | 'MUTUAL_FUND' | 'INDEX' | 'COMMODITY';
   assetClass: 'EQUITY' | 'DEBT' | 'COMMODITY' | 'HYBRID' | 'INDEX';
   market: string;
   country?: string;
@@ -212,12 +213,15 @@ export interface MarketInstrument {
   aum?: number | null;
   nav?: number | null;
   navDate?: string | null;
+  plan?: string;
+  option?: string;
   fundManager?: string;
   fundHouse?: string;
   schemeCode?: string;
   amfiCode?: string;
   isActive?: boolean;
   isTradable?: boolean;
+  lastUpdated?: string;
   quote?: MarketQuote | null;
 }
 
@@ -240,6 +244,11 @@ export interface MarketInstrumentsResponse {
   page: number;
   limit: number;
   totalPages?: number;
+  total_pages?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+  has_next?: boolean;
+  has_prev?: boolean;
   hasMore?: boolean;
   filters?: Record<string, any>;
 }
@@ -781,9 +790,34 @@ export const marketApi = {
       if (params.limit) queryParts.push(`limit=${params.limit}`);
 
       const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
-      const res = await apiClient.get<MarketInstrumentsResponse>(`/market/instruments${queryString}`);
+      const res = await apiClient.get<any>(`/market/instruments${queryString}`);
       if (res.data && Array.isArray(res.data.items) && res.data.items.length > 0) {
-        return res.data;
+        const normalizedItems: MarketInstrument[] = res.data.items.map((raw: any) => ({
+          ...raw,
+          assetType: raw.asset_type || raw.assetType,
+          assetClass: raw.asset_class || raw.assetClass || 'EQUITY',
+          instrumentType: raw.instrument_type || raw.instrumentType || raw.asset_type || raw.assetType,
+          schemeCode: raw.scheme_code || raw.schemeCode,
+          fundHouse: raw.fund_house || raw.fundHouse,
+          fundManager: raw.fund_manager || raw.fundManager,
+          navDate: raw.nav_date || raw.navDate,
+          shortName: raw.short_name || raw.shortName,
+          providerSymbol: raw.provider_symbol || raw.providerSymbol,
+          isActive: raw.is_active !== undefined ? raw.is_active : raw.isActive,
+          isTradable: raw.is_tradable !== undefined ? raw.is_tradable : raw.isTradable,
+          lastUpdated: raw.last_updated || raw.lastUpdated
+        }));
+        return {
+          items: normalizedItems,
+          total: res.data.total ?? normalizedItems.length,
+          page: res.data.page ?? params.page ?? 1,
+          limit: res.data.limit ?? params.limit ?? 25,
+          totalPages: res.data.totalPages ?? res.data.total_pages ?? Math.ceil((res.data.total || normalizedItems.length) / (res.data.limit || 25)),
+          hasNext: res.data.hasNext ?? res.data.has_next ?? res.data.hasMore ?? false,
+          hasPrev: res.data.hasPrev ?? res.data.has_prev ?? false,
+          hasMore: res.data.hasMore ?? res.data.hasNext ?? res.data.has_next ?? false,
+          filters: res.data.filters
+        };
       }
       // If live returned empty set for default query, fallback to demo dataset to keep explorer populated
       return getDemoInstruments(params);

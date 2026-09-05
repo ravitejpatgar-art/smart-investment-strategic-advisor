@@ -1,4 +1,5 @@
 from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
 import re
 from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.orm import Session
@@ -19,7 +20,8 @@ class GlobalInstrumentMasterRegistry:
         try:
             with SessionLocal() as db:
                 if db.query(Instrument).count() == 0:
-                    GlobalUniverseManager.seed_initial_universe(db)
+                    from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
+                    universe_sync_engine.run_full_sync(db=db, sync_eodhd=False, sync_nse=True, sync_amfi=True)
         except Exception:
             pass
 
@@ -31,11 +33,13 @@ class GlobalInstrumentMasterRegistry:
             close_db = True
 
         try:
-            # 1. Exact canonical ID or symbol or ticker lookup in DB
+            # 1. Exact canonical ID or symbol or ticker or ISIN lookup in DB
             inst = db.query(Instrument).filter(
                 (Instrument.canonical_id.ilike(clean_id)) |
                 (Instrument.symbol.ilike(clean_id)) |
-                (Instrument.ticker.ilike(clean_id))
+                (Instrument.ticker.ilike(clean_id)) |
+                (Instrument.isin.ilike(clean_id)) |
+                (Instrument.scheme_code.ilike(clean_id))
             ).first()
 
             if not inst:
@@ -66,6 +70,7 @@ class GlobalInstrumentMasterRegistry:
                     "name": quote.get("name") or clean_id.upper(),
                     "shortName": clean_id.upper(),
                     "assetType": quote.get("assetType", "STOCK"),
+                    "instrumentType": quote.get("assetType", "STOCK"),
                     "assetClass": quote.get("assetClass", "EQUITY"),
                     "market": mkt,
                     "country": "IN" if mkt == "INDIA" else "US",
@@ -73,6 +78,7 @@ class GlobalInstrumentMasterRegistry:
                     "currency": curr,
                     "provider": "DynamicGlobalProvider",
                     "status": "ACTIVE",
+                    "isActive": True,
                     "category": quote.get("category", "Market Asset"),
                     "riskLevel": "Moderate",
                     "aliases": [clean_id.lower()]
@@ -91,13 +97,17 @@ class GlobalInstrumentMasterRegistry:
         exchange: Optional[str] = None,
         country: Optional[str] = None,
         page: int = 1,
-        limit: int = 20,
+        limit: int = 25,
         db: Optional[Session] = None
     ) -> Dict[str, Any]:
         """
         Global Marketplace Search with exact-match ranking, alias discrimination,
         server-side pagination, and parallel live quote hydration.
         """
+        # Constrain page and limit
+        safe_page = max(1, page)
+        safe_limit = max(1, min(limit, 100))
+
         close_db = False
         if db is None:
             db = SessionLocal()
@@ -111,8 +121,8 @@ class GlobalInstrumentMasterRegistry:
                 market=market,
                 country=country,
                 exchange=exchange,
-                page=page,
-                limit=limit
+                page=safe_page,
+                limit=safe_limit
             )
 
             raw_items = search_res["items"]
@@ -120,12 +130,56 @@ class GlobalInstrumentMasterRegistry:
 
             serialized = [self._serialize_instrument(inst) for inst in raw_items]
 
-            # Parallel quote enrichment for low-latency response (<0.35s)
+            # Parallel quote enrichment
             def fetch_quote(it: Dict[str, Any]) -> Dict[str, Any]:
                 item_copy = dict(it)
+                # If mutual fund and NAV is known, populate official NAV quote
+                if it.get("assetType") == "MUTUAL_FUND" and it.get("nav") is not None:
+                    item_copy["quote"] = {
+                        "symbol": it["symbol"],
+                        "name": it["name"],
+                        "exchange": it.get("exchange") or "AMFI",
+                        "assetType": "MUTUAL_FUND",
+                        "price": it["nav"],
+                        "currency": it.get("currency") or "INR",
+                        "change": 0.0,
+                        "changePct": 0.0,
+                        "volume": 0,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "marketStatus": "PUBLISHED",
+                        "freshness": "LATEST_AVAILABLE",
+                        "status": "FALLBACK",
+                        "source": "AMFI Official NAV Feed",
+                        "asOf": it.get("navDate") or "Latest Published NAV",
+                        "navDate": it.get("navDate"),
+                        "message": "Latest published scheme NAV shown"
+                    }
+                    return item_copy
+
+                # For equities / ETFs, fetch live or fallback quote
                 try:
                     q = market_registry.get_quote(it["symbol"])
-                    item_copy["quote"] = q
+                    if q and q.get("price") is not None:
+                        item_copy["quote"] = q
+                    else:
+                        item_copy["quote"] = {
+                            "symbol": it["symbol"],
+                            "name": it["name"],
+                            "exchange": it.get("exchange") or "UNKNOWN",
+                            "assetType": it.get("assetType") or "STOCK",
+                            "price": None,
+                            "currency": it.get("currency") or "USD",
+                            "change": None,
+                            "changePct": None,
+                            "volume": None,
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "marketStatus": "CLOSED",
+                            "freshness": "UNAVAILABLE",
+                            "status": "UNAVAILABLE",
+                            "source": "Market Feed Unavailable",
+                            "asOf": "Unavailable",
+                            "message": "Quote not currently available"
+                        }
                 except Exception:
                     item_copy["quote"] = None
                 return item_copy
@@ -139,9 +193,9 @@ class GlobalInstrumentMasterRegistry:
             return {
                 "items": enriched_items,
                 "total": total_count,
-                "page": page,
-                "limit": limit,
-                "totalPages": (total_count + limit - 1) // limit if total_count > 0 else 1,
+                "page": safe_page,
+                "limit": safe_limit,
+                "totalPages": (total_count + safe_limit - 1) // safe_limit if total_count > 0 else 1,
                 "hasMore": search_res["has_next"]
             }
         finally:
@@ -170,6 +224,7 @@ class GlobalInstrumentMasterRegistry:
             "name": inst.name,
             "shortName": inst.short_name or inst.name,
             "assetType": inst.asset_type,
+            "instrumentType": inst.asset_type,
             "assetClass": inst.asset_class,
             "market": inst.market,
             "country": inst.country,
@@ -177,16 +232,26 @@ class GlobalInstrumentMasterRegistry:
             "exchangeMic": inst.exchange_mic,
             "currency": inst.currency,
             "provider": inst.provider,
+            "providerSymbol": inst.provider_symbol,
             "status": inst.status,
+            "isActive": inst.is_active,
             "sector": inst.sector,
             "industry": inst.industry,
             "fundHouse": inst.fund_house,
             "fundCategory": inst.fund_category,
+            "schemeCode": inst.scheme_code,
+            "plan": inst.plan,
+            "option": inst.option,
+            "nav": inst.nav,
+            "navDate": inst.nav_date,
             "isin": inst.isin,
+            "cusip": inst.cusip,
+            "sedol": inst.sedol,
             "benchmark": inst.benchmark,
             "expenseRatio": inst.expense_ratio,
             "riskLevel": inst.risk_level or "Moderate",
-            "aliases": inst.aliases or []
+            "aliases": inst.aliases or [],
+            "lastUpdated": inst.updated_at.isoformat() if inst.updated_at else None
         }
 
 instrument_master = GlobalInstrumentMasterRegistry()

@@ -37,11 +37,31 @@ class Instrument(Base):
     risk_level = Column(String(30), nullable=True)
     aliases = Column(JSON, default=list)
 
+    # Mutual Fund / Scheme Metadata
+    scheme_code = Column(String(50), index=True, nullable=True)
+    plan = Column(String(50), nullable=True)     # Direct, Regular
+    option = Column(String(50), nullable=True)   # Growth, IDCW, Dividend
+    nav = Column(Float, nullable=True)
+    nav_date = Column(String(30), nullable=True)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    @property
+    def instrument_type(self) -> str:
+        return self.asset_type
+
+    @instrument_type.setter
+    def instrument_type(self, value: str):
+        self.asset_type = value
+
+    @property
+    def last_updated(self) -> datetime:
+        return self.updated_at
 
     __table_args__ = (
         Index('ix_instruments_search', 'symbol', 'name', 'ticker'),
         Index('ix_instruments_filter', 'asset_type', 'market', 'exchange'),
         Index('ix_instruments_canonical_provider', 'canonical_id', 'provider'),
+        Index('ix_instruments_country_exchange', 'country', 'exchange'),
     )

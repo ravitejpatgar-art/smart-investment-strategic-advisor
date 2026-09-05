@@ -44,6 +44,21 @@ def ensure_sqlite_columns():
                 col_names_port = [r[1] for r in res_port]
                 if col_names_port and "updated_at" not in col_names_port:
                     conn.exec_driver_sql("ALTER TABLE portfolio_holdings ADD COLUMN updated_at DATETIME;")
+
+                # Check instruments
+                res_inst = conn.exec_driver_sql("PRAGMA table_info(instruments);").fetchall()
+                col_names_inst = [r[1] for r in res_inst]
+                if col_names_inst:
+                    if "scheme_code" not in col_names_inst:
+                        conn.exec_driver_sql("ALTER TABLE instruments ADD COLUMN scheme_code VARCHAR(50);")
+                    if "plan" not in col_names_inst:
+                        conn.exec_driver_sql("ALTER TABLE instruments ADD COLUMN plan VARCHAR(50);")
+                    if "option" not in col_names_inst:
+                        conn.exec_driver_sql("ALTER TABLE instruments ADD COLUMN option VARCHAR(50);")
+                    if "nav" not in col_names_inst:
+                        conn.exec_driver_sql("ALTER TABLE instruments ADD COLUMN nav FLOAT;")
+                    if "nav_date" not in col_names_inst:
+                        conn.exec_driver_sql("ALTER TABLE instruments ADD COLUMN nav_date VARCHAR(30);")
         except Exception:
             pass
 
