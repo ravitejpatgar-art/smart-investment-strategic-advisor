@@ -51,11 +51,11 @@ export const ExpenseTrackerView: React.FC = () => {
     Other: { color: '#8A94A6', label: 'Miscellaneous', group: 'Wants' },
   };
 
-  const cardStyle = {
-    background: '#101827',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  const cardStyle: React.CSSProperties = {
+    background: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    borderRadius: 16,
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)',
   };
 
   // Group totals
@@ -125,17 +125,17 @@ export const ExpenseTrackerView: React.FC = () => {
       <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-[#00D4AA]" />
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Monthly Cash Flow & Surplus</h1>
+            <Wallet className="w-5 h-5 text-[#00A884]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Monthly Cash Flow & Surplus</h1>
           </div>
-          <p className="text-xs text-[#8A94A6]">
+          <p className="text-xs text-[#64748B]">
             Audit fixed baseline expenditure, track discretionary leaks, and optimize investable capital capacity.
           </p>
         </div>
 
         <button
           onClick={handleOpenAddModal}
-          className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs hover:bg-[#00D4AA]/90 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+          className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#00D4AA] hover:bg-[#00BFA0] text-[#050816] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Add Expense</span>
@@ -148,24 +148,24 @@ export const ExpenseTrackerView: React.FC = () => {
         {/* Left: Total Expense & Burn Metric */}
         <div style={{ ...cardStyle, padding: '20px 22px' }} className="md:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="space-y-1.5">
-            <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Total Monthly Outflow</span>
-            <div className="text-3xl font-black text-white font-mono leading-tight">
+            <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">Total Monthly Outflow</span>
+            <div className="text-3xl font-black text-[#0F172A] font-mono leading-tight">
               {formatCurrency(totalExpenses)}
             </div>
-            <div className="flex items-center gap-3 text-xs text-[#8A94A6] pt-1">
+            <div className="flex items-center gap-3 text-xs text-[#64748B] pt-1">
               <span>Burn Ratio: <strong className="text-[#FF5252] font-mono">{burnRate}%</strong></span>
               <span>•</span>
-              <span>Savings Rate: <strong className="text-[#00D4AA] font-mono">{savingsRate}%</strong></span>
+              <span>Savings Rate: <strong className="text-[#00A884] font-mono">{savingsRate}%</strong></span>
             </div>
           </div>
 
           {/* Progress Split Bar */}
-          <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
-            <div className="flex justify-between text-xs text-[#8A94A6]">
-              <span>Inflow: <strong className="text-white font-mono">{formatCurrency(totalIncome)}</strong></span>
-              <span>Surplus: <strong className="text-[#00D4AA] font-mono">{formatCurrency(netSavings)}</strong></span>
+          <div className="space-y-1.5 pt-2 border-t border-[#E2E8F0]">
+            <div className="flex justify-between text-xs text-[#64748B]">
+              <span>Inflow: <strong className="text-[#0F172A] font-mono">{formatCurrency(totalIncome)}</strong></span>
+              <span>Surplus: <strong className="text-[#00A884] font-mono">{formatCurrency(netSavings)}</strong></span>
             </div>
-            <div className="w-full bg-[#0A1022] h-2 rounded-full overflow-hidden flex">
+            <div className="w-full bg-[#F1F5F9] h-2 rounded-full overflow-hidden flex">
               <div className="h-full bg-[#FF5252]" style={{ width: `${Math.min(100, burnRate)}%` }} />
               <div className="h-full bg-[#00D4AA]" style={{ width: `${Math.min(100 - burnRate, savingsRate)}%` }} />
             </div>
@@ -174,31 +174,31 @@ export const ExpenseTrackerView: React.FC = () => {
 
         {/* Right: Essentiality Distribution (50/30/20 Rule) */}
         <div style={{ ...cardStyle, padding: '20px 22px' }} className="md:col-span-7 space-y-3.5">
-          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">
+          <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">
             Essentiality Allocation (50 / 30 / 20 Rule)
           </span>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
-              <span className="text-[10.5px] text-[#00D4AA] font-bold block uppercase">NEEDS (CORE)</span>
-              <div className="text-base font-black text-white font-mono">{formatCurrency(needsTotal)}</div>
-              <div className="text-[11px] text-[#8A94A6]">
+            <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
+              <span className="text-[10.5px] text-[#00A884] font-bold block uppercase">NEEDS (CORE)</span>
+              <div className="text-base font-black text-[#0F172A] font-mono">{formatCurrency(needsTotal)}</div>
+              <div className="text-[11px] text-[#64748B]">
                 {totalIncome > 0 ? Math.round((needsTotal / totalIncome) * 100) : 0}% (≤50%)
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
-              <span className="text-[10.5px] text-amber-400 font-bold block uppercase">WANTS (DISCRETIONARY)</span>
-              <div className="text-base font-black text-white font-mono">{formatCurrency(wantsTotal)}</div>
-              <div className="text-[11px] text-[#8A94A6]">
+            <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
+              <span className="text-[10.5px] text-amber-600 font-bold block uppercase">WANTS (DISCRETIONARY)</span>
+              <div className="text-base font-black text-[#0F172A] font-mono">{formatCurrency(wantsTotal)}</div>
+              <div className="text-[11px] text-[#64748B]">
                 {totalIncome > 0 ? Math.round((wantsTotal / totalIncome) * 100) : 0}% (≤30%)
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1">
+            <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
               <span className="text-[10.5px] text-[#8B5CF6] font-bold block uppercase">FIXED & EMIS</span>
-              <div className="text-base font-black text-white font-mono">{formatCurrency(fixedTotal)}</div>
-              <div className="text-[11px] text-[#8A94A6]">
+              <div className="text-base font-black text-[#0F172A] font-mono">{formatCurrency(fixedTotal)}</div>
+              <div className="text-[11px] text-[#64748B]">
                 {totalIncome > 0 ? Math.round((fixedTotal / totalIncome) * 100) : 0}% (≤20%)
               </div>
             </div>
@@ -206,10 +206,10 @@ export const ExpenseTrackerView: React.FC = () => {
 
           {/* 20-Year Compounding Leak Analysis */}
           {wantsTotal > 0 && (
-            <div className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.06] flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-[#00D4AA] shrink-0 mt-0.5" />
-              <div className="text-xs text-[#8A94A6] leading-relaxed">
-                <strong className="text-white">Compounding Opportunity:</strong> Trimming discretionary spend by 25% ({formatCurrency(potentialMonthlySaved)}/mo) and redirecting into a 13.5% CAGR allocation could yield <strong className="text-[#00D4AA] font-mono">{formatCurrency(futureCorpus20Yr)}</strong> in 20 years.
+            <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-[#00A884] shrink-0 mt-0.5" />
+              <div className="text-xs text-[#64748B] leading-relaxed">
+                <strong className="text-[#0F172A]">Compounding Opportunity:</strong> Trimming discretionary spend by 25% ({formatCurrency(potentialMonthlySaved)}/mo) and redirecting into a 13.5% CAGR allocation could yield <strong className="text-[#00A884] font-mono">{formatCurrency(futureCorpus20Yr)}</strong> in 20 years.
               </div>
             </div>
           )}
@@ -219,7 +219,7 @@ export const ExpenseTrackerView: React.FC = () => {
 
       {/* Category Breakdown */}
       <div style={{ ...cardStyle, padding: '20px 22px' }} className="space-y-3.5">
-        <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">
+        <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">
           Outflow by Expenditure Category
         </span>
 
@@ -230,15 +230,15 @@ export const ExpenseTrackerView: React.FC = () => {
             const pct = totalExpenses > 0 ? Math.round((catAmt / totalExpenses) * 100) : 0;
 
             return (
-              <div key={cat} className="p-3 rounded-lg bg-[#0A1022] border border-white/[0.04] space-y-1.5">
+              <div key={cat} className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-white font-medium">{meta.label}</span>
-                  <span className="font-mono font-bold text-white">{formatCurrency(catAmt)}</span>
+                  <span className="text-[#0F172A] font-semibold">{meta.label}</span>
+                  <span className="font-mono font-bold text-[#0F172A]">{formatCurrency(catAmt)}</span>
                 </div>
-                <div className="w-full bg-[#101827] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
                 </div>
-                <div className="flex justify-between text-[10.5px] text-[#8A94A6]">
+                <div className="flex justify-between text-[10.5px] text-[#64748B]">
                   <span>{meta.group}</span>
                   <span className="font-mono font-bold">{pct}%</span>
                 </div>
@@ -250,14 +250,14 @@ export const ExpenseTrackerView: React.FC = () => {
 
       {/* Recent Transactions List */}
       <div style={{ ...cardStyle, padding: '20px 22px' }} className="space-y-4">
-        <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#E2E8F0]">
           <div className="flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-[#00D4AA]" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Logged Outflows ({expenses.length})</h3>
+            <Receipt className="w-4 h-4 text-[#00A884]" />
+            <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Logged Outflows ({expenses.length})</h3>
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="text-xs text-[#00D4AA] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
+            className="text-xs text-[#00A884] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Transaction</span>
@@ -265,39 +265,39 @@ export const ExpenseTrackerView: React.FC = () => {
         </div>
 
         {expenses.length === 0 ? (
-          <div className="p-8 text-center space-y-2 bg-[#0A1022] rounded-lg">
-            <Receipt className="w-8 h-8 text-[#5A667A] mx-auto" />
-            <p className="text-xs text-[#8A94A6]">No expenditure logged yet. Add your living costs to compute cashflow surplus.</p>
+          <div className="p-8 text-center space-y-2 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+            <Receipt className="w-8 h-8 text-[#94A3B8] mx-auto" />
+            <p className="text-xs text-[#64748B]">No expenditure logged yet. Add your living costs to compute cashflow surplus.</p>
           </div>
         ) : (
-          <div className="divide-y divide-white/[0.04]">
+          <div className="divide-y divide-[#E2E8F0]">
             {expenses.map((item) => {
               const meta = categoryMeta[item.category] || categoryMeta.Other;
               return (
-                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-white/[0.02] px-2 rounded-md transition-colors text-xs">
+                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-[#F8FAFC] px-2 rounded-lg transition-colors text-xs">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-[11px] bg-[#0A1022] border border-white/[0.06]" style={{ color: meta.color }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] bg-[#F8FAFC] border border-[#E2E8F0]" style={{ color: meta.color }}>
                       {item.category.charAt(0)}
                     </div>
                     <div>
-                      <div className="font-semibold text-white">{item.description}</div>
-                      <div className="text-[11px] text-[#8A94A6]">{item.date} • {meta.label}</div>
+                      <div className="font-semibold text-[#0F172A]">{item.description}</div>
+                      <div className="text-[11px] text-[#64748B]">{item.date} • {meta.label}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-white">{formatCurrency(item.amount)}</span>
+                    <span className="font-mono font-bold text-[#0F172A]">{formatCurrency(item.amount)}</span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleOpenEditModal(item)}
-                        className="p-1 rounded text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
                         title="Edit Expense"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => deleteExpense(item.id)}
-                        className="p-1 rounded text-[#8A94A6] hover:text-[#FF5252] transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#FF5252] hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Delete Expense"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -313,33 +313,33 @@ export const ExpenseTrackerView: React.FC = () => {
 
       {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
-          <div className="bg-[#101827] border border-white/[0.12] rounded-xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
-              <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <h3 className="text-sm sm:text-base font-bold text-[#0F172A] uppercase tracking-wider">
                 {editingId ? 'Edit Expenditure Record' : 'Add Expenditure Record'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="p-1 rounded text-[#8A94A6] hover:text-white cursor-pointer active:scale-95" aria-label="Close">
+              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer active:scale-95" aria-label="Close">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitExpense} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Category</label>
+                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ExpenseItem['category'])}
-                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none"
                 >
                   {(Object.keys(categoryMeta) as ExpenseItem['category'][]).map((cat) => (
-                    <option key={cat} value={cat} className="bg-[#0A1022] text-white">{categoryMeta[cat].label} ({categoryMeta[cat].group})</option>
+                    <option key={cat} value={cat} className="bg-white text-[#0F172A]">{categoryMeta[cat].label} ({categoryMeta[cat].group})</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Monthly Amount (₹)</label>
+                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Monthly Amount (₹)</label>
                 <input
                   type="number"
                   required
@@ -347,42 +347,42 @@ export const ExpenseTrackerView: React.FC = () => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 5000"
-                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Description</label>
+                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Description</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Groceries and weekly dining"
-                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none placeholder:text-[#94A3B8]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#8A94A6] font-bold uppercase tracking-wider">Date</label>
+                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Date</label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-xs focus:border-[#00D4AA] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg text-[#8A94A6] hover:text-white text-xs cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] text-xs cursor-pointer font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#00D4AA] hover:bg-[#00BFA0] text-[#050816] font-bold text-xs cursor-pointer shadow-xs"
                 >
                   {editingId ? 'Update Record' : 'Save Record'}
                 </button>

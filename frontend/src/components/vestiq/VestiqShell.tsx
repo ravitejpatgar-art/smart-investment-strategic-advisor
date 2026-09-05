@@ -465,7 +465,7 @@ export const VestiqShell: React.FC = () => {
         </main>
 
         {/* Right: Personal SmartVest Context Panel (Desktop >= 1280px) */}
-        <div className="hidden xl:flex p-4 border-l border-[#E7EAF0] bg-[#F8FAFC] h-full overflow-y-auto">
+        <div className="hidden xl:flex p-4 border-l border-[#E2E8F0] bg-white h-full overflow-y-auto">
           <VestiqContextPanel onNavigateToProfile={() => setActiveView('profile')} />
         </div>
 
@@ -477,7 +477,7 @@ export const VestiqShell: React.FC = () => {
               className="fixed inset-0 bg-black/40"
             />
             <div className="relative z-10 w-[300px] bg-white h-full p-4 shadow-2xl overflow-y-auto animate-slide-left">
-              <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#E7EAF0]">
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#E2E8F0]">
                 <span className="font-bold text-[#172033] text-[13px] uppercase tracking-wider">SmartVest Context</span>
                 <button onClick={() => setContextOpen(false)} className="text-[#667085] hover:text-[#172033]">
                   ✕

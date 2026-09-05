@@ -30,30 +30,30 @@ export const Badge: React.FC<BadgeProps> = ({
   children,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center select-none font-bold tracking-wider uppercase rounded-md transition-colors duration-150 ease-out';
+  const baseClasses = 'inline-flex items-center select-none font-bold tracking-wider uppercase rounded-full transition-colors duration-150 ease-out';
 
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-[10px] gap-1',
-    md: 'px-2.5 py-1 text-[11px] gap-1.5',
+    md: 'px-2.5 py-0.5 text-[11px] gap-1.5',
   }[size];
 
   const variantClasses: Record<BadgeVariant, { bg: string; dot: string }> = {
-    success: { bg: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20', dot: 'bg-emerald-400' },
-    warning: { bg: 'bg-amber-500/10 text-amber-400 border border-amber-500/20', dot: 'bg-amber-400' },
-    danger: { bg: 'bg-red-500/10 text-red-400 border border-red-500/20', dot: 'bg-red-400' },
-    info: { bg: 'bg-blue-500/10 text-blue-400 border border-blue-500/20', dot: 'bg-blue-400' },
-    neutral: { bg: 'bg-white/6 text-[#A0AEC0] border border-white/8', dot: 'bg-[#A0AEC0]' },
-    teal: { bg: 'bg-[#00D4AA]/10 text-[#00D4AA] border border-[#00D4AA]/20', dot: 'bg-[#00D4AA]' },
-    blue: { bg: 'bg-[#1E88E5]/10 text-[#1E88E5] border border-[#1E88E5]/20', dot: 'bg-[#1E88E5]' },
-    live: { bg: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25', dot: 'bg-emerald-400 animate-pulse' },
-    delayed: { bg: 'bg-amber-500/10 text-amber-400 border border-amber-500/25', dot: 'bg-amber-400' },
-    stale: { bg: 'bg-slate-500/10 text-slate-400 border border-slate-500/25', dot: 'bg-slate-400' },
-    fallback: { bg: 'bg-blue-500/10 text-blue-400 border border-blue-500/25', dot: 'bg-blue-400' },
-    demo: { bg: 'bg-purple-500/10 text-purple-400 border border-purple-500/25', dot: 'bg-purple-400' },
-    unavailable: { bg: 'bg-red-500/10 text-red-400 border border-red-500/25', dot: 'bg-red-400' },
+    success: { bg: 'bg-emerald-50 text-emerald-700 border border-emerald-200', dot: 'bg-emerald-500' },
+    warning: { bg: 'bg-amber-50 text-amber-800 border border-amber-200', dot: 'bg-amber-500' },
+    danger: { bg: 'bg-red-50 text-red-700 border border-red-200', dot: 'bg-red-500' },
+    info: { bg: 'bg-blue-50 text-blue-700 border border-blue-200', dot: 'bg-blue-500' },
+    neutral: { bg: 'bg-slate-100 text-slate-700 border border-slate-200', dot: 'bg-slate-500' },
+    teal: { bg: 'bg-teal-50 text-teal-800 border border-teal-200', dot: 'bg-teal-600' },
+    blue: { bg: 'bg-blue-50 text-blue-700 border border-blue-200', dot: 'bg-blue-600' },
+    live: { bg: 'bg-emerald-50 text-emerald-700 border border-emerald-200', dot: 'bg-emerald-500 animate-pulse' },
+    delayed: { bg: 'bg-amber-50 text-amber-800 border border-amber-200', dot: 'bg-amber-500' },
+    stale: { bg: 'bg-slate-100 text-slate-600 border border-slate-200', dot: 'bg-slate-400' },
+    fallback: { bg: 'bg-blue-50 text-blue-700 border border-blue-200', dot: 'bg-blue-500' },
+    demo: { bg: 'bg-purple-50 text-purple-700 border border-purple-200', dot: 'bg-purple-500' },
+    unavailable: { bg: 'bg-red-50 text-red-700 border border-red-200', dot: 'bg-red-500' },
   };
 
-  const currentVariant = variantClasses[variant];
+  const currentVariant = variantClasses[variant] || variantClasses.neutral;
 
   return (
     <span

@@ -31,11 +31,11 @@ export const ProfileView: React.FC = () => {
     expenses
   } = useFintechStore();
 
-  const cardStyle = {
-    background: '#101827',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+  const cardStyle: React.CSSProperties = {
+    background: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    borderRadius: 16,
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)',
   };
 
   // Helper to extract form data from user object (clean empty state for new users)
@@ -173,15 +173,15 @@ export const ProfileView: React.FC = () => {
       <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-[#00D4AA]" />
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Investor Mandate & Profile</h1>
+            <User className="w-5 h-5 text-[#00A884]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Investor Mandate & Profile</h1>
             {isDirty && (
-              <span className="text-[10.5px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 border border-amber-500/20">
                 Unsaved Edits
               </span>
             )}
           </div>
-          <p className="text-xs text-[#8A94A6]">
+          <p className="text-xs text-[#64748B]">
             Configure your capital parameters, volatility tolerances, and lifecycle horizon to recalibrate portfolio strategy.
           </p>
         </div>
@@ -192,7 +192,7 @@ export const ProfileView: React.FC = () => {
               type="button"
               onClick={handleReset}
               disabled={isSaving}
-              className="px-3 py-2 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -203,7 +203,7 @@ export const ProfileView: React.FC = () => {
             type="button"
             onClick={handleSaveProfile}
             disabled={isSaving}
-            className="px-4 py-2 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl bg-[#00D4AA] hover:bg-[#00BFA0] text-[#050816] font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
             <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate'}</span>
@@ -213,23 +213,23 @@ export const ProfileView: React.FC = () => {
 
       {/* Success Notification */}
       {savedSuccess && (
-        <div className="p-3.5 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA] text-xs font-semibold flex items-center gap-2.5 shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+        <div className="p-3.5 rounded-xl bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#008769] text-xs font-semibold flex items-center gap-2.5 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-[#00A884] shrink-0" />
           <span>Profile parameters updated. Multi-asset investment strategy successfully recalibrated.</span>
         </div>
       )}
 
       {/* Error Notification */}
       {errorMessage && (
-        <div className="p-3.5 rounded-lg bg-[#FF5252]/10 border border-[#FF5252]/30 text-[#FF5252] text-xs font-semibold flex items-center justify-between gap-2.5 shadow-xs">
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center justify-between gap-2.5 shadow-xs">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#FF5252] shrink-0" />
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
             <span>{errorMessage}</span>
           </div>
           <button
             type="button"
             onClick={handleSaveProfile}
-            className="px-2.5 py-0.5 bg-[#FF5252] text-white rounded text-xs font-bold cursor-pointer"
+            className="px-2.5 py-0.5 bg-rose-600 text-white rounded-md text-xs font-bold cursor-pointer"
           >
             Retry
           </button>
@@ -239,27 +239,27 @@ export const ProfileView: React.FC = () => {
       {/* Summary Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
-          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Monthly Inflow</span>
-          <div className="text-xl font-bold text-white font-mono">{formatCurrency(totalInflow)}</div>
-          <span className="text-xs text-[#8A94A6] truncate block">{form.occupation || 'Active Inflow'}</span>
+          <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">Monthly Inflow</span>
+          <div className="text-xl font-bold text-[#0F172A] font-mono">{formatCurrency(totalInflow)}</div>
+          <span className="text-xs text-[#64748B] truncate block">{form.occupation || 'Active Inflow'}</span>
         </div>
 
         <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
-          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Monthly Outflow</span>
-          <div className="text-xl font-bold text-white font-mono">{formatCurrency(totalOutflows)}</div>
-          <span className="text-xs text-[#8A94A6] block">{expenses.length} Logged Categories</span>
+          <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">Monthly Outflow</span>
+          <div className="text-xl font-bold text-[#0F172A] font-mono">{formatCurrency(totalOutflows)}</div>
+          <span className="text-xs text-[#64748B] block">{expenses.length} Logged Categories</span>
         </div>
 
         <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
-          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Investable Surplus</span>
-          <div className="text-xl font-bold text-[#00D4AA] font-mono">{formatCurrency(surplus)}</div>
-          <span className="text-xs text-[#00D4AA]/80 block">Capacity to deploy</span>
+          <span className="text-[10.5px] text-[#00A884] font-bold uppercase tracking-wider block">Investable Surplus</span>
+          <div className="text-xl font-bold text-[#00A884] font-mono">{formatCurrency(surplus)}</div>
+          <span className="text-xs text-[#00A884] block font-medium">Capacity to deploy</span>
         </div>
 
         <div style={{ ...cardStyle, padding: '16px 18px' }} className="space-y-1">
-          <span className="text-[10.5px] text-[#8A94A6] font-bold uppercase tracking-wider block">Emergency Reserve</span>
-          <div className="text-xl font-bold text-white font-mono">{formatCurrency(numericEmergency)}</div>
-          <span className="text-xs text-[#8A94A6] block">Liquid Reserves</span>
+          <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">Emergency Reserve</span>
+          <div className="text-xl font-bold text-[#0F172A] font-mono">{formatCurrency(numericEmergency)}</div>
+          <span className="text-xs text-[#64748B] block">Liquid Reserves</span>
         </div>
       </div>
 
@@ -267,24 +267,24 @@ export const ProfileView: React.FC = () => {
         
         {/* 1. PERSONAL INFORMATION */}
         <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
-          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
+          <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider pb-2 border-b border-[#E2E8F0]">
             1. Investor Demographics
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Full Legal Name</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Full Legal Name</label>
               <input
                 type="text"
                 value={form.fullName}
                 onChange={(e) => updateField('fullName', e.target.value)}
                 placeholder="Investor Name"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none placeholder:text-[#94A3B8]"
               />
             </div>
 
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Age (Years)</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Age (Years)</label>
               <input
                 type="number"
                 value={form.age}
@@ -292,18 +292,18 @@ export const ProfileView: React.FC = () => {
                 placeholder="e.g. 28"
                 min="18"
                 max="100"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
               />
             </div>
 
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Occupation</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Occupation</label>
               <input
                 type="text"
                 value={form.occupation}
                 onChange={(e) => updateField('occupation', e.target.value)}
                 placeholder="e.g. Software Engineer"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none placeholder:text-[#94A3B8]"
               />
             </div>
           </div>
@@ -311,56 +311,56 @@ export const ProfileView: React.FC = () => {
 
         {/* 2. FINANCIAL PARAMETERS */}
         <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
-          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
+          <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider pb-2 border-b border-[#E2E8F0]">
             2. Capital Inflows & Assets
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Monthly Take-Home Salary (₹)</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Monthly Take-Home Salary (₹)</label>
               <input
                 type="number"
                 value={form.salaryIncome}
                 onChange={(e) => updateField('salaryIncome', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
               />
             </div>
 
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Other Monthly Cash Inflows (₹)</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Other Monthly Cash Inflows (₹)</label>
               <input
                 type="number"
                 value={form.otherIncome}
                 onChange={(e) => updateField('otherIncome', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
               />
             </div>
 
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Emergency Cash Reserves (₹)</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Emergency Cash Reserves (₹)</label>
               <input
                 type="number"
                 value={form.emergencyFund}
                 onChange={(e) => updateField('emergencyFund', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
               />
             </div>
 
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Existing Investments Portfolio (₹)</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Existing Investments Portfolio (₹)</label>
               <input
                 type="number"
                 value={form.existingInvestments}
                 onChange={(e) => updateField('existingInvestments', e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
               />
             </div>
           </div>
@@ -368,14 +368,14 @@ export const ProfileView: React.FC = () => {
 
         {/* 3. RISK TOLERANCE & STRATEGY PREFERENCES */}
         <div style={{ ...cardStyle, padding: '20px 24px' }} className="space-y-4">
-          <h2 className="text-xs font-bold text-white uppercase tracking-wider pb-2 border-b border-white/[0.06]">
+          <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider pb-2 border-b border-[#E2E8F0]">
             3. Risk Mandate & Governance
           </h2>
 
           <div className="space-y-4">
             {/* Segmented Risk Selector */}
             <div className="space-y-2">
-              <label className="block text-[#8A94A6] text-xs font-semibold uppercase tracking-wider">Risk Profile Strategy</label>
+              <label className="block text-[#64748B] text-xs font-semibold uppercase tracking-wider">Risk Profile Strategy</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { id: 'Conservative', label: 'Conservative', desc: 'Focus on capital safety and high-yield fixed debt' },
@@ -386,14 +386,14 @@ export const ProfileView: React.FC = () => {
                     key={item.id}
                     type="button"
                     onClick={() => updateField('riskTolerance', item.id as any)}
-                    className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                       form.riskTolerance === item.id 
-                        ? 'bg-[#00D4AA]/10 border-[#00D4AA]/40 text-white' 
-                        : 'bg-[#0A1022] border-white/[0.06] text-[#8A94A6] hover:border-white/[0.14]'
+                        ? 'bg-[#00D4AA]/10 border-[#00D4AA] text-[#0F172A] shadow-xs' 
+                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1]'
                     }`}
                   >
-                    <span className={`font-bold text-sm block mb-0.5 ${form.riskTolerance === item.id ? 'text-[#00D4AA]' : 'text-white'}`}>{item.label}</span>
-                    <span className="text-xs text-[#8A94A6] leading-relaxed block">{item.desc}</span>
+                    <span className={`font-bold text-sm block mb-0.5 ${form.riskTolerance === item.id ? 'text-[#008769]' : 'text-[#0F172A]'}`}>{item.label}</span>
+                    <span className="text-xs text-[#64748B] leading-relaxed block">{item.desc}</span>
                   </button>
                 ))}
               </div>
@@ -401,42 +401,42 @@ export const ProfileView: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               <div>
-                <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Investment Horizon</label>
+                <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Investment Horizon</label>
                 <select
                   value={form.investmentHorizon}
                   onChange={(e) => updateField('investmentHorizon', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none cursor-pointer"
                 >
-                  <option value="1 to 3 years" className="bg-[#0A1022] text-white">Short Term (1 to 3 years)</option>
-                  <option value="3 to 5 years" className="bg-[#0A1022] text-white">Medium Term (3 to 5 years)</option>
-                  <option value="5 to 10 years" className="bg-[#0A1022] text-white">Long Term (5 to 10 years)</option>
-                  <option value="10 to 20 years" className="bg-[#0A1022] text-white">Extended Growth (10 to 20 years)</option>
-                  <option value="20+ years" className="bg-[#0A1022] text-white">Multi-Decade (20+ years)</option>
+                  <option value="1 to 3 years">Short Term (1 to 3 years)</option>
+                  <option value="3 to 5 years">Medium Term (3 to 5 years)</option>
+                  <option value="5 to 10 years">Long Term (5 to 10 years)</option>
+                  <option value="10 to 20 years">Extended Growth (10 to 20 years)</option>
+                  <option value="20+ years">Multi-Decade (20+ years)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Market Experience</label>
+                <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Market Experience</label>
                 <select
                   value={form.investmentExperience}
                   onChange={(e) => updateField('investmentExperience', e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none cursor-pointer"
                 >
-                  <option value="Beginner" className="bg-[#0A1022] text-white">Beginner (Index funds & SIP focus)</option>
-                  <option value="Intermediate" className="bg-[#0A1022] text-white">Intermediate (Multi-asset & ETFs)</option>
-                  <option value="Advanced" className="bg-[#0A1022] text-white">Advanced (Global allocation & hedging)</option>
+                  <option value="Beginner">Beginner (Index funds & SIP focus)</option>
+                  <option value="Intermediate">Intermediate (Multi-asset & ETFs)</option>
+                  <option value="Advanced">Advanced (Global allocation & hedging)</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-[#8A94A6] text-xs font-semibold mb-1.5 uppercase tracking-wider">Primary Financial Mandate</label>
+              <label className="block text-[#64748B] text-xs font-semibold mb-1.5 uppercase tracking-wider">Primary Financial Mandate</label>
               <input
                 type="text"
                 value={form.financialGoal}
                 onChange={(e) => updateField('financialGoal', e.target.value)}
                 placeholder="e.g. Wealth Creation & Early Independence"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-white text-sm focus:border-[#00D4AA] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm focus:border-[#00D4AA] focus:bg-white focus:outline-none placeholder:text-[#94A3B8]"
               />
             </div>
           </div>
@@ -444,9 +444,9 @@ export const ProfileView: React.FC = () => {
 
         {/* Bottom Action Footer */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-          <div className="text-xs text-[#8A94A6]">
+          <div className="text-xs text-[#64748B]">
             {isDirty ? (
-              <span className="text-amber-400 font-medium">Unsaved parameters detected.</span>
+              <span className="text-amber-600 font-medium">Unsaved parameters detected.</span>
             ) : (
               <span>Profile parameters are synchronized.</span>
             )}
@@ -458,7 +458,7 @@ export const ProfileView: React.FC = () => {
                 type="button"
                 onClick={handleReset}
                 disabled={isSaving}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#0A1022] border border-white/[0.08] text-[#8A94A6] hover:text-white text-xs font-semibold cursor-pointer transition-colors active:scale-95 text-center"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] text-xs font-semibold cursor-pointer transition-colors active:scale-95 text-center shadow-xs"
               >
                 Cancel
               </button>
@@ -467,7 +467,7 @@ export const ProfileView: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#00D4AA] text-[#050816] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 active:scale-95"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#00D4AA] hover:bg-[#00BFA0] text-[#050816] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50 active:scale-95"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
               <span>{isSaving ? 'Recalibrating...' : 'Save & Recalibrate Strategy'}</span>

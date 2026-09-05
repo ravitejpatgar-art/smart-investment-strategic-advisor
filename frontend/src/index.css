@@ -8,53 +8,53 @@
 
 @layer base {
   :root {
-    /* === Core Institutional Palette === */
-    --bg-base:             #050816;
-    --bg-surface:          #0A1022;
-    --bg-card:             #101827;
-    --bg-card-elevated:    #141F36;
-    --bg-surface-3:        #1A2844;
+    /* === Modern Indian Fintech / StockGro Palette === */
+    --bg-base:             #F8F9FA;
+    --bg-surface:          #FFFFFF;
+    --bg-card:             #FFFFFF;
+    --bg-card-elevated:    #FFFFFF;
+    --bg-surface-3:        #F1F5F9;
 
-    /* === Borders (Crisp, subtle, institutional) === */
-    --border-subtle:       rgba(255, 255, 255, 0.05);
-    --border-default:      rgba(255, 255, 255, 0.08);
-    --border-strong:       rgba(255, 255, 255, 0.14);
-    --border-accent:       rgba(0, 212, 170, 0.30);
+    /* === Borders (Subtle, clean, modern) === */
+    --border-subtle:       #F1F5F9;
+    --border-default:      #E2E8F0;
+    --border-strong:       #CBD5E1;
+    --border-accent:       rgba(0, 212, 170, 0.40);
 
     /* === Accent Colors === */
     --accent-teal:         #00D4AA;
-    --accent-teal-dim:     rgba(0, 212, 170, 0.10);
+    --accent-teal-dim:     rgba(0, 212, 170, 0.12);
     --accent-blue:         #1E88E5;
-    --accent-blue-dim:     rgba(30, 136, 229, 0.10);
+    --accent-blue-dim:     rgba(30, 136, 229, 0.12);
 
     /* === Semantic Status Colors === */
-    --color-success:       #00C853;
-    --color-success-dim:   rgba(0, 200, 83, 0.10);
-    --color-warning:       #F59E0B;
-    --color-warning-dim:   rgba(245, 158, 11, 0.10);
-    --color-danger:        #FF5252;
-    --color-danger-dim:    rgba(255, 82, 82, 0.10);
+    --color-success:       #16A34A;
+    --color-success-dim:   rgba(22, 163, 74, 0.12);
+    --color-warning:       #D97706;
+    --color-warning-dim:   rgba(217, 119, 6, 0.12);
+    --color-danger:        #DC2626;
+    --color-danger-dim:    rgba(220, 38, 38, 0.12);
 
     /* === Typography Colors === */
-    --text-primary:        #FFFFFF;
-    --text-secondary:      #A0AEC0;
-    --text-muted:          #5A667A;
-    --text-accent:         #00D4AA;
+    --text-primary:        #0F172A;
+    --text-secondary:      #475569;
+    --text-muted:          #94A3B8;
+    --text-accent:         #00A884;
 
-    /* === Soft Shadows (No neon glows) === */
-    --shadow-sm:           0 1px 2px rgba(0, 0, 0, 0.35);
-    --shadow-md:           0 4px 16px rgba(0, 0, 0, 0.40);
-    --shadow-lg:           0 8px 30px rgba(0, 0, 0, 0.50);
-    --shadow-card:         0 4px 20px rgba(0, 0, 0, 0.35);
+    /* === Soft Modern Shadows === */
+    --shadow-sm:           0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md:           0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-lg:           0 10px 25px rgba(0, 0, 0, 0.06);
+    --shadow-card:         0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 
-    /* === Glass Effect === */
-    --glass-bg:            rgba(10, 16, 34, 0.85);
-    --glass-border:        rgba(255, 255, 255, 0.08);
-    --glass-blur:          16px;
+    /* === Glass / Card Surface === */
+    --glass-bg:            rgba(255, 255, 255, 0.95);
+    --glass-border:        #E2E8F0;
+    --glass-blur:          12px;
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
@@ -82,8 +82,8 @@
 
   /* Global selection style */
   ::selection {
-    background: rgba(0, 212, 170, 0.20);
-    color: #00D4AA;
+    background: rgba(0, 212, 170, 0.25);
+    color: #0F172A;
   }
 }
 
@@ -107,9 +107,9 @@
 }
 
 .glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .glass-card-accent {
@@ -120,7 +120,7 @@
 }
 
 .glass-input {
-  background: rgba(10, 16, 34, 0.8);
+  background: #FFFFFF;
   border: 1px solid var(--border-default);
   border-radius: 10px;
   color: var(--text-primary);
@@ -129,7 +129,7 @@
 
 .glass-input:focus {
   border-color: var(--accent-teal);
-  box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15);
   outline: none;
 }
 

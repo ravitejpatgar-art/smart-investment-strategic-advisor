@@ -19,9 +19,10 @@ import {
 import { auditLogger } from '../../services/auditLogger';
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: '#0A1022',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  borderRadius: 12
+  backgroundColor: '#FFFFFF',
+  border: '1px solid #E2E8F0',
+  borderRadius: 16,
+  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
 };
 
 export const PortfolioRebalanceView: React.FC = () => {
@@ -85,20 +86,20 @@ export const PortfolioRebalanceView: React.FC = () => {
     switch (action) {
       case 'OVERWEIGHT':
         return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#FF5252]/10 border border-[#FF5252]/30 text-[#FF5252] flex items-center gap-1">
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-[#FF5252] flex items-center gap-1">
             <span>+{drift.toFixed(1)}% OVERWEIGHT</span>
           </span>
         );
       case 'UNDERWEIGHT':
         return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#3B82F6]/10 border border-[#3B82F6]/30 text-[#3B82F6] flex items-center gap-1">
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#3B82F6] flex items-center gap-1">
             <span>{drift.toFixed(1)}% UNDERWEIGHT</span>
           </span>
         );
       case 'ON_TARGET':
       default:
         return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA] flex items-center gap-1">
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md bg-[#00D4AA]/15 border border-[#00D4AA]/40 text-[#008769] flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> ON TARGET
           </span>
         );
@@ -106,33 +107,33 @@ export const PortfolioRebalanceView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       
       {/* 1. Header Banner & Threshold Controls */}
       <div style={{ ...cardStyle, padding: '20px 24px' }}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#3B82F6]">PORTFOLIO REBALANCING ADVISORY</span>
+              <span className="w-2 h-2 rounded-full bg-[#1E88E5]" />
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1E88E5]">PORTFOLIO REBALANCING ADVISORY</span>
             </div>
-            <h2 className="text-xl font-extrabold text-white">Asset Allocation Variance & Drift Engine</h2>
-            <p className="text-xs text-[#8A94A6] mt-1 max-w-2xl">
+            <h2 className="text-xl font-extrabold text-[#0F172A]">Asset Allocation Variance & Drift Engine</h2>
+            <p className="text-xs text-[#64748B] mt-1 max-w-2xl">
               Compare your current portfolio distribution against your target strategy blueprint. Identifies asset drift and calculates smart SIP adjustments to realign without selling.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-[#141F36] p-1 rounded-lg border border-white/[0.08] text-xs">
-              <span className="text-[#8A94A6] px-2 font-semibold">Drift Threshold:</span>
+            <div className="flex items-center gap-1.5 bg-[#F8FAFC] p-1 rounded-xl border border-[#E2E8F0] text-xs">
+              <span className="text-[#64748B] px-2 font-semibold">Drift Threshold:</span>
               {[1.0, 2.0, 5.0].map((t) => (
                 <button
                   key={t}
                   onClick={() => setThresholdPct(t)}
-                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     thresholdPct === t
-                      ? 'bg-[#3B82F6] text-white shadow-sm'
-                      : 'text-[#8A94A6] hover:text-white'
+                      ? 'bg-[#1E88E5] text-white shadow-xs'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
                   ±{t}%
@@ -142,7 +143,7 @@ export const PortfolioRebalanceView: React.FC = () => {
 
             <button
               onClick={handleResetToTarget}
-              className="p-2 rounded-lg bg-[#141F36] hover:bg-[#1C2C4E] text-[#8A94A6] hover:text-white border border-white/[0.08] transition-all text-xs font-bold flex items-center gap-1.5"
+              className="p-2.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
               title="Reset current allocation to target blueprint"
             >
               <RotateCcw className="w-3.5 h-3.5" /> Reset
@@ -154,53 +155,53 @@ export const PortfolioRebalanceView: React.FC = () => {
       {/* 2. Drift KPIs & Health Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div style={{ ...cardStyle, padding: '16px 20px' }}>
-          <div className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mb-1 flex items-center justify-between">
+          <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1 flex items-center justify-between">
             <span>Portfolio Alignment Fit</span>
-            <Shield className="w-4 h-4 text-[#00D4AA]" />
+            <Shield className="w-4 h-4 text-[#00A884]" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-[#00D4AA]">
+          <div className="text-xl sm:text-2xl font-black font-mono text-[#00A884]">
             {analysis.alignmentFitScore}/100
           </div>
-          <div className="text-[11px] text-[#8A94A6] mt-1">
+          <div className="text-[11px] text-[#64748B] mt-1">
             {analysis.isFullyAligned ? 'Perfect Strategy Fit' : 'Mild Allocation Drift Detected'}
           </div>
         </div>
 
         <div style={{ ...cardStyle, padding: '16px 20px' }}>
-          <div className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mb-1 flex items-center justify-between">
+          <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1 flex items-center justify-between">
             <span>Total Portfolio Drift</span>
-            <Activity className="w-4 h-4 text-[#3B82F6]" />
+            <Activity className="w-4 h-4 text-[#1E88E5]" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-white">
+          <div className="text-xl sm:text-2xl font-black font-mono text-[#0F172A]">
             {analysis.overallDriftScore.toFixed(1)}%
           </div>
-          <div className="text-[11px] text-[#8A94A6] mt-1">
+          <div className="text-[11px] text-[#64748B] mt-1">
             Cumulative Absolute Variance
           </div>
         </div>
 
         <div style={{ ...cardStyle, padding: '16px 20px' }}>
-          <div className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mb-1 flex items-center justify-between">
+          <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1 flex items-center justify-between">
             <span>Largest Overweight</span>
             <AlertTriangle className="w-4 h-4 text-[#FF5252]" />
           </div>
           <div className="text-sm font-bold text-[#FF5252] truncate">
             {analysis.maxOverweight ? `${analysis.maxOverweight.name} (+${analysis.maxOverweight.driftPct}%)` : 'None (> threshold)'}
           </div>
-          <div className="text-[11px] text-[#8A94A6] mt-1">
+          <div className="text-[11px] text-[#64748B] mt-1">
             Candidate for Rebalance Trim
           </div>
         </div>
 
         <div style={{ ...cardStyle, padding: '16px 20px' }}>
-          <div className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mb-1 flex items-center justify-between">
+          <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1 flex items-center justify-between">
             <span>Largest Underweight</span>
-            <TrendingUp className="w-4 h-4 text-[#3B82F6]" />
+            <TrendingUp className="w-4 h-4 text-[#1E88E5]" />
           </div>
-          <div className="text-sm font-bold text-[#3B82F6] truncate">
+          <div className="text-sm font-bold text-[#1E88E5] truncate">
             {analysis.maxUnderweight ? `${analysis.maxUnderweight.name} (${analysis.maxUnderweight.driftPct}%)` : 'None (> threshold)'}
           </div>
-          <div className="text-[11px] text-[#8A94A6] mt-1">
+          <div className="text-[11px] text-[#64748B] mt-1">
             Priority for New SIP Inflows
           </div>
         </div>
@@ -208,21 +209,21 @@ export const PortfolioRebalanceView: React.FC = () => {
 
       {/* 3. Detailed Drift Breakdown Table */}
       <div style={{ ...cardStyle, padding: '20px 24px' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.08]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E2E8F0]">
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Asset Allocation Drift & Rebalance Matrix</h3>
-            <p className="text-xs text-[#8A94A6]">Interactive model: adjust your current portfolio percentages to inspect drift in real-time.</p>
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider">Asset Allocation Drift & Rebalance Matrix</h3>
+            <p className="text-xs text-[#64748B]">Interactive model: adjust your current portfolio percentages to inspect drift in real-time.</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[#8A94A6]">Portfolio Value:</span>
-            <span className="text-xs font-mono font-bold text-white">{formatCurrency(portfolioVal)}</span>
+            <span className="text-xs text-[#64748B]">Portfolio Value:</span>
+            <span className="text-xs font-mono font-bold text-[#0F172A]">{formatCurrency(portfolioVal)}</span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-white/[0.08] text-[#8A94A6]">
+              <tr className="border-b border-[#E2E8F0] text-[#64748B]">
                 <th className="py-2.5 px-3 font-semibold">Instrument & Asset Class</th>
                 <th className="py-2.5 px-3 font-semibold text-center">Current %</th>
                 <th className="py-2.5 px-3 font-semibold text-center">Target %</th>
@@ -231,15 +232,15 @@ export const PortfolioRebalanceView: React.FC = () => {
                 <th className="py-2.5 px-3 font-semibold text-right">Illustrative Adjustment</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {analysis.assets.map((asset) => (
-                <tr key={asset.id} className="hover:bg-white/[0.02]">
+                <tr key={asset.id} className="hover:bg-[#F8FAFC]">
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
                       <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: asset.color || '#00D4AA', display: 'inline-block' }} />
                       <div>
-                        <div className="font-bold text-white text-xs">{asset.name}</div>
-                        <div className="text-[10px] text-[#8A94A6] uppercase">{asset.category}</div>
+                        <div className="font-bold text-[#0F172A] text-xs">{asset.name}</div>
+                        <div className="text-[10px] text-[#64748B] uppercase">{asset.category}</div>
                       </div>
                     </div>
                   </td>
@@ -252,18 +253,18 @@ export const PortfolioRebalanceView: React.FC = () => {
                         max="100"
                         value={asset.currentPct}
                         onChange={(e) => handleCurrentPctChange(asset.id, Number(e.target.value))}
-                        className="w-14 px-2 py-1 rounded bg-[#141F36] border border-white/[0.12] text-center font-mono font-bold text-white text-xs"
+                        className="w-14 px-2 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-center font-mono font-bold text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none"
                       />
-                      <span className="text-[#8A94A6]">%</span>
+                      <span className="text-[#64748B]">%</span>
                     </div>
                   </td>
 
-                  <td className="py-3 px-3 text-center font-mono font-bold text-white">
+                  <td className="py-3 px-3 text-center font-mono font-bold text-[#0F172A]">
                     {asset.targetPct}%
                   </td>
 
                   <td className="py-3 px-3 font-mono font-bold">
-                    <span className={asset.driftPct > 0 ? 'text-[#FF5252]' : (asset.driftPct < 0 ? 'text-[#3B82F6]' : 'text-[#00D4AA]')}>
+                    <span className={asset.driftPct > 0 ? 'text-[#FF5252]' : (asset.driftPct < 0 ? 'text-[#3B82F6]' : 'text-[#00A884]')}>
                       {asset.driftPct > 0 ? `+${asset.driftPct.toFixed(1)}%` : `${asset.driftPct.toFixed(1)}%`}
                     </span>
                   </td>
@@ -278,7 +279,7 @@ export const PortfolioRebalanceView: React.FC = () => {
                     ) : asset.adjustmentAmount < 0 ? (
                       <span className="text-[#FF5252]">-{formatCurrency(Math.abs(asset.adjustmentAmount))}</span>
                     ) : (
-                      <span className="text-[#8A94A6]">Aligned</span>
+                      <span className="text-[#64748B]">Aligned</span>
                     )}
                   </td>
                 </tr>
@@ -290,47 +291,47 @@ export const PortfolioRebalanceView: React.FC = () => {
 
       {/* 4. Smart Rebalancing via New SIP Inflows */}
       <div style={{ ...cardStyle, padding: '20px 24px' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.08]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E2E8F0]">
           <div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#00D4AA]" />
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">New-Contribution SIP Rebalancing Plan</h3>
+              <Sparkles className="w-4 h-4 text-[#00A884]" />
+              <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider">New-Contribution SIP Rebalancing Plan</h3>
             </div>
-            <p className="text-xs text-[#8A94A6] mt-0.5">
-              Direct future monthly SIP of <strong className="text-white font-mono">{formatCurrency(monthlySip)}</strong> towards underweight buckets to realign your portfolio over time without selling existing holdings or incurring taxes.
+            <p className="text-xs text-[#64748B] mt-0.5">
+              Direct future monthly SIP of <strong className="text-[#0F172A] font-mono">{formatCurrency(monthlySip)}</strong> towards underweight buckets to realign your portfolio over time without selling existing holdings or incurring taxes.
             </p>
           </div>
-          <span className="text-[10px] font-bold text-[#00D4AA] uppercase tracking-wider px-2 py-0.5 rounded bg-[#00D4AA]/10 border border-[#00D4AA]/30 shrink-0">
+          <span className="text-[10px] font-bold text-[#008769] uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#00D4AA]/15 border border-[#00D4AA]/40 shrink-0">
             Tax-Efficient Method
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {analysis.newContributionPlan.map((plan) => (
-            <div key={plan.assetId} className="p-3.5 rounded-lg bg-[#141F36] border border-white/[0.06] flex flex-col justify-between gap-2">
+            <div key={plan.assetId} className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col justify-between gap-2">
               <div>
-                <div className="text-xs font-bold text-white truncate">{plan.name}</div>
-                <div className="text-[10px] text-[#8A94A6] uppercase mt-0.5">{plan.category}</div>
+                <div className="text-xs font-bold text-[#0F172A] truncate">{plan.name}</div>
+                <div className="text-[10px] text-[#64748B] uppercase mt-0.5">{plan.category}</div>
               </div>
 
-              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between">
+              <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] text-[#8A94A6]">Suggested SIP</div>
-                  <div className="text-sm font-mono font-bold text-[#00D4AA]">{formatCurrency(plan.suggestedSipAmount)}/mo</div>
+                  <div className="text-[10px] text-[#64748B]">Suggested SIP</div>
+                  <div className="text-sm font-mono font-bold text-[#00A884]">{formatCurrency(plan.suggestedSipAmount)}/mo</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-[#8A94A6]">SIP Share</div>
-                  <div className="text-sm font-mono font-bold text-white">{plan.suggestedSipPct.toFixed(1)}%</div>
+                  <div className="text-[10px] text-[#64748B]">SIP Share</div>
+                  <div className="text-sm font-mono font-bold text-[#0F172A]">{plan.suggestedSipPct.toFixed(1)}%</div>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 p-3 rounded-lg bg-[#050816] border border-white/[0.06] flex items-start gap-2 text-xs text-[#8A94A6]">
-          <Info className="w-4 h-4 text-[#3B82F6] shrink-0 mt-0.5" />
+        <div className="mt-4 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-2 text-xs text-[#64748B]">
+          <Info className="w-4 h-4 text-[#1E88E5] shrink-0 mt-0.5" />
           <span>
-            <strong>Non-Execution Disclosure:</strong> SmartVest provides educational rebalancing analytics. SmartVest does not execute trades or place orders on discount brokers. Execute SIP modifications directly via your registered broker or AMFI platform.
+            <strong className="text-[#0F172A]">Non-Execution Disclosure:</strong> SmartVest provides educational rebalancing analytics. SmartVest does not execute trades or place orders on discount brokers. Execute SIP modifications directly via your registered broker or AMFI platform.
           </span>
         </div>
       </div>

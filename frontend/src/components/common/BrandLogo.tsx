@@ -24,15 +24,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`inline-flex items-center gap-3 select-none ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`inline-flex items-center gap-2.5 select-none ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      {/* Institutional Geometric SV Monogram */}
+      {/* SmartVest Monogram */}
       <div
-        className={`${iconDimensions.box} ${iconDimensions.radius} flex items-center justify-center shrink-0 border border-white/10`}
-        style={{
-          background: '#0A1022',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
-        }}
+        className={`${iconDimensions.box} ${iconDimensions.radius} flex items-center justify-center shrink-0 border border-teal-200 bg-teal-50 shadow-2xs`}
       >
         <svg
           width={iconDimensions.svg}
@@ -49,7 +45,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           {/* Bottom Geometric Pillar: Capital Preservation & Value */}
           <path
             d="M21 19.5H10.5L4.5 13.5V10.5H8.5L13.5 15.5H21V19.5Z"
-            fill="#FFFFFF"
+            fill="#0F172A"
           />
           {/* Central Strategic Interlock */}
           <path
@@ -63,7 +59,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       <div className="flex flex-col leading-none">
         <div className="flex items-center gap-1.5">
           <span
-            className={`${iconDimensions.text} font-black tracking-[-0.03em] text-white`}
+            className={`${iconDimensions.text} font-black tracking-[-0.03em] text-[#0F172A]`}
             style={{ fontFamily: "'Inter Tight', 'Inter', sans-serif" }}
           >
             SMARTVEST
@@ -71,7 +67,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         </div>
         {showSubtitle && (
           <span
-            className={`${iconDimensions.sub} font-semibold tracking-[0.24em] text-[#A0AEC0] uppercase mt-1`}
+            className={`${iconDimensions.sub} font-bold tracking-[0.20em] text-[#64748B] uppercase mt-1`}
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             {subtitleText}
