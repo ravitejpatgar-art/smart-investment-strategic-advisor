@@ -4,11 +4,13 @@ import { FileText, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 interface LessonTranscriptProps {
   transcript: string;
   durationSeconds: number;
+  languageLabel?: string;
 }
 
 export const LessonTranscript: React.FC<LessonTranscriptProps> = ({
   transcript,
   durationSeconds,
+  languageLabel,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -39,7 +41,9 @@ export const LessonTranscript: React.FC<LessonTranscriptProps> = ({
             <FileText className="w-3.5 h-3.5" />
           </div>
           <div>
-            <span className="text-sm font-semibold text-[#0F172A]">Lesson Transcript</span>
+            <span className="text-sm font-semibold text-[#0F172A]">
+              Lesson Transcript {languageLabel ? `(${languageLabel})` : ''}
+            </span>
             <span className="text-xs text-[#64748B] ml-2">({Math.ceil(durationSeconds / 60)} min read)</span>
           </div>
         </div>
