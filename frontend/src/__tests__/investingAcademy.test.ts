@@ -86,13 +86,16 @@ describe('SmartVest Academy — Investing for Beginners', () => {
     });
   });
 
-  // 6. Video placeholder support when videoUrl is missing
-  it('6. safely handles lessons awaiting AI video rendering without crashing', () => {
-    const lesson = getLessonById('what-is-investment');
-    expect(lesson).toBeDefined();
-    expect(lesson?.videoUrl).toBeUndefined(); // clean placeholder state
-    expect(lesson?.aiVideoPrompt).toBeDefined();
-    expect(lesson?.aiVideoPrompt?.length).toBeGreaterThan(20);
+  // 6. Video URL and asset validation
+  it('6. provides valid AI educational video and thumbnail assets for lessons', () => {
+    INVESTMENT_LESSONS.forEach((lesson) => {
+      expect(lesson.videoUrl).toBeDefined();
+      expect(lesson.videoUrl).toMatch(/^\/academy\/[a-z0-9-]+\.mp4$/);
+      expect(lesson.thumbnailUrl).toBeDefined();
+      expect(lesson.thumbnailUrl).toMatch(/^\/academy\/[a-z0-9-]+\.webp$/);
+      expect(lesson.aiVideoPrompt).toBeDefined();
+      expect(lesson.aiVideoPrompt?.length).toBeGreaterThan(20);
+    });
   });
 
   // 7. Quiz questions integrity (2–3 multiple-choice questions per lesson)

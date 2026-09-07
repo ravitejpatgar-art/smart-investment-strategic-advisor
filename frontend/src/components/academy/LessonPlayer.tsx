@@ -172,7 +172,15 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
                 }
               }}
               className="w-full h-full object-contain"
-            />
+            >
+              <track
+                kind="captions"
+                src={lesson.videoUrl.replace(/\.mp4$/i, '.vtt')}
+                srcLang="en"
+                label="English"
+                default
+              />
+            </video>
           </div>
         ) : (
           /* High-Fidelity Clean Video Placeholder */

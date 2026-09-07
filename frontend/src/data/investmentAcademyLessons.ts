@@ -15,6 +15,8 @@ export const INVESTMENT_LESSONS: InvestmentLesson[] = [
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 90,
+    videoUrl: '/academy/investment.mp4',
+    thumbnailUrl: '/academy/investment.webp',
     description: 'Learn the difference between saving and investing, and how putting capital to work helps outpace inflation.',
     aiVideoPrompt: `Modern fintech education style, clean light background with teal and blue accents. Professional friendly presenter in a smart casual outfit. Minimal financial illustrations showing money growing into assets. Animated diagram comparing cash sitting idle in a bank vs. allocated into productive assets. Clear Indian English narration, simple subtitles. End screen: SmartVest Investing Academy - Learn first. Invest with understanding.`,
     transcript: `Have you ever wondered what actually happens when you invest money instead of just saving it?
@@ -71,6 +73,8 @@ Remember: investing involves risk, and asset values can fluctuate. The goal of i
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 95,
+    videoUrl: '/academy/stock.mp4',
+    thumbnailUrl: '/academy/stock.webp',
     description: 'Understand what owning a company stock actually means and how shareholders participate in corporate growth.',
     aiVideoPrompt: `Modern fintech education style, light clean background, teal accents. Professional presenter. Animated graphics illustrating a company dividing into fractional pieces. Visual of a coffee shop chain expanding. Clear diagrams showing how business profits can translate to dividend income and share price appreciation. No buy/sell signals. End screen: SmartVest Investing Academy.`,
     transcript: `When you hear people talk about buying a 'stock', what are they actually purchasing?
@@ -127,6 +131,8 @@ However, if the company struggles or faces stiff competition, its market value m
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 85,
+    videoUrl: '/academy/shares.mp4',
+    thumbnailUrl: '/academy/shares.webp',
     description: 'Explore how total company ownership is divided into individual units called shares, and how market cap is calculated.',
     aiVideoPrompt: `Clean light fintech background, elegant teal/blue theme. Young presenter explaining shares vs. stock. Graphic visual of a pizza sliced into equal pieces, representing total shares outstanding multiplied by price per share to show Market Capitalization. Clear subtitles in Indian English. End screen: SmartVest Investing Academy.`,
     transcript: `People often use the words 'stock' and 'shares' interchangeably, but there is a slight, helpful distinction.
@@ -183,6 +189,8 @@ When you buy 50 shares, you hold 50 individual units of ownership. If the compan
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 105,
+    videoUrl: '/academy/etf.mp4',
+    thumbnailUrl: '/academy/etf.webp',
     description: 'Learn how Exchange-Traded Funds package a diversified basket of securities into a single tradeable instrument.',
     aiVideoPrompt: `Modern fintech education style, light clean aesthetic with vibrant teal and blue accents. Animated graphics displaying a shopping cart or basket filled with 50 top company logos representing the NIFTY 50 or S&P 500. Diagram showing real-time trading during market hours with low expense ratio callouts. Professional presenter with clear subtitles. End screen: SmartVest Investing Academy.`,
     transcript: `What if you want to invest in dozens or hundreds of top companies without having to research and buy each stock individually? That is where an ETF, or Exchange-Traded Fund, comes in.
@@ -240,6 +248,8 @@ Third, low cost. Most index ETFs have minimal annual management fees, called exp
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 110,
+    videoUrl: '/academy/mutual-fund.mp4',
+    thumbnailUrl: '/academy/mutual-fund.webp',
     description: 'Understand pooled capital, professional portfolio managers, Net Asset Value (NAV), and mutual fund categories.',
     aiVideoPrompt: `Fintech education aesthetic, bright clean environment, teal and navy graphics. Visual representation of thousands of individual investors pooling money into a large reservoir managed by a professional fund manager holding diverse equities and debt instruments. Infographic explaining NAV calculated at the end of each trading day. Clear Indian English. End screen: SmartVest Investing Academy.`,
     transcript: `A Mutual Fund is an investment vehicle that pools money from thousands of individual investors to build a diversified portfolio of securities.
@@ -297,6 +307,8 @@ Mutual funds make it easy to start investing with small recurring amounts throug
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 100,
+    videoUrl: '/academy/long-term.mp4',
+    thumbnailUrl: '/academy/long-term.webp',
     description: 'Discover why time in the market beats timing the market, and how long investment horizons smooth out volatility.',
     aiVideoPrompt: `Sleek light fintech visual, calming teal and deep slate palette. Animated chart comparing short-term daily volatility (jagged line) against a smooth upward long-term trendline spanning 10 to 20 years. Illustration of economic cycles: expansion, correction, recovery. Clear subtitles. End screen: SmartVest Investing Academy - Learn first. Invest with understanding.`,
     transcript: `If you watch daily financial news, you might think investing is about constantly buying and selling based on daily headlines. But history shows that the most successful investors take a long-term approach.
@@ -353,6 +365,8 @@ Long-term investing also saves you money on frequent brokerage fees, short-term 
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 105,
+    videoUrl: '/academy/compounding.mp4',
+    thumbnailUrl: '/academy/compounding.webp',
     description: 'Learn how mathematical compounding allows returns to generate their own returns over time when reinvested.',
     aiVideoPrompt: `High-quality modern fintech education style, bright clean background. Animated snowball rolling down a gentle hill, picking up snow and accelerating in size. Interactive bar chart demonstrating 5, 10, 20, and 30-year exponential compounding curves. Clear Indian rupee examples (₹10,000 growing over time). Professional narration with clear captions. End screen: SmartVest Investing Academy.`,
     transcript: `Albert Einstein is often said to have called compound interest the eighth wonder of the world. But what is it mathematically, and why does it matter to you?
@@ -413,6 +427,8 @@ The most critical ingredient in compounding is not how much money you start with
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 95,
+    videoUrl: '/academy/sip.mp4',
+    thumbnailUrl: '/academy/sip.webp',
     description: 'Understand Systematic Investment Plans, Rupee Cost Averaging, and how regular investing builds disciplined habits.',
     aiVideoPrompt: `Fintech education aesthetic, clean light theme, teal and emerald green accents. Calendar animation showing an automated deduction of ₹2,000 on the 5th of every month into a mutual fund. Visual diagram showing Rupee Cost Averaging: buying more units when prices dip and fewer units when prices rise. Professional presenter in Indian English. End screen: SmartVest Investing Academy.`,
     transcript: `In India, one of the most popular ways to invest in mutual funds is through a SIP—which stands for Systematic Investment Plan.
@@ -472,6 +488,8 @@ SIPs also build financial discipline: money gets invested automatically right af
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 95,
+    videoUrl: '/academy/swp.mp4',
+    thumbnailUrl: '/academy/swp.webp',
     description: 'Learn how Systematic Withdrawal Plans allow structured cash flow from accumulated corpus during retirement or financial goals.',
     aiVideoPrompt: `Modern light fintech aesthetic, teal and slate color accents. Animated diagram demonstrating the reverse of SIP: a large accumulated corpus in a mutual fund releasing a steady monthly cash flow (e.g. ₹25,000) directly to an investor's bank account while the remaining balance stays invested. Professional presenter with clear subtitles. End screen: SmartVest Investing Academy.`,
     transcript: `If a SIP is how you build wealth over time, how do you harvest that wealth when you retire or need regular income? The answer is a Systematic Withdrawal Plan, or SWP.
@@ -529,6 +547,8 @@ SWPs are widely used by retirees in India because they provide predictable cash 
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 115,
+    videoUrl: '/academy/hedge-fund.mp4',
+    thumbnailUrl: '/academy/hedge-fund.webp',
     description: 'Understand alternative investment funds, sophisticated strategies, leverage, short selling, and accredited investor requirements.',
     aiVideoPrompt: `Clean light fintech background, navy and teal modern graphics. Visual showing the difference between a retail mutual fund (open to everyone, strictly regulated) vs. a hedge fund / AIF (high minimum investment, sophisticated tools like long/short and derivatives). Clear diagrams of risk and fee structures (e.g. 2 and 20). Professional presenter. End screen: SmartVest Investing Academy.`,
     transcript: `You might hear financial news mention 'Hedge Funds' moving markets. But what are they, and how do they differ from normal mutual funds?
@@ -587,6 +607,8 @@ Because of their complexity and risk, hedge funds have high minimum investment t
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 120,
+    videoUrl: '/academy/diversification.mp4',
+    thumbnailUrl: '/academy/diversification.webp',
     description: 'Learn the foundational relationship between risk and potential return, and how asset allocation cushions market shocks.',
     aiVideoPrompt: `Modern light fintech educational visual, teal and warm slate palette. Interactive seesaw balance graphic showing Higher Risk on one side and Higher Potential Return on the other. Visual metaphor of not putting all eggs in one basket: spreading capital across equities, bonds, gold, and liquid cash. Clean Indian English narration with subtitles. End screen: SmartVest Investing Academy.`,
     transcript: `There is a fundamental rule in the financial world that every investor must understand: Risk and Potential Return are inextricably linked.
@@ -645,6 +667,8 @@ If one sector suffers a downturn, gains in another asset class can cushion the b
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 110,
+    videoUrl: '/academy/getting-started.mp4',
+    thumbnailUrl: '/academy/getting-started.webp',
     description: 'A step-by-step practical beginner framework: emergency funds, goal setting, opening accounts, and starting with small steps.',
     aiVideoPrompt: `Inspiring modern fintech educational visual, bright clean background with teal and emerald accents. Step-by-step 4-stage road map: 1. Build Emergency Fund, 2. Define Goals, 3. Complete KYC / Open Demat, 4. Start Small via Index SIP. Confident young presenter with clear subtitles. End screen: SmartVest Investing Academy - Learn first. Invest with understanding.`,
     transcript: `Congratulations on learning the foundational concepts of investing! Now, how do you actually take your first step?
