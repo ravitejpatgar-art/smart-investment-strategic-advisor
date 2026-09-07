@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { InvestmentLesson } from '../../types/investmentAcademy';
+import type { InvestmentLesson, SupportedAcademyLanguage } from '../../types/investmentAcademy';
 import { academyProgress } from '../../services/academyProgress';
 import { getNextLesson, getRelatedLessons } from '../../data/investmentAcademyLessons';
 import { LessonTranscript } from './LessonTranscript';
@@ -16,9 +16,25 @@ import {
   Bot,
   ArrowRight,
   BookOpen,
-  Clapperboard,
-  Film
+  Globe
 } from 'lucide-react';
+
+interface LanguageOption {
+  code: SupportedAcademyLanguage;
+  label: string;
+  native: string;
+}
+
+const ACADEMY_LANGUAGES: LanguageOption[] = [
+  { code: 'en', label: 'English', native: 'English' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
+  { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'te', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
+  { code: 'mr', label: 'Marathi', native: 'मराठी' },
+  { code: 'bn', label: 'Bengali', native: 'বাংলা' },
+];
 
 interface LessonPlayerProps {
   lesson: InvestmentLesson;
@@ -33,13 +49,13 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
   onSelectLesson,
   onAskVestIQ,
 }) => {
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedAcademyLanguage>('en');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(lesson.durationSeconds);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [showPromptDetails, setShowPromptDetails] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -51,7 +67,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     setIsPlaying(false);
     // Scroll smoothly to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [lesson.id]);
+  }, [lesson.id, selectedLanguage]);
 
   const handleTogglePlay = () => {
     if (videoRef.current) {
@@ -114,9 +130,28 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     }
   };
 
+  const localizedContent = lesson.languages?.[selectedLanguage];
+
+  const activeVideoUrl = selectedLanguage === 'en'
+    ? lesson.videoUrl
+    : localizedContent?.videoUrl;
+
+  const activeThumbnailUrl = selectedLanguage === 'en'
+    ? lesson.thumbnailUrl
+    : localizedContent?.thumbnailUrl;
+
+  const activeCaptionUrl = selectedLanguage === 'en'
+    ? lesson.videoUrl?.replace(/\.mp4$/i, '.vtt')
+    : localizedContent?.captionUrl;
+
+  const activeTranscript = (selectedLanguage === 'en' ? lesson.transcript : localizedContent?.transcript) || lesson.transcript;
+  const activeTakeaway = (selectedLanguage === 'en' ? lesson.keyTakeaway : localizedContent?.keyTakeaway) || lesson.keyTakeaway;
+
+  const currentLangObj = ACADEMY_LANGUAGES.find((l) => l.code === selectedLanguage) || ACADEMY_LANGUAGES[0];
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Top Header Navigation */}
+      {/* Top Header Navigation & Language Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         <button
           type="button"
@@ -127,7 +162,28 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
           <span>Back to Academy</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Language Selector Dropdown */}
+          <div className="flex items-center gap-1.5 bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1 shadow-xs">
+            <Globe className="w-3.5 h-3.5 text-[#0EA5E9]" />
+            <span className="text-[11px] font-semibold text-[#64748B]">Language:</span>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value as SupportedAcademyLanguage)}
+              className="text-xs font-bold text-[#0F172A] bg-transparent border-none focus:outline-none cursor-pointer pr-1"
+              aria-label="Select Lesson Language"
+            >
+              {ACADEMY_LANGUAGES.map((lang) => {
+                const available = lang.code === 'en' || !!lesson.languages?.[lang.code]?.videoUrl;
+                return (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.native} ({lang.label}){available ? '' : ' — Coming soon'}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
           <span className="text-xs font-mono font-bold text-[#64748B] bg-slate-100 px-2 py-1 rounded-md">
             Lesson {lesson.number < 10 ? `0${lesson.number}` : lesson.number} / 12
           </span>
@@ -151,13 +207,14 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
           VIDEO PLAYER CONTAINER
       ================================================================ */}
       <div className="relative w-full rounded-2xl bg-[#0F172A] border border-slate-800 shadow-lg overflow-hidden flex flex-col">
-        {lesson.videoUrl ? (
+        {activeVideoUrl ? (
           /* Actual Video Player */
           <div className="relative aspect-video w-full bg-black flex items-center justify-center">
             <video
+              key={`${lesson.id}-${selectedLanguage}`}
               ref={videoRef}
-              src={lesson.videoUrl}
-              poster={lesson.thumbnailUrl}
+              src={activeVideoUrl}
+              poster={activeThumbnailUrl}
               onTimeUpdate={() => {
                 if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
               }}
@@ -173,61 +230,47 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               }}
               className="w-full h-full object-contain"
             >
-              <track
-                kind="captions"
-                src={lesson.videoUrl.replace(/\.mp4$/i, '.vtt')}
-                srcLang="en"
-                label="English"
-                default
-              />
+              {activeCaptionUrl && (
+                <track
+                  kind="captions"
+                  src={activeCaptionUrl}
+                  srcLang={selectedLanguage}
+                  label={currentLangObj.label}
+                  default
+                />
+              )}
             </video>
           </div>
         ) : (
-          /* High-Fidelity Clean Video Placeholder */
+          /* High-Fidelity Clean Video Placeholder / Translation Coming Soon */
           <div className="relative aspect-video w-full bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 flex flex-col items-center justify-center text-center p-6 text-white overflow-hidden">
             <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#38bdf8_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
 
-            {/* Center Play Graphic */}
             <div className="relative z-10 flex flex-col items-center max-w-md">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-sky-400 mb-4 shadow-xl">
-                <Clapperboard className="w-8 h-8 sm:w-10 sm:h-10" />
+                <Globe className="w-8 h-8 sm:w-10 sm:h-10 text-sky-400" />
               </div>
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-300 text-xs font-semibold mb-2">
-                <Sparkles className="w-3 h-3 text-sky-400" />
-                AI Video Ready • 60–120s
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-semibold mb-2">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                {currentLangObj.native} ({currentLangObj.label}) Translation in Production
               </div>
 
               <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
                 {lesson.title}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-2 mb-4">
-                {lesson.keyTakeaway}
+                Narration and video for {currentLangObj.native} are coming soon. You can switch to English to watch the master AI video or explore the concept outline below.
               </p>
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowPromptDetails(!showPromptDetails)}
-                  className="px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-slate-200 border border-white/10 transition-colors flex items-center gap-1.5"
-                >
-                  <Film className="w-3.5 h-3.5" />
-                  <span>{showPromptDetails ? 'Hide AI Prompt' : 'View AI Video Prompt'}</span>
-                </button>
-
-                <div className="text-xs text-slate-400 font-mono">
-                  Duration: ~{formatTime(lesson.durationSeconds)}
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedLanguage('en')}
+                className="px-4 py-2 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-xs"
+              >
+                <span>Switch to English Video (2+ min)</span>
+              </button>
             </div>
-
-            {/* Collapsible AI Prompt Blueprint */}
-            {showPromptDetails && (
-              <div className="relative z-10 mt-4 p-3.5 bg-black/60 backdrop-blur-md rounded-lg border border-white/15 text-left max-w-lg text-xs text-slate-300 space-y-1">
-                <span className="font-semibold text-sky-400 uppercase tracking-wider text-[10px]">Master Video Prompt:</span>
-                <p className="font-mono text-[11px] leading-relaxed text-slate-200">{lesson.aiVideoPrompt}</p>
-              </div>
-            )}
           </div>
         )}
 
@@ -338,12 +381,16 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               Key Takeaway
             </div>
             <p className="text-sm sm:text-base font-semibold text-[#0F172A] leading-snug">
-              "{lesson.keyTakeaway}"
+              "{activeTakeaway}"
             </p>
           </div>
 
           {/* Full Educational Transcript */}
-          <LessonTranscript transcript={lesson.transcript} durationSeconds={lesson.durationSeconds} />
+          <LessonTranscript
+            transcript={activeTranscript}
+            durationSeconds={lesson.durationSeconds}
+            languageLabel={`${currentLangObj.native} (${currentLangObj.label})`}
+          />
 
           {/* Interactive Quiz */}
           <LessonQuiz

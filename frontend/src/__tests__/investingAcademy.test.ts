@@ -68,11 +68,11 @@ describe('SmartVest Academy — Investing for Beginners', () => {
     expect(ACADEMY_CATEGORIES).toHaveLength(5);
   });
 
-  // 4. Durations are valid (60–120 seconds for bite-sized learning)
-  it('4. ensures lesson duration is between 60 and 120 seconds', () => {
+  // 4. Durations are valid (at least 120 seconds for master AI educational videos)
+  it('4. ensures lesson duration is at least 120 seconds (master 2+ minute videos)', () => {
     INVESTMENT_LESSONS.forEach((lesson) => {
-      expect(lesson.durationSeconds).toBeGreaterThanOrEqual(60);
-      expect(lesson.durationSeconds).toBeLessThanOrEqual(120);
+      expect(lesson.durationSeconds).toBeGreaterThanOrEqual(120);
+      expect(lesson.durationSeconds).toBeLessThanOrEqual(240);
     });
   });
 
