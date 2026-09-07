@@ -10,12 +10,13 @@ import { ExpenseTrackerView } from './components/expenses/ExpenseTrackerView';
 import { GoalPlannerView } from './components/goals/GoalPlannerView';
 import { InvestmentRecommendationsView } from './components/recommendations/InvestmentRecommendationsView';
 import { MarketExplorerView } from './components/market/MarketExplorerView';
+import { InvestingAcademyView } from './components/academy/InvestingAcademyView';
 import { ProfileView } from './components/profile/ProfileView';
 import { VestiqShell } from './components/vestiq/VestiqShell';
 
 export const App: React.FC = () => {
-  const { 
-    activeView, 
+  const {
+    activeView,
     setActiveView,
     initAuthListener
   } = useFintechStore();
@@ -31,11 +32,13 @@ export const App: React.FC = () => {
     try {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
-      
+
       if (path === '/login' || hash === '#login') {
         setActiveView('dashboard');
       } else if (path === '/market' || hash === '#market') {
         setActiveView('market');
+      } else if (path === '/academy' || hash === '#academy') {
+        setActiveView('academy');
       } else if (path === '/recommendations' || hash === '#recommendations') {
         setActiveView('recommendations');
       } else if (path === '/goals' || hash === '#goals') {
@@ -49,11 +52,11 @@ export const App: React.FC = () => {
       } else if (path === '/onboarding' || hash === '#onboarding') {
         setActiveView('onboarding');
       } else if (
-        path === '/ai' || 
-        path === '/vestiq' || 
-        path.startsWith('/vestiq/') || 
-        path.startsWith('/ai/') || 
-        hash === '#ai' || 
+        path === '/ai' ||
+        path === '/vestiq' ||
+        path.startsWith('/vestiq/') ||
+        path.startsWith('/ai/') ||
+        hash === '#ai' ||
         hash === '#vestiq' ||
         hash.startsWith('#vestiq/') ||
         hash.startsWith('#ai/')
@@ -71,6 +74,7 @@ export const App: React.FC = () => {
       const viewToPath: Record<string, string> = {
         dashboard: '/dashboard',
         market: '/market',
+        academy: '/academy',
         recommendations: '/recommendations',
         goals: '/goals',
         expenses: '/expenses',
@@ -100,6 +104,8 @@ export const App: React.FC = () => {
           setActiveView('recommendations');
         } else if (path === '/market') {
           setActiveView('market');
+        } else if (path === '/academy') {
+          setActiveView('academy');
         } else if (path === '/goals') {
           setActiveView('goals');
         } else if (path === '/expenses' || path === '/expense-tracker') {
@@ -156,18 +162,20 @@ export const App: React.FC = () => {
       <DashboardLayout>
         {activeView === 'dashboard' && <OverviewDashboard />}
         {activeView === 'market' && <MarketExplorerView onOpenVestIQWithQuery={() => setActiveView('ai')} />}
+        {activeView === 'academy' && <InvestingAcademyView onOpenVestIQWithQuery={() => setActiveView('ai')} />}
         {activeView === 'expenses' && <ExpenseTrackerView />}
         {activeView === 'goals' && <GoalPlannerView />}
         {activeView === 'recommendations' && <InvestmentRecommendationsView />}
         {activeView === 'profile' && <ProfileView />}
 
         {/* Fallback */}
-        {activeView !== 'dashboard' && 
+        {activeView !== 'dashboard' &&
          activeView !== 'market' &&
-         activeView !== 'expenses' && 
-         activeView !== 'goals' && 
-         activeView !== 'recommendations' && 
-         activeView !== 'profile' && 
+         activeView !== 'academy' &&
+         activeView !== 'expenses' &&
+         activeView !== 'goals' &&
+         activeView !== 'recommendations' &&
+         activeView !== 'profile' &&
          <OverviewDashboard />}
       </DashboardLayout>
     </ProtectedRoute>

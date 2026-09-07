@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { 
-  Currency, 
-  UserProfile, 
-  ExpenseItem, 
-  GoalItem, 
+import type {
+  Currency,
+  UserProfile,
+  ExpenseItem,
+  GoalItem,
   InvestmentStrategy
 } from '../types';
 import { calculateInvestmentStrategy } from '../services/strategyEngine';
@@ -12,16 +12,17 @@ import { userProfileRepo } from '../services/userProfileRepository';
 import { subscribeToAuthState, isAuthEnabled } from '../services/firebase';
 import { auditLogger } from '../services/auditLogger';
 
-export type ActiveNavTab = 
-  | 'landing' 
-  | 'onboarding' 
-  | 'analysis' 
-  | 'dashboard' 
+export type ActiveNavTab =
+  | 'landing'
+  | 'onboarding'
+  | 'analysis'
+  | 'dashboard'
   | 'market'
-  | 'expenses' 
-  | 'goals' 
-  | 'recommendations' 
-  | 'advisor' 
+  | 'academy'
+  | 'expenses'
+  | 'goals'
+  | 'recommendations'
+  | 'advisor'
   | 'ai'
   | 'vestiq'
   | 'profile';
@@ -32,7 +33,7 @@ interface FintechState {
   currencyRate: number;
   setCurrency: (currency: Currency) => void;
   formatCurrency: (amount: number) => string;
-  
+
   // User Profile
   user: UserProfile | null;
   isAuthenticated: boolean;
@@ -42,7 +43,7 @@ interface FintechState {
   updateUserProfile: (data: Partial<UserProfile>) => void;
   initAuthListener: () => () => void;
   resetProfile: () => void;
-  
+
   // Navigation
   activeView: ActiveNavTab;
   setActiveView: (view: ActiveNavTab) => void;
@@ -108,7 +109,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
   formatCurrency: (amount: number) => {
     const { currency, currencySymbol, currencyRate } = get();
     const finalAmount = currency === 'USD' ? amount / currencyRate : amount;
-    
+
     if (currency === 'INR') {
       if (Math.abs(finalAmount) >= 10000000) {
         return `${currencySymbol}${(finalAmount / 10000000).toFixed(2)} Cr`;
@@ -133,7 +134,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
   isAuthenticated: !isAuthEnabled(),
   isAuthLoading: isAuthEnabled(),
   token: storedToken || null,
-  
+
   initAuthListener: () => {
     if (!isAuthEnabled()) {
       set({ isAuthLoading: false, isAuthenticated: true });
@@ -232,22 +233,22 @@ export const useFintechStore = create<FintechState>((set, get) => ({
       const computedStrategy = calculateInvestmentStrategy(user, get().expenses, get().goals);
       localStorage.setItem('smartvest_recommendations', JSON.stringify(computedStrategy));
       auditLogger.profile(user.onboardingCompleted ? 'ONBOARDING_COMPLETED' : 'PROFILE_SAVED', 'success');
-      set({ 
-        user, 
-        isAuthenticated: true, 
-        isAuthLoading: false, 
+      set({
+        user,
+        isAuthenticated: true,
+        isAuthLoading: false,
         token: token || get().token,
         strategy: computedStrategy,
         activeView: user.onboardingCompleted ? 'dashboard' : 'onboarding'
       });
     } else {
       localStorage.removeItem('smartvest_token');
-      set({ 
-        user: null, 
-        isAuthenticated: !isAuthEnabled(), 
-        isAuthLoading: false, 
-        token: null, 
-        activeView: 'landing' 
+      set({
+        user: null,
+        isAuthenticated: !isAuthEnabled(),
+        isAuthLoading: false,
+        token: null,
+        activeView: 'landing'
       });
     }
   },
@@ -260,7 +261,7 @@ export const useFintechStore = create<FintechState>((set, get) => ({
     const computedStrategy = calculateInvestmentStrategy(updatedUser, get().expenses, get().goals);
     localStorage.setItem('smartvest_recommendations', JSON.stringify(computedStrategy));
     auditLogger.profile('PROFILE_UPDATED', 'success');
-    
+
     set({
       user: updatedUser,
       strategy: computedStrategy

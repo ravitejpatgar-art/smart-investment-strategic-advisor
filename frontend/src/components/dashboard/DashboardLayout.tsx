@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { useFintechStore, type ActiveNavTab } from '../../store/useFintechStore';
-import { 
-  LayoutDashboard, 
-  Receipt, 
-  Sparkles, 
-  Target, 
-  User, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Receipt,
+  Sparkles,
+  Target,
+  User,
+  FileText,
   RefreshCw,
   BarChart3,
   Menu,
   X,
   Layers,
-  LogOut
+  LogOut,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isAuthEnabled } from '../../services/firebase';
@@ -26,16 +27,16 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { 
-    activeView, 
-    setActiveView, 
-    user, 
-    strategy, 
+  const {
+    activeView,
+    setActiveView,
+    user,
+    strategy,
     expenses,
     goals,
-    currency, 
-    setCurrency, 
-    isAdvisorOpen, 
+    currency,
+    setCurrency,
+    isAdvisorOpen,
     setAdvisorOpen,
     runAiAnalysis
   } = useFintechStore();
@@ -49,6 +50,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const navItems: { id: ActiveNavTab; label: string; icon: React.ElementType; desc: string }[] = [
     { id: 'dashboard',       label: 'Wealth Overview',  icon: LayoutDashboard, desc: 'Portfolio & KPIs' },
     { id: 'market',          label: 'Market Terminal',  icon: BarChart3,        desc: 'Global Quotes'   },
+    { id: 'academy',         label: 'Investing Academy', icon: GraduationCap,   desc: 'Beginner Lessons' },
     { id: 'recommendations', label: 'Asset Allocation', icon: Layers,           desc: 'Strategy Blueprint' },
     { id: 'goals',           label: 'Goal Roadmaps',    icon: Target,           desc: 'Milestones'      },
     { id: 'expenses',        label: 'Cash Flow & Surplus', icon: Receipt,       desc: 'Inflow & Expenses' },
@@ -73,6 +75,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const pageTitleMap: Partial<Record<ActiveNavTab, { title: string; subtitle: string }>> = {
     dashboard:       { title: 'Portfolio Overview',     subtitle: 'Real-time wealth metrics, surplus analytics & financial health' },
     market:          { title: 'Market Terminal',        subtitle: 'NSE · SENSEX · NASDAQ · Direct ETFs & Mutual Funds' },
+    academy:         { title: 'Investing Academy',      subtitle: 'Learn investing in simple 1–2 minute lessons' },
     recommendations: { title: 'Asset Allocation Blueprint', subtitle: 'Quantitative multi-asset strategy & execution guide' },
     goals:           { title: 'Goal Roadmaps & Milestones', subtitle: 'Target probability modeling & inflation-adjusted SIP plans' },
     expenses:        { title: 'Cash Flow & Capital Surplus', subtitle: 'Income allocation, expenditure breakdown, and investable surplus' },
@@ -85,7 +88,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#F8F9FA] text-[#0F172A] font-sans">
-      
+
       {/* ================================================================
           MODERN LIGHT FINTECH SIDEBAR — Desktop
       ================================================================ */}
@@ -111,7 +114,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-teal-500 ${
-                  isActive 
+                  isActive
                     ? 'bg-teal-50 text-teal-900 border border-teal-200/80 font-bold shadow-2xs'
                     : 'text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 border border-transparent'
                 }`}
@@ -174,7 +177,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           MAIN CONTENT AREA & TOPBAR
       ================================================================ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        
+
         {/* Modern Clean TopBar */}
         <header className="h-14 shrink-0 bg-white border-b border-[#E2E8F0] px-3 sm:px-4 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 z-20 shadow-xs">
           {/* Mobile Menu Toggle & Title */}
@@ -255,7 +258,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex animate-fade-in">
-            <div 
+            <div
               className="fixed inset-0 bg-black/40"
               onClick={() => setMobileMenuOpen(false)}
             />
@@ -263,7 +266,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
                   <BrandLogo size="md" subtitleText="SMARTVEST" />
-                  <button 
+                  <button
                     onClick={() => setMobileMenuOpen(false)}
                     className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A]"
                   >
