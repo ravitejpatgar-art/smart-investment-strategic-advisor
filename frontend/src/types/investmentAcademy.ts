@@ -18,6 +18,24 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export type SupportedAcademyLanguage =
+  | 'en'
+  | 'hi'
+  | 'kn'
+  | 'te'
+  | 'ta'
+  | 'ml'
+  | 'mr'
+  | 'bn';
+
+export interface LocalizedLessonContent {
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  captionUrl?: string;
+  transcript: string;
+  keyTakeaway?: string;
+}
+
 export interface InvestmentLesson {
   id: string;
   number: number;
@@ -35,6 +53,7 @@ export interface InvestmentLesson {
   quiz: QuizQuestion[];
   relatedLessons: string[];
   vestiqPrompt: string;
+  languages?: Partial<Record<SupportedAcademyLanguage, LocalizedLessonContent>>;
 }
 
 export type LessonCompletionStatus = 'not_started' | 'in_progress' | 'completed';
