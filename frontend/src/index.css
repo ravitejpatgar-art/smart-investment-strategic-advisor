@@ -870,3 +870,29 @@ a:active:not([aria-disabled="true"]) {
     transform: none !important;
   }
 }
+/* SmartVest onboarding input visibility fix */
+input, select, textarea {
+  color: #FFFFFF !important;
+  caret-color: #00D4AA;
+}
+
+input:focus, select:focus, textarea:focus {
+  color: #FFFFFF !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #5A667A !important;
+}
+
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #FFFFFF !important;
+}
