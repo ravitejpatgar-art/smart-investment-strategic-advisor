@@ -10,6 +10,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { useFintechStore } from '../../store/useFintechStore';
+import { formatInvestorRiskLabel } from '../dashboard/DashboardLayout';
 
 export interface CalculationData {
   type?: string;
@@ -189,7 +190,7 @@ export const VestiqAnalysisCard: React.FC<{ calc: CalculationData }> = ({ calc }
             <span>Portfolio Allocation Diagnostics</span>
           </span>
           <span className="text-[12px] font-bold text-slate-700">
-            {calc.riskLevel || 'Moderate'} Mandate
+            {formatInvestorRiskLabel(calc.riskLevel)}
           </span>
         </div>
 

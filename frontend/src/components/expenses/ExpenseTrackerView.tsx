@@ -126,7 +126,7 @@ export const ExpenseTrackerView: React.FC = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-[#00A884]" />
-            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Monthly Cash Flow & Surplus</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Expense Tracker</h1>
           </div>
           <p className="text-xs text-[#64748B]">
             Audit fixed baseline expenditure, track discretionary leaks, and optimize investable capital capacity.

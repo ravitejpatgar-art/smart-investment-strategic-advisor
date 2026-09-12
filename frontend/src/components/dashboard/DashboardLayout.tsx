@@ -3,7 +3,6 @@ import { useFintechStore, type ActiveNavTab } from '../../store/useFintechStore'
 import {
   LayoutDashboard,
   Receipt,
-  Sparkles,
   Target,
   User,
   FileText,
@@ -21,6 +20,16 @@ import { AIAssistantDrawer } from '../assistant/AIAssistantDrawer';
 import { FloatingAIAssistantButton } from '../assistant/FloatingAIAssistantButton';
 import { generateAdvisoryPdfReport } from '../../services/pdfReportGenerator';
 import { BrandLogo } from '../common/BrandLogo';
+import { VestiqMark } from '../common/VestiqLogo';
+
+export const formatInvestorRiskLabel = (risk?: string): string => {
+  if (!risk) return 'Medium Investor';
+  const r = risk.toLowerCase();
+  if (r.includes('aggressive')) return 'Aggressive Investor';
+  if (r.includes('moderate') || r.includes('medium') || r.includes('growth')) return 'Medium Investor';
+  if (r.includes('conservative') || r.includes('slow')) return 'Slow Investor';
+  return `${risk} Investor`;
+};
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -53,7 +62,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     { id: 'academy',         label: 'Investing Academy', icon: GraduationCap,   desc: 'Beginner Lessons' },
     { id: 'recommendations', label: 'Asset Allocation', icon: Layers,           desc: 'Strategy Blueprint' },
     { id: 'goals',           label: 'Goal Roadmaps',    icon: Target,           desc: 'Milestones'      },
-    { id: 'expenses',        label: 'Cash Flow & Surplus', icon: Receipt,       desc: 'Inflow & Expenses' },
+    { id: 'expenses',        label: 'Expense Tracker',  icon: Receipt,          desc: 'Inflow & Expenses' },
     { id: 'profile',         label: 'Investor Mandate', icon: User,             desc: 'Risk & Profile'  },
   ];
 
@@ -78,7 +87,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     academy:         { title: 'Investing Academy',      subtitle: 'Learn investing in simple 1–2 minute lessons' },
     recommendations: { title: 'Asset Allocation Blueprint', subtitle: 'Quantitative multi-asset strategy & execution guide' },
     goals:           { title: 'Goal Roadmaps & Milestones', subtitle: 'Target probability modeling & inflation-adjusted SIP plans' },
-    expenses:        { title: 'Cash Flow & Capital Surplus', subtitle: 'Income allocation, expenditure breakdown, and investable surplus' },
+    expenses:        { title: 'Expense Tracker',        subtitle: 'Income allocation, expenditure breakdown, and investable surplus' },
     profile:         { title: 'Investor Mandate & Profile', subtitle: 'Risk capacity scores, horizon parameters, and personal targets' },
     onboarding:      { title: 'Wealth Discovery',       subtitle: 'Complete your investment profile' },
   };
@@ -141,7 +150,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   : 'text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 border border-transparent'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-teal-600" />
+              <VestiqMark size={16} className="shrink-0" />
               <span>VestIQ Strategic AI</span>
             </button>
           </div>
@@ -155,7 +164,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-xs font-bold text-[#0F172A] truncate">{user?.name || 'Investor'}</div>
-              <div className="text-[10px] text-[#64748B] truncate">{user?.riskTolerance ? `${user.riskTolerance} Mandate` : 'Moderate Mandate'}</div>
+              <div className="text-[10px] text-[#64748B] truncate">{formatInvestorRiskLabel(user?.riskTolerance)}</div>
             </div>
           </div>
           {authActive && (
@@ -249,7 +258,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               onClick={() => setActiveView('ai')}
               className="px-3 py-1.5 rounded-lg bg-[#00D4AA] hover:bg-teal-400 text-[#0F172A] text-[10.5px] sm:text-[11px] font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
+              <VestiqMark size={14} className="shrink-0" />
               <span>VestIQ AI</span>
             </button>
           </div>

@@ -7,7 +7,7 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 import { useFintechStore } from '../../store/useFintechStore';
-import { BrandLogo } from '../common/BrandLogo';
+import { VestiqLogo } from '../common/VestiqLogo';
 
 interface VestiqHeaderProps {
   onNewAnalysis: () => void;
@@ -39,7 +39,7 @@ export const VestiqHeader: React.FC<VestiqHeaderProps> = ({
           </button>
         )}
 
-        <BrandLogo size="sm" subtitleText="VESTIQ COPILOT" />
+        <VestiqLogo size="sm" subtitleText="VESTIQ COPILOT" />
       </div>
 
       {/* Center / Context indicator (Desktop) */}

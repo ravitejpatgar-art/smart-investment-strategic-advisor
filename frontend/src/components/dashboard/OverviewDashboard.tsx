@@ -25,6 +25,7 @@ import {
 } from 'recharts';
 import { useMarketQuotes } from '../../hooks/useMarketQuotes';
 import { Skeleton, EmptyState, Button } from '../common';
+import { formatInvestorRiskLabel } from './DashboardLayout';
 
 type ProjectionHorizon = 5 | 10 | 15 | 20 | 25;
 type ProjectionScenario = 'Conservative' | 'Base' | 'Optimistic';
@@ -181,7 +182,7 @@ export const OverviewDashboard: React.FC = () => {
         <div className="space-y-1.5 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className={`text-[10.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${riskBadgeStyle}`}>
-              {effectiveRiskCategory} Mandate
+              {formatInvestorRiskLabel(effectiveRiskCategory)}
             </span>
             <span className="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-[#475569] border border-slate-200">
               {horizon}
@@ -284,7 +285,7 @@ export const OverviewDashboard: React.FC = () => {
             <div>
               <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
                 <Activity className="w-3.5 h-3.5 text-teal-600" />
-                <span>Operating Cash Flow & Surplus</span>
+                <span>EXPENSE TRACKER</span>
               </h2>
               <p className="text-[11px] text-[#64748B] mt-0.5">Net disposable liquidity calibrated for investment</p>
             </div>

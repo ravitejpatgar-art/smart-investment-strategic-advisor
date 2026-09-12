@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  Sparkles, 
   User, 
   Copy, 
   Check, 
   ArrowRight
 } from 'lucide-react';
 import { VestiqAnalysisCard, type CalculationData } from './VestiqAnalysisCard';
+import { VestiqMark } from '../common/VestiqLogo';
 
 export interface VestiqChatMessage {
   id: string;
@@ -244,8 +244,8 @@ export const VestiqMessage: React.FC<VestiqMessageProps> = ({
       
       {/* Assistant Avatar */}
       {!isUser && (
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-600 to-teal-700 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-          <Sparkles className="w-4 h-4 stroke-[2.5]" />
+        <div className="w-8 h-8 rounded-xl bg-[#101827] border border-teal-500/20 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+          <VestiqMark size={18} />
         </div>
       )}
 

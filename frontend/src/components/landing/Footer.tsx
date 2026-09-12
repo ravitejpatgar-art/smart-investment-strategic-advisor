@@ -42,7 +42,7 @@ export const Footer: React.FC = () => {
               <li><button onClick={() => setActiveView('market')} className="hover:text-white transition-colors cursor-pointer">Market Terminal</button></li>
               <li><button onClick={() => setActiveView('recommendations')} className="hover:text-white transition-colors cursor-pointer">Asset Allocation Blueprint</button></li>
               <li><button onClick={() => setActiveView('goals')} className="hover:text-white transition-colors cursor-pointer">Lifecycle Goal Planner</button></li>
-              <li><button onClick={() => setActiveView('expenses')} className="hover:text-white transition-colors cursor-pointer">Cash Flow & Surplus</button></li>
+              <li><button onClick={() => setActiveView('expenses')} className="hover:text-white transition-colors cursor-pointer">Expense Tracker</button></li>
               <li><button onClick={() => setActiveView('profile')} className="hover:text-white transition-colors cursor-pointer">Investor Mandate</button></li>
             </ul>
           </div>

@@ -10,6 +10,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
+import { formatInvestorRiskLabel } from '../dashboard/DashboardLayout';
 
 const ANALYSIS_STEPS = [
   { id: 1, title: 'Analyzing cashflow stability & net investable surplus...', icon: TrendingUp },
@@ -81,7 +82,7 @@ export const AIAnalysisEngineView: React.FC = () => {
             Synthesizing Strategic Investment Allocation
           </h2>
           <p className="text-[#8A94A6] text-xs">
-            Evaluating financial DNA for <span className="text-white font-semibold">{user?.name || 'Investor'}</span> ({user?.age || 28}y, <span className="text-[#00D4AA] font-semibold">{user?.riskTolerance || 'Moderate'} Mandate</span>)
+            Evaluating financial DNA for <span className="text-white font-semibold">{user?.name || 'Investor'}</span> ({user?.age || 28}y, <span className="text-[#00D4AA] font-semibold">{formatInvestorRiskLabel(user?.riskTolerance)}</span>)
           </p>
         </div>
 

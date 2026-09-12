@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { 
-  Bot, 
   Send, 
   Sparkles, 
   ShieldCheck, 
@@ -17,6 +16,7 @@ import {
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
 import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
+import { VestiqMark } from '../common/VestiqLogo';
 
 interface CalculationData {
   type?: string;
@@ -251,7 +251,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
         <header className="p-4 border-b border-white/[0.06] bg-[#0A1022] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-[#101827] border border-white/[0.08] flex items-center justify-center text-[#00D4AA]">
-              <Bot className="w-4 h-4" />
+              <VestiqMark size={16} />
             </div>
             <div>
               <h2 className="text-sm font-bold text-white tracking-tight">VestIQ Strategic Advisory</h2>
