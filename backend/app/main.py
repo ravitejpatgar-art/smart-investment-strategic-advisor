@@ -22,6 +22,19 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup():
     market_scheduler.start()
+    # Trigger background universe sync if universe is uninitialized or needs auto-sync
+    import threading
+    def _startup_universe_sync():
+        try:
+            from app.core.database import SessionLocal
+            from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
+            with SessionLocal() as db:
+                if universe_sync_engine.should_run_auto_sync(db=db):
+                    universe_sync_engine.run_full_sync(db=db, sync_eodhd=False, sync_nse=True, sync_amfi=True)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Startup universe sync notice: {e}")
+    threading.Thread(target=_startup_universe_sync, daemon=True, name="StartupUniverseSync").start()
 
 @app.on_event("shutdown")
 def on_shutdown():

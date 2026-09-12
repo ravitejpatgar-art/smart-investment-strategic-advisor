@@ -20,6 +20,8 @@ class GlobalInstrumentMasterRegistry:
         import threading
         def _bg_seed():
             try:
+                from app.core.database import Base, engine, SessionLocal
+                Base.metadata.create_all(bind=engine)
                 with SessionLocal() as db:
                     if db.query(Instrument).count() <= 60:
                         from app.services.market_data.providers.universe_sync_engine import universe_sync_engine

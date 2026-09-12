@@ -342,6 +342,12 @@ export interface MarketCoverageResponse {
   countries_count: number;
   countries: string[];
   last_synced_at: string;
+  instrumentCount?: number;
+  stockCount?: number;
+  etfCount?: number;
+  mutualFundCount?: number;
+  indexCount?: number;
+  geographicCounts?: Record<string, number>;
 }
 
 // Direct AMFI Scheme Directory

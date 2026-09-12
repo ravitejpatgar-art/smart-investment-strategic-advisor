@@ -277,10 +277,10 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
   };
 
   const categories: { id: CategoryFilter; label: string; count?: number }[] = [
-    { id: 'ALL', label: 'All', count: coverageData?.total_instruments },
-    { id: 'STOCKS', label: 'Stocks', count: coverageData?.stocks_count ?? coverageData?.by_asset_type?.STOCK },
-    { id: 'ETFS', label: 'ETFs', count: coverageData?.etfs_count ?? coverageData?.by_asset_type?.ETF },
-    { id: 'MUTUAL_FUNDS', label: 'Mutual Funds', count: coverageData?.mutual_funds_count ?? coverageData?.by_asset_type?.MUTUAL_FUND },
+    { id: 'ALL', label: 'All', count: coverageData?.total_instruments ?? coverageData?.instrumentCount },
+    { id: 'STOCKS', label: 'Stocks', count: coverageData?.stocks_count ?? coverageData?.stockCount ?? coverageData?.by_asset_type?.STOCK },
+    { id: 'ETFS', label: 'ETFs', count: coverageData?.etfs_count ?? coverageData?.etfCount ?? coverageData?.by_asset_type?.ETF },
+    { id: 'MUTUAL_FUNDS', label: 'Mutual Funds', count: coverageData?.mutual_funds_count ?? coverageData?.mutualFundCount ?? coverageData?.by_asset_type?.MUTUAL_FUND },
     { id: 'WATCHLIST', label: 'Watchlist', count: watchlist.length },
   ];
 

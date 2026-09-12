@@ -16,6 +16,7 @@ from app.services.market_data.providers.universe_sync_engine import universe_syn
 router = APIRouter(prefix="/market", tags=["Production Market Data Engine"])
 
 @router.get("/coverage")
+@router.get("/instruments/summary")
 def get_market_coverage(db: Session = Depends(get_db)):
     """
     Returns authentic database-backed dynamic coverage metrics:
