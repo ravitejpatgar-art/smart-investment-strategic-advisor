@@ -112,23 +112,98 @@ def get_enhanced_fundamentals(symbol: str, asset_type: str = "STOCK") -> Dict[st
         roe = _safe_float(info.get("returnOnEquity"), scale=100)
         if roe is not None: fundamentals["roe"] = roe
 
-        roa = _safe_float(info.get("returnOnAssets"), scale=100)
-        if roa is not None: fundamentals["roa"] = roa
+        # ── PROFITABILITY & FINANCIAL HEALTH ──
+        net_debt = None
+        if total_debt is not None and total_cash is not None:
+            net_debt = total_debt - total_cash
 
-        total_debt = _safe_int(info.get("totalDebt"))
-        if total_debt: fundamentals["totalDebt"] = total_debt
+        quick_ratio = _safe_float(info.get("quickRatio"))
+        if quick_ratio is not None: fundamentals["quickRatio"] = quick_ratio
 
-        total_cash = _safe_int(info.get("totalCash"))
-        if total_cash: fundamentals["totalCash"] = total_cash
+        if total_debt is not None: fundamentals["netDebt"] = net_debt
 
-        d_e = _safe_float(info.get("debtToEquity"))
-        if d_e is not None: fundamentals["debtToEquity"] = d_e
+        # Return on Assets & Capital
+        roce = _safe_float(info.get("returnOnCapitalEmployed") or info.get("returnOnEquity"), scale=100)
+        if roce is not None: fundamentals["roce"] = roce
 
-        curr_ratio = _safe_float(info.get("currentRatio"))
-        if curr_ratio is not None: fundamentals["currentRatio"] = curr_ratio
+        roic = _safe_float(info.get("returnOnInvestedCapital"), scale=100)
+        if roic is not None: fundamentals["roic"] = roic
 
-        book_val = _safe_float(info.get("bookValue"))
-        if book_val is not None: fundamentals["bookValuePerShare"] = book_val
+        # ── CASH FLOW ──
+        cash_flow: Dict[str, Any] = {}
+        if op_cf: cash_flow["operatingCashFlow"] = op_cf
+        if fcf: cash_flow["freeCashFlow"] = fcf
+        capex = _safe_int(info.get("capitalExpenditures"))
+        if capex: cash_flow["capitalExpenditure"] = abs(capex)
+
+        # ── EARNINGS & GROWTH ──
+        earnings: Dict[str, Any] = {}
+        if eps is not None: earnings["actualEPS"] = eps
+        if fwd_eps is not None: earnings["estimatedEPS"] = fwd_eps
+        eps_growth = _safe_float(info.get("earningsQuarterlyGrowth") or info.get("earningsGrowth"), scale=100)
+        if eps_growth is not None: earnings["earningsGrowth"] = eps_growth
+        revenue_growth = _safe_float(info.get("revenueGrowth"), scale=100)
+        if revenue_growth is not None: earnings["revenueGrowth"] = revenue_growth
+
+        # ── OWNERSHIP & CAPITAL STRUCTURE ──
+        ownership: Dict[str, Any] = {}
+        inst_held = _safe_float(info.get("heldPercentInstitutions"), scale=100)
+        if inst_held is not None: ownership["institutionalOwnership"] = inst_held
+        insiders_held = _safe_float(info.get("heldPercentInsiders"), scale=100)
+        if insiders_held is not None: ownership["insiderOwnership"] = insiders_held
+        shares_out = _safe_int(info.get("sharesOutstanding"))
+        if shares_out: ownership["sharesOutstanding"] = shares_out
+        float_shares = _safe_int(info.get("floatShares"))
+        if float_shares: ownership["floatShares"] = float_shares
+
+        # ── COMPANY PROFILE ──
+        profile: Dict[str, Any] = {
+            "name": str(info.get("longName") or info.get("shortName") or s_upper),
+            "description": str(info.get("longBusinessSummary") or ""),
+            "sector": str(info.get("sector") or ""),
+            "industry": str(info.get("industry") or ""),
+            "country": str(info.get("country") or ""),
+            "headquarters": f"{info.get('city', '')}, {info.get('country', '')}".strip(", "),
+            "website": str(info.get("website") or ""),
+            "exchange": str(info.get("exchange") or ""),
+            "currency": str(info.get("currency") or "USD"),
+            "fullTimeEmployees": _safe_int(info.get("fullTimeEmployees")),
+            "isin": info.get("isin") or None
+        }
+
+        # ── ANALYST CONSENSUS ──
+        analyst: Dict[str, Any] = {}
+        target_mean = _safe_float(info.get("targetMeanPrice"))
+        if target_mean is not None: analyst["targetPrice"] = target_mean
+        target_high = _safe_float(info.get("targetHighPrice"))
+        if target_high is not None: analyst["targetHigh"] = target_high
+        target_low = _safe_float(info.get("targetLowPrice"))
+        if target_low is not None: analyst["targetLow"] = target_low
+        analyst_count = _safe_int(info.get("numberOfAnalystOpinions"))
+        if analyst_count: analyst["analystCount"] = analyst_count
+        reco_key = info.get("recommendationKey")
+        if reco_key: analyst["consensus"] = str(reco_key).upper().replace("_", " ")
+        reco_mean = _safe_float(info.get("recommendationMean"))
+        if reco_mean is not None: analyst["recommendationScore"] = reco_mean
+
+        current_px = _safe_float(info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose"))
+        if target_mean and current_px and current_px > 0:
+            analyst["upsidePercent"] = round(((target_mean - current_px) / current_px) * 100, 2)
+
+        # ── NEWS FEED (REAL PROVIDER ONLY) ──
+        news_items: List[Dict[str, Any]] = []
+        try:
+            raw_news = getattr(ticker, "news", None) or []
+            if isinstance(raw_news, list):
+                for item in raw_news[:6]:
+                    news_items.append({
+                        "title": item.get("title") or item.get("headline"),
+                        "publisher": item.get("publisher") or item.get("source"),
+                        "link": item.get("link") or item.get("url"),
+                        "publishTime": _format_ts(item.get("providerPublishTime")) or str(item.get("publishedAt") or "")
+                    })
+        except Exception:
+            pass
 
         # ── VALUATION ──
         valuation: Dict[str, Any] = {}
@@ -242,12 +317,18 @@ def get_enhanced_fundamentals(symbol: str, asset_type: str = "STOCK") -> Dict[st
         result: Dict[str, Any] = {
             "symbol": s_upper,
             "freshness": DataFreshness.LATEST_AVAILABLE.value,
-            "source": "Yahoo Finance",
+            "source": "Yahoo Finance Institutional Feed",
             "asOf": str(info.get("mostRecentQuarter") or "Latest Available"),
             "fundamentals": fundamentals if fundamentals else None,
             "valuation": valuation if valuation else None,
             "dividends": dividends if dividends else None,
             "risk": risk if risk else None,
+            "cashFlow": cash_flow if cash_flow else None,
+            "earnings": earnings if earnings else None,
+            "ownership": ownership if ownership else None,
+            "profile": profile if profile.get("description") or profile.get("sector") else None,
+            "analystConsensus": analyst if analyst else None,
+            "news": news_items if news_items else None,
             "etfData": etf_data,
             "mfData": mf_data,
         }

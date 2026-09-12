@@ -9,7 +9,7 @@ from app.services.market_data.registry import market_registry
 from app.services.market_data.instrument_master import instrument_master
 from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.fundamentals import get_enhanced_fundamentals
-from app.services.market_data.technical_analysis import calculate_technical_indicators
+from app.services.market_data.technical_analysis import calculate_technical_indicators, compute_market_research_signal
 
 from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
 
@@ -171,6 +171,12 @@ def get_instrument_research(
     valuation    = research_data.get("valuation")
     dividends    = research_data.get("dividends")
     risk         = research_data.get("risk")
+    cash_flow    = research_data.get("cashFlow")
+    earnings     = research_data.get("earnings")
+    ownership    = research_data.get("ownership")
+    profile      = research_data.get("profile")
+    analyst      = research_data.get("analystConsensus")
+    news         = research_data.get("news")
     etf_data     = research_data.get("etfData")
     mf_data      = research_data.get("mfData")
 
@@ -183,7 +189,15 @@ def get_instrument_research(
     except Exception:
         technicals = None
 
-    # ── 5. Build capabilities from actual data (not hardcoded true) ──
+    # ── 5. Market Research Signal Computation (Transparent, Rule-Based) ──
+    research_signal = compute_market_research_signal(
+        technicals=technicals,
+        fundamentals=fundamentals,
+        valuation=valuation,
+        asset_type=asset_type
+    )
+
+    # ── 6. Build capabilities from actual data (not hardcoded true) ──
     has_exp_ratio = (
         bool(instrument_data and instrument_data.get("expenseRatio"))
         or bool(etf_data and etf_data.get("expenseRatio"))
@@ -196,6 +210,13 @@ def get_instrument_research(
         "hasValuation":       bool(valuation),
         "hasDividends":       bool(dividends),
         "hasRisk":            bool(risk),
+        "hasCashFlow":        bool(cash_flow),
+        "hasEarnings":        bool(earnings),
+        "hasOwnership":       bool(ownership),
+        "hasProfile":         bool(profile),
+        "hasAnalyst":         bool(analyst),
+        "hasNews":            bool(news and len(news) > 0),
+        "hasResearchSignal":  bool(research_signal and research_signal.get("signal") != "INSUFFICIENT DATA"),
         "hasETFData":         bool(etf_data),
         "hasMFData":          bool(mf_data),
         "hasExpenseRatio":    has_exp_ratio,
@@ -214,16 +235,23 @@ def get_instrument_research(
     }
 
     return {
-        "instrument":  instrument_data,
-        "quote":       quote,
-        "fundamentals":fundamentals,
-        "valuation":   valuation,
-        "dividends":   dividends,
-        "risk":        risk,
-        "technicals":  technicals,
-        "etfData":     etf_data,
-        "mfData":      mf_data,
-        "capabilities":capabilities,
+        "instrument":       instrument_data,
+        "quote":            quote,
+        "fundamentals":     fundamentals,
+        "valuation":        valuation,
+        "dividends":        dividends,
+        "risk":             risk,
+        "cashFlow":         cash_flow,
+        "earnings":         earnings,
+        "ownership":        ownership,
+        "profile":          profile,
+        "analystConsensus": analyst,
+        "news":             news,
+        "researchSignal":   research_signal,
+        "technicals":       technicals,
+        "etfData":          etf_data,
+        "mfData":           mf_data,
+        "capabilities":     capabilities,
         "sources": {
             "quote":       quote.get("source")    if quote           else None,
             "research":    research_data.get("source"),

@@ -225,6 +225,26 @@ export interface MarketInstrument {
   quote?: MarketQuote | null;
 }
 
+export interface MarketResearchSignal {
+  signal: 'BUY' | 'HOLD' | 'SELL' | 'INSUFFICIENT DATA';
+  confidence: number;
+  coveragePct: number;
+  reasons: string[];
+  methodology: string;
+  dataTimestamp: string;
+  disclaimer: string;
+}
+
+export interface AnalystConsensusData {
+  targetPrice?: number | null;
+  targetHigh?: number | null;
+  targetLow?: number | null;
+  analystCount?: number | null;
+  consensus?: string | null;
+  recommendationScore?: number | null;
+  upsidePercent?: number | null;
+}
+
 export interface InstrumentResearchBundle {
   instrument?: MarketInstrument | null;
   quote?: MarketQuote | null;
@@ -232,6 +252,12 @@ export interface InstrumentResearchBundle {
   valuation?: any;
   dividends?: any;
   risk?: any;
+  cashFlow?: any;
+  earnings?: any;
+  ownership?: any;
+  profile?: any;
+  analystConsensus?: AnalystConsensusData;
+  researchSignal?: MarketResearchSignal;
   etfData?: any;
   mfData?: any;
   capabilities?: Record<string, boolean>;
@@ -241,13 +267,52 @@ export interface InstrumentResearchBundle {
     freshness?: FreshnessType | string;
   };
   technicals?: {
+    available?: boolean;
+    currentPrice?: number;
     rsi?: number;
-    macd?: { macd: number; signal: number; hist: number };
-    indicators?: Array<{ name: string; value: number; signal: string }>;
+    rsiCondition?: string;
     summary?: string;
+    indicators?: Array<{ name: string; value: number; signal: string }>;
+    macd?: { macd: number; signal: number; histogram: number; trend: string };
+    movingAverages?: {
+      sma20?: number | null;
+      sma50?: number | null;
+      sma100?: number | null;
+      sma200?: number | null;
+      ema20?: number | null;
+      ema50?: number | null;
+    };
+    bollingerBands?: {
+      upper: number;
+      middle: number;
+      lower: number;
+      bandwidthPct: number;
+      percentB: number;
+    };
+    atr?: number | null;
+    supportResistance?: {
+      pivot: number;
+      r1: number;
+      s1: number;
+      r2: number;
+      s2: number;
+    };
+    trendDirection?: string;
+    fiftyTwoWeek?: {
+      high: number;
+      low: number;
+      positionPct: number;
+    };
+    volatilityAnnualizedPct?: number | null;
+    maxDrawdownPct?: number;
+    currentDrawdownPct?: number;
   };
-  news?: any[];
-  profile?: any;
+  news?: Array<{
+    title: string;
+    publisher?: string;
+    link?: string;
+    publishTime?: string;
+  }>;
 }
 
 export interface MarketInstrumentsResponse {

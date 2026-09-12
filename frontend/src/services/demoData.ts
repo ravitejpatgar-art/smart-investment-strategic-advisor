@@ -779,6 +779,7 @@ export function getDemoInstruments(params: {
 
 export function getDemoResearch(symbol: string): InstrumentResearchBundle {
   const quote = getDemoQuote(symbol);
+  const px = quote.price || 100;
   return {
     quote,
     fundamentals: {
@@ -787,21 +788,165 @@ export function getDemoResearch(symbol: string): InstrumentResearchBundle {
       peRatio: 24.5,
       pbRatio: 4.2,
       dividendYield: 1.15,
-      fiftyTwoWeekHigh: (quote.price || 100) * 1.18,
-      fiftyTwoWeekLow: (quote.price || 100) * 0.82,
+      fiftyTwoWeekHigh: Math.round(px * 1.18 * 100) / 100,
+      fiftyTwoWeekLow: Math.round(px * 0.82 * 100) / 100,
+      revenue: quote.currency === 'INR' ? 890000000000 : 96000000000,
+      revenueGrowth: 11.4,
+      grossProfit: quote.currency === 'INR' ? 340000000000 : 42000000000,
+      ebitda: quote.currency === 'INR' ? 220000000000 : 31000000000,
+      ebit: quote.currency === 'INR' ? 180000000000 : 26000000000,
+      netIncome: quote.currency === 'INR' ? 140000000000 : 21000000000,
+      eps: Math.round(px * 0.042 * 100) / 100,
+      forwardEPS: Math.round(px * 0.048 * 100) / 100,
+      profitMargin: 15.7,
+      operatingMargin: 20.2,
+      grossMargin: 38.2,
+      roe: 18.5,
+      roa: 9.2,
+      roce: 21.0,
+      roic: 16.4,
+      totalDebt: quote.currency === 'INR' ? 250000000000 : 35000000000,
+      totalCash: quote.currency === 'INR' ? 180000000000 : 28000000000,
+      netDebt: quote.currency === 'INR' ? 70000000000 : 7000000000,
+      debtToEquity: 0.45,
+      currentRatio: 1.85,
+      quickRatio: 1.42,
+      bookValuePerShare: Math.round(px * 0.24 * 100) / 100,
       freshness: 'MODEL_ASSUMPTION',
       asOf: 'Today',
       source: 'Deterministic Demo Market Feed'
     },
-    technicals: {
-      rsi: 56.4,
-      macd: { macd: 1.25, signal: 0.95, hist: 0.30 },
-      indicators: [
-        { name: 'RSI (14)', value: 56.4, signal: 'NEUTRAL' },
-        { name: 'MACD (12, 26, 9)', value: 1.25, signal: 'BULLISH' },
-        { name: '200 DMA', value: (quote.price || 100) * 0.94, signal: 'BULLISH' }
+    valuation: {
+      marketCap: quote.currency === 'INR' ? 1850000000000 : 2800000000000,
+      peRatio: 24.5,
+      forwardPE: 21.2,
+      pbRatio: 4.2,
+      psRatio: 3.1,
+      evEbitda: 14.8,
+      evSales: 2.9,
+      peg: 1.35,
+      enterpriseValue: quote.currency === 'INR' ? 1920000000000 : 2870000000000
+    },
+    dividends: {
+      yield: 1.15,
+      annualDividend: Math.round(px * 0.0115 * 100) / 100,
+      payoutRatio: 28.5,
+      exDividendDate: '2026-06-15'
+    },
+    risk: {
+      beta: 0.95,
+      fiftyTwoWeekHigh: Math.round(px * 1.18 * 100) / 100,
+      fiftyTwoWeekLow: Math.round(px * 0.82 * 100) / 100,
+      averageVolume: quote.volume || 1500000,
+      averageVolume10d: quote.volume || 1600000
+    },
+    cashFlow: {
+      operatingCashFlow: quote.currency === 'INR' ? 195000000000 : 29000000000,
+      freeCashFlow: quote.currency === 'INR' ? 145000000000 : 22000000000,
+      capitalExpenditure: quote.currency === 'INR' ? 50000000000 : 7000000000
+    },
+    earnings: {
+      actualEPS: Math.round(px * 0.042 * 100) / 100,
+      estimatedEPS: Math.round(px * 0.040 * 100) / 100,
+      earningsGrowth: 14.2,
+      revenueGrowth: 11.4
+    },
+    ownership: {
+      institutionalOwnership: 48.5,
+      insiderOwnership: 12.2,
+      sharesOutstanding: quote.currency === 'INR' ? 6500000000 : 15500000000,
+      floatShares: quote.currency === 'INR' ? 5200000000 : 13800000000
+    },
+    profile: {
+      name: quote.name,
+      description: `${quote.name} is a market-leading enterprise operating globally across key economic segments with sustained profitability and institutional governance.`,
+      sector: 'Technology & Enterprise Solutions',
+      industry: 'Global Digital Infrastructure',
+      country: quote.currency === 'INR' ? 'India' : 'United States',
+      headquarters: quote.currency === 'INR' ? 'Mumbai, India' : 'California, USA',
+      website: 'https://smartvest.investments',
+      exchange: quote.exchange,
+      currency: quote.currency,
+      fullTimeEmployees: 125000
+    },
+    analystConsensus: {
+      consensus: 'BUY',
+      analystCount: 38,
+      targetPrice: Math.round(px * 1.16 * 100) / 100,
+      targetHigh: Math.round(px * 1.28 * 100) / 100,
+      targetLow: Math.round(px * 0.98 * 100) / 100,
+      recommendationScore: 1.8,
+      upsidePercent: 16.0
+    },
+    researchSignal: {
+      signal: 'BUY',
+      confidence: 88,
+      coveragePct: 88,
+      reasons: [
+        'Price is trading above 200-day moving average',
+        'RSI momentum is in balanced constructive territory (56.4)',
+        'Positive MACD upward momentum',
+        'Solid Return on Equity (ROE: 18.5%) and manageable debt leverage'
       ],
-      summary: 'Constructive Momentum / Low Volatility'
-    }
+      methodology: 'Multi-factor quantitative model evaluating trend alignment (SMA 20/50/200), momentum (RSI/MACD), valuation multiples (P/E, PEG), and capital profitability (ROE).',
+      dataTimestamp: '12 Sep 2026 15:30 IST',
+      disclaimer: 'Market research signals are quantitative model outputs based on historical and published data. They do not constitute personalized investment advice or guaranteed return forecasts.'
+    },
+    technicals: {
+      available: true,
+      currentPrice: px,
+      rsi: 56.4,
+      rsiCondition: 'NEUTRAL',
+      macd: { macd: 1.25, signal: 0.95, histogram: 0.30, trend: 'BULLISH' },
+      movingAverages: {
+        sma20: Math.round(px * 0.98 * 100) / 100,
+        sma50: Math.round(px * 0.96 * 100) / 100,
+        sma100: Math.round(px * 0.93 * 100) / 100,
+        sma200: Math.round(px * 0.90 * 100) / 100,
+        ema20: Math.round(px * 0.99 * 100) / 100,
+        ema50: Math.round(px * 0.97 * 100) / 100
+      },
+      bollingerBands: {
+        upper: Math.round(px * 1.06 * 100) / 100,
+        middle: px,
+        lower: Math.round(px * 0.94 * 100) / 100,
+        bandwidthPct: 12.0,
+        percentB: 50.0
+      },
+      atr: Math.round(px * 0.022 * 100) / 100,
+      supportResistance: {
+        pivot: px,
+        r1: Math.round(px * 1.03 * 100) / 100,
+        s1: Math.round(px * 0.97 * 100) / 100,
+        r2: Math.round(px * 1.06 * 100) / 100,
+        s2: Math.round(px * 0.94 * 100) / 100
+      },
+      trendDirection: 'BULLISH',
+      fiftyTwoWeek: {
+        high: Math.round(px * 1.18 * 100) / 100,
+        low: Math.round(px * 0.82 * 100) / 100,
+        positionPct: 62.5
+      },
+      volatilityAnnualizedPct: 18.4,
+      maxDrawdownPct: 12.2,
+      currentDrawdownPct: 4.1
+    },
+    sources: {
+      quote: 'Deterministic Demo Market Feed',
+      research: 'SmartVest Institutional Research Model',
+      freshness: 'MODEL_ASSUMPTION'
+    },
+    news: [
+      {
+        title: `${quote.name} Expands Global Operational Footprint with Strategic Capital Investments`,
+        publisher: 'Financial Express',
+        publishTime: '2026-09-10'
+      },
+      {
+        title: `Institutional Inflows Surge as Sector Fundamentals Strengthen`,
+        publisher: 'Bloomberg Markets',
+        publishTime: '2026-09-08'
+      }
+    ]
   };
 }
