@@ -69,6 +69,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
 
   // Debounce search query (300ms)
   useEffect(() => {
+    if (searchQuery === debouncedQuery) return;
     setIsSearching(true);
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -76,7 +77,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
       setIsSearching(false);
     }, 300);
     return () => clearTimeout(handler);
-  }, [searchQuery]);
+  }, [searchQuery, debouncedQuery]);
 
   // Reset page when category, exchange, country or currency changes
   const handleCategoryChange = (cat: CategoryFilter) => {
@@ -231,15 +232,6 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
   useEffect(() => {
     fetchInstruments();
   }, [fetchInstruments]);
-
-  // Real-Time 15-Second Background Market Refresh
-  useEffect(() => {
-    const liveTimer = setInterval(() => {
-      fetchOverview();
-      fetchInstruments();
-    }, 15000);
-    return () => clearInterval(liveTimer);
-  }, [fetchOverview, fetchInstruments]);
 
   // Toggle watchlist
   const handleToggleWatchlist = async (canonicalId: string) => {
