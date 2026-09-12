@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.instrument import Instrument
 from app.services.market_data.registry import market_registry
+from app.services.market_data.cache import market_cache
 from app.services.market_data.universe_provider import GlobalUniverseManager
 
 class GlobalInstrumentMasterRegistry:
@@ -204,7 +205,20 @@ class GlobalInstrumentMasterRegistry:
                     item_copy["price"] = None
                     return item_copy
 
-                # For equities / ETFs / Indices / Commodities, fetch live or fallback quote
+                # For equities / ETFs / Indices / Commodities, check cache first for instant response
+                sym_clean = it["symbol"].upper()
+                cached_quote = (
+                    market_cache.get(f"quote:router:{sym_clean}", allow_stale=True) or
+                    market_cache.get(f"quote:{sym_clean}", allow_stale=True)
+                )
+                if cached_quote and cached_quote.get("price") is not None:
+                    item_copy["quote"] = cached_quote
+                    item_copy["price"] = cached_quote.get("price")
+                    item_copy["change"] = cached_quote.get("change")
+                    item_copy["changePct"] = cached_quote.get("changePct")
+                    return item_copy
+
+                # Try live quote with quick resolution
                 try:
                     q = market_registry.get_quote(it["symbol"])
                     if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
@@ -238,7 +252,7 @@ class GlobalInstrumentMasterRegistry:
                 return item_copy
 
             if serialized:
-                with ThreadPoolExecutor(max_workers=min(len(serialized), 12)) as executor:
+                with ThreadPoolExecutor(max_workers=min(len(serialized), 8)) as executor:
                     enriched_items = list(executor.map(fetch_quote, serialized))
             else:
                 enriched_items = []
