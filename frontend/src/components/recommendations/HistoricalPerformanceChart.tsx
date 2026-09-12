@@ -251,7 +251,7 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
                   try {
                     const dt = new Date(val);
                     if (!isNaN(dt.getTime())) {
-                      return dt.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+                      return dt.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
                     }
                   } catch {}
                   return val.slice(0, 7);

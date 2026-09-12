@@ -34,6 +34,7 @@ interface CandlePoint {
   nav?: number;
   volume: number;
   label: string;
+  tooltipDate: string;
   isUp: boolean;
 }
 
@@ -41,9 +42,37 @@ function fmtLabel(d: string, p: string): string {
   try {
     const dt = new Date(d);
     if (isNaN(dt.getTime())) return d;
-    if (p === "1D" || p === "1W") return dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-    if (p === "1M" || p === "3M" || p === "6M") return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
-    return dt.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+    if (p === "1D") {
+      return dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+    }
+    if (p === "1W") {
+      return dt.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+    }
+    if (p === "1M" || p === "3M" || p === "6M") {
+      return dt.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    }
+    // 1Y, 3Y, 5Y, MAX: Full 4-digit year (e.g. "Jun 1997", "Mar 1999", "Jan 2001", "Oct 2026")
+    return dt.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+  } catch {
+    return d;
+  }
+}
+
+function fmtTooltipDate(d: string, p: string): string {
+  try {
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    if (p === "1D") {
+      const datePart = dt.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+      const timePart = dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+      return `${datePart}, ${timePart}`;
+    }
+    if (p === "1W") {
+      const datePart = dt.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+      const timePart = dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+      return `${datePart} ${timePart}`;
+    }
+    return dt.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
   } catch {
     return d;
   }
@@ -112,8 +141,8 @@ const InteractiveCandlestickCanvas: React.FC<{
       {/* Dynamic OHLC Bar on Hover */}
       {activePoint && (
         <div className="flex items-center justify-between flex-wrap gap-x-4 gap-y-1 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono">
-          <div className="text-slate-500 font-sans font-semibold text-[11px]">
-            {activePoint.date.slice(0, 10)} {activePoint.date.length > 10 ? activePoint.date.slice(11, 16) : ""}
+          <div className="text-slate-700 font-sans font-bold text-[11px]">
+            {activePoint.tooltipDate || activePoint.date.slice(0, 10)}
           </div>
           <div className="flex items-center gap-3 flex-wrap text-[11.5px]">
             <div>
@@ -258,9 +287,11 @@ const InteractiveCandlestickCanvas: React.FC<{
 
 const CustomTooltip = ({ active, payload, label, currency, isMF }: any) => {
   if (!active || !payload?.length) return null;
+  const point = payload[0]?.payload;
+  const displayDate = point?.tooltipDate || label;
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-xl px-3 py-2 text-xs space-y-0.5 pointer-events-none">
-      <div className="text-[10.5px] text-slate-500 font-semibold">{label}</div>
+      <div className="text-[10.5px] text-slate-500 font-semibold">{displayDate}</div>
       <div className="text-sm font-bold font-mono text-slate-900">
         {currency}{Number(payload[0].value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
       </div>
@@ -304,6 +335,7 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
             nav: o.nav,
             volume: o.volume || 0,
             label: fmtLabel(o.date || "", p),
+            tooltipDate: fmtTooltipDate(o.date || "", p),
             isUp: val >= openVal
           };
         })
@@ -331,6 +363,7 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
             close: o.close || o.nav || 100,
             volume: o.volume || 0,
             label: fmtLabel(o.date || "", p),
+            tooltipDate: fmtTooltipDate(o.date || "", p),
             isUp: (o.close || 100) >= (o.open || 100)
           }))
           .filter((o) => o.close > 0);
