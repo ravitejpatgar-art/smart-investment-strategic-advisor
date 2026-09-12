@@ -432,7 +432,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search stocks, ETFs, mutual funds, ISIN, ticker (e.g. AAPL, AMD, RELIANCE, SPY, VOO, Nippon India, HDFC Flexi Cap)..."
-            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white placeholder:text-slate-400 shadow-2xs transition-all"
+            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#0F172A] caret-[#0F172A] font-medium text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white placeholder:text-slate-400 shadow-2xs transition-all"
           />
           {searchQuery && (
             <button
