@@ -426,13 +426,33 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
 
         {/* Search Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <style>{`
+            .market-search-input,
+            .market-search-input:focus,
+            .market-search-input:active {
+              color: #0F172A !important;
+              -webkit-text-fill-color: #0F172A !important;
+              caret-color: #0F172A !important;
+              opacity: 1 !important;
+            }
+            .market-search-input::placeholder {
+              color: #94A3B8 !important;
+              -webkit-text-fill-color: #94A3B8 !important;
+            }
+          `}</style>
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search stocks, ETFs, mutual funds, ISIN, ticker (e.g. AAPL, AMD, RELIANCE, SPY, VOO, Nippon India, HDFC Flexi Cap)..."
-            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#0F172A] caret-[#0F172A] font-medium text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white placeholder:text-slate-400 shadow-2xs transition-all"
+            className="market-search-input w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#0F172A] caret-[#0F172A] font-medium text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white placeholder:text-slate-400 shadow-2xs transition-all"
+            style={{
+              color: '#0F172A',
+              WebkitTextFillColor: '#0F172A',
+              caretColor: '#0F172A',
+              opacity: 1
+            }}
           />
           {searchQuery && (
             <button
