@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Query, Depends, HTTPException, status, Header, Request
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -336,10 +336,26 @@ def remove_from_watchlist(
 
     return {"status": "SUCCESS", "message": f"Removed {target_id} from watchlist."}
 
+@router.get("/quote")
 @router.get("/quote/{symbol:path}")
-def get_single_quote(symbol: str):
-    """Returns normalized quote for a single symbol."""
-    return market_registry.get_quote(symbol)
+def get_single_quote(
+    request: Request,
+    symbol: Optional[str] = "",
+    ticker: Optional[str] = Query(None, description="Alias for symbol"),
+    query: Optional[str] = Query(None, description="Alias for symbol"),
+    instrument: Optional[str] = Query(None, description="Alias for symbol")
+):
+    """Returns normalized quote for a single symbol (via path parameter or query parameter)."""
+    target = (symbol or "").strip()
+    if not target:
+        target = (
+            request.query_params.get("symbol")
+            or ticker
+            or query
+            or instrument
+            or ""
+        ).strip()
+    return market_registry.get_quote(target)
 
 @router.get("/quotes")
 def get_multiple_quotes(symbols: str = Query(..., description="Comma separated list of symbols")):
