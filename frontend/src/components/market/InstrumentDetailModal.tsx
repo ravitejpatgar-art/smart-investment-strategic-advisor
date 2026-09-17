@@ -155,21 +155,43 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   };
 
   const getFreshnessBadge = (freshness?: string, status?: string) => {
-    const s = (freshness || status || "UNAVAILABLE").toUpperCase();
-    if (s === "REALTIME" || s === "LIVE") {
+    // 1. Mutual Funds: always LATEST NAV with explicit NAV date
+    if (isMF) {
+      return <Badge variant="fallback">LATEST NAV ({quote?.navDate || "OFFICIAL"})</Badge>;
+    }
+
+    // 2. Market Closed / Weekend / Holiday
+    const mkt = (quote?.marketStatus || "").toUpperCase();
+    if (mkt === "CLOSED" || mkt === "WEEKEND" || mkt === "HOLIDAY") {
+      return <Badge variant="neutral">MARKET CLOSED</Badge>;
+    }
+    if (mkt === "PRE_OPEN") {
+      return <Badge variant="neutral">PRE-OPEN</Badge>;
+    }
+
+    // 3. Stale state
+    if (quote?.isStale === true) {
+      return <Badge variant="stale">STALE</Badge>;
+    }
+
+    // 4. True Live quote (market OPEN + provider verified realtime)
+    if (quote?.isLive === true) {
       return <Badge variant="live">LIVE</Badge>;
     }
+
+    // 5. Fallback delayed / latest available
+    const s = (freshness || status || "UNAVAILABLE").toUpperCase();
     if (s === "DELAYED") {
       return <Badge variant="delayed">DELAYED (15M)</Badge>;
     }
-    if (s === "LATEST_NAV" || isMF) {
-      return <Badge variant="fallback">LATEST NAV ({quote?.navDate || "OFFICIAL"})</Badge>;
+    if (s === "STALE") {
+      return <Badge variant="stale">STALE</Badge>;
+    }
+    if (s === "REALTIME" || s === "LIVE") {
+      return <Badge variant="live">LIVE</Badge>;
     }
     if (s === "LATEST_AVAILABLE" || s === "HISTORICAL" || s === "FALLBACK") {
       return <Badge variant="fallback">LATEST AVAILABLE</Badge>;
-    }
-    if (s === "STALE") {
-      return <Badge variant="stale">STALE</Badge>;
     }
     return <Badge variant="unavailable">UNAVAILABLE</Badge>;
   };

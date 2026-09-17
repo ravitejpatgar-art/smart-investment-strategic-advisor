@@ -32,6 +32,16 @@ class MarketDataProviderRegistry:
         """Returns provider capabilities and entitlement status."""
         return [
             {
+                "provider": "Angel One SmartAPI",
+                "market": "Indian Stocks & ETFs (Real-Time WebSocket Feed)",
+                "realtime": self.router.angel.capabilities.realtime,
+                "delayed": False,
+                "historical": False,
+                "apiKeyPresent": bool(self.router.angel.api_key),
+                "entitlementVerified": self.router.angel.capabilities.entitlement_verified,
+                "status": "ACTIVE" if self.router.angel.is_connected else ("READY" if self.router.angel.is_configured else "CREDENTIALS_REQUIRED")
+            },
+            {
                 "provider": "TrueData",
                 "market": "Indian Equities & Indices (NSE/BSE/MCX Paid Feed)",
                 "realtime": self.router.truedata.capabilities.realtime,

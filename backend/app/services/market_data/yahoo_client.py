@@ -165,15 +165,37 @@ def parse_yahoo_chart_quote(chart_result: Dict[str, Any]) -> Optional[Dict[str, 
     change = current_price - prev_close if prev_close else 0.0
     change_pct = (change / prev_close * 100.0) if prev_close and prev_close > 0 else 0.0
 
+    # Extract actual trade timestamp from provider (regularMarketTime or last candle timestamp)
+    raw_trade_ts = meta.get("regularMarketTime")
+    if not raw_trade_ts and timestamps:
+        raw_trade_ts = timestamps[-1]
+
+    if raw_trade_ts:
+        try:
+            dt = datetime.fromtimestamp(int(raw_trade_ts), tz=timezone.utc)
+            trade_timestamp_iso = dt.isoformat()
+            data_date = dt.strftime("%Y-%m-%d")
+        except Exception:
+            trade_timestamp_iso = None
+            data_date = None
+    else:
+        trade_timestamp_iso = None
+        data_date = None
+
     return {
         "price": float(current_price),
         "prev_close": float(prev_close) if prev_close else float(current_price),
         "change": float(change),
         "change_pct": float(change_pct),
+        "changePercent": float(change_pct),
         "open": float(opens[-1]) if opens else float(current_price),
         "high": float(highs[-1]) if highs else float(current_price),
         "low": float(lows[-1]) if lows else float(current_price),
         "volume": int(volumes[-1]) if volumes else int(meta.get("regularMarketVolume", 0)),
         "currency": meta.get("currency", "INR"),
-        "name": meta.get("shortName") or meta.get("longName") or meta.get("symbol", "")
+        "name": meta.get("shortName") or meta.get("longName") or meta.get("symbol", ""),
+        "timestamp": trade_timestamp_iso,
+        "raw_timestamp": trade_timestamp_iso,
+        "provider_timestamp": int(raw_trade_ts) if raw_trade_ts else None,
+        "data_date": data_date
     }

@@ -12,6 +12,7 @@ from app.services.market_data.providers.polygon_provider import PolygonProvider
 from app.services.market_data.providers.alphavantage_provider import AlphaVantageProvider
 from app.services.market_data.providers.yahoo_provider import YahooFinanceProvider
 from app.services.market_data.providers.truedata_provider import TrueDataProvider
+from app.services.market_data.providers.angel_provider import angel_provider
 from app.services.market_data.indian_equities import IndianEquitiesProvider
 from app.services.market_data.mutual_funds import MutualFundsProvider
 from app.services.market_data.gold import GoldProvider
@@ -100,13 +101,14 @@ class ProviderRouter:
     """
     Multi-provider market data router with automatic failover, health tracking, market-closed detection, and caching.
     Strict Priority Fallback Pipeline:
-      1. Indian Stocks: Optional Paid TrueData Feed -> NSE Feed -> Yahoo Finance
-      2. Mutual Funds: AMFI Official Feed -> MFAPI Feed -> Scheme DB
+      1. Indian Stocks: Angel One SmartAPI (Real-Time WebSocket) -> TrueData (if configured) -> NSE Feed -> Yahoo Finance
+      2. Mutual Funds: AMFI Official Feed -> MFAPI Feed -> Scheme DB (NEVER Live Intraday)
       3. US Stocks: Finnhub -> TwelveData -> Polygon.io -> Yahoo Finance -> AlphaVantage
-      4. ETFs: ETF Provider -> Yahoo Finance -> Exchange Provider
+      4. ETFs: Angel One SmartAPI (Real-Time WebSocket) -> ETF Provider -> Yahoo Finance -> Indian Equities
       5. Gold: NSE GoldBeES -> MCX Spot Feed -> Yahoo Finance
     """
     def __init__(self):
+        self.angel = angel_provider
         self.finnhub = FinnhubProvider()
         self.twelvedata = TwelveDataProvider()
         self.polygon = PolygonProvider()
@@ -119,6 +121,7 @@ class ProviderRouter:
         self.etf_provider = ETFProvider()
 
         self.health_trackers = {
+            "Angel One SmartAPI": ProviderHealthTracker("Angel One SmartAPI"),
             "TrueData": ProviderHealthTracker("TrueData"),
             "Finnhub": ProviderHealthTracker("Finnhub"),
             "TwelveData": ProviderHealthTracker("TwelveData"),
@@ -140,17 +143,23 @@ class ProviderRouter:
         if "GOLD" in s or "SGB" in s or "SILVER" in s or s in ["MCX:GOLD", "GOLDBEES.NS", "GOLDBEES"]:
             return [self.gold_provider, self.indian_equities, self.yahoo]
 
-        # 2. Mutual Funds -> AMFI Official NAV Feed -> MFAPI -> Yahoo
+        # 2. Mutual Funds -> AMFI Official NAV Feed -> MFAPI -> Baseline NAV (NEVER LIVE)
         if asset_type == "MUTUAL_FUND" or s.startswith("AMFI:") or s.isdigit() or any(w in s for w in ["PARAG", "QUANT", "NIPPON", "MUTUAL", "GROWTH", "DIRECT", "UTI"]):
             return [self.mutual_funds, self.yahoo]
 
-        # 3. ETFs -> Global ETF Provider -> Yahoo Finance -> Indian Equities
-        if asset_type == "ETF" or "ETF" in s or "BEES" in s or s in ["MON100.NS", "SP500.NS", "QQQ", "SPY", "VOO", "VTI"]:
-            return [self.etf_provider, self.yahoo, self.indian_equities]
-
-        # 4. Indian Equities & Indices priority (.NS, .BO, Nifty, Sensex) -> TrueData (if configured) -> NSE -> Yahoo Finance
-        if s.endswith(".NS") or s.endswith(".BO") or s in ["NIFTY 50", "^NSEI", "SENSEX", "^BSESN", "BANKNIFTY", "^NSEBANK", "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS"]:
+        # 3. ETFs -> Angel One SmartAPI (if active) -> Global ETF Provider -> Yahoo Finance -> Indian Equities
+        if asset_type == "ETF" or "ETF" in s or "BEES" in s or s in ["MON100.NS", "MON100", "SP500.NS", "QQQ", "SPY", "VOO", "VTI"]:
             chain = []
+            if self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
+                chain.append(self.angel)
+            chain.extend([self.etf_provider, self.yahoo, self.indian_equities])
+            return chain
+
+        # 4. Indian Equities & Indices priority -> Angel One SmartAPI (Real-Time WebSocket) -> TrueData (if configured) -> NSE -> Yahoo Finance
+        if norm.get("market") == "INDIA" or s.endswith(".NS") or s.endswith(".BO") or s in ["NIFTY 50", "^NSEI", "SENSEX", "^BSESN", "BANKNIFTY", "^NSEBANK", "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "TATAMOTORS"]:
+            chain = []
+            if self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
+                chain.append(self.angel)
             if self.truedata.capabilities.is_configured and self.health_trackers["TrueData"].is_available():
                 chain.append(self.truedata)
             chain.extend([self.indian_equities, self.yahoo])
@@ -195,7 +204,7 @@ class ProviderRouter:
         quote_result = None
 
         # Check market session status for appropriate freshness attribution
-        is_india = s_clean.endswith(".NS") or s_clean.endswith(".BO") or s_clean.startswith("^NSE") or s_clean.startswith("AMFI:")
+        is_india = norm.get("market") == "INDIA" or s_clean.endswith(".NS") or s_clean.endswith(".BO") or s_clean.startswith("^NSE") or s_clean.startswith("AMFI:")
         mkt_status = get_indian_market_status() if is_india else get_us_market_status()
         is_market_open = mkt_status.get("isOpen", False)
         
@@ -218,7 +227,8 @@ class ProviderRouter:
                         
                         # Apply market closed detection without converting to UNAVAILABLE
                         if not is_market_open and norm.get("asset_type") != "MUTUAL_FUND":
-                            quote["marketStatus"] = "CLOSED"
+                            quote["marketStatus"] = mkt_status.get("status", "CLOSED")
+                            quote["isLive"] = False
                             # Downgrade LIVE to LATEST_AVAILABLE when market is closed
                             if quote.get("freshness") in ["LIVE", "REALTIME"]:
                                 quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
@@ -257,7 +267,9 @@ class ProviderRouter:
         stale_cached = market_cache.get(cache_key, allow_stale=True)
         if stale_cached and stale_cached.get("price") is not None:
             stale_cached["freshness"] = DataFreshness.LATEST_AVAILABLE.value
-            stale_cached["marketStatus"] = "CLOSED" if not is_market_open else stale_cached.get("marketStatus", "CLOSED")
+            stale_cached["isLive"] = False
+            stale_cached["isStale"] = True
+            stale_cached["marketStatus"] = mkt_status.get("status", "CLOSED") if not is_market_open else stale_cached.get("marketStatus", "CLOSED")
             stale_cached["message"] = "Latest available market data shown"
             return stale_cached
 

@@ -10,6 +10,7 @@ def format_ist_timestamp(dt: Optional[datetime] = None) -> str:
     return ist_dt.strftime("%d %b %Y, %I:%M:%S %p IST")
 
 # Canonical Symbol Resolution Map
+# Expanded Canonical Symbol Resolution Map for Indian Equities & ETFs
 INDIA_STOCK_MAPPINGS = {
     "RELIANCE": "RELIANCE.NS",
     "TCS": "TCS.NS",
@@ -24,11 +25,53 @@ INDIA_STOCK_MAPPINGS = {
     "ITC": "ITC.NS",
     "KOTAKBANK": "KOTAKBANK.NS",
     "LT": "LT.NS",
+    "AXISBANK": "AXISBANK.NS",
+    "BAJFINANCE": "BAJFINANCE.NS",
+    "BAJAJFINSV": "BAJAJFINSV.NS",
+    "MARUTI": "MARUTI.NS",
+    "TITAN": "TITAN.NS",
+    "SUNPHARMA": "SUNPHARMA.NS",
+    "ULTRACEMCO": "ULTRACEMCO.NS",
+    "ASIANPAINT": "ASIANPAINT.NS",
+    "HCLTECH": "HCLTECH.NS",
+    "NTPC": "NTPC.NS",
+    "ONGC": "ONGC.NS",
+    "POWERGRID": "POWERGRID.NS",
+    "NESTLEIND": "NESTLEIND.NS",
+    "JSWSTEEL": "JSWSTEEL.NS",
+    "ADANIENT": "ADANIENT.NS",
+    "ADANIPORTS": "ADANIPORTS.NS",
+    "COALINDIA": "COALINDIA.NS",
+    "BPCL": "BPCL.NS",
+    "GRASIM": "GRASIM.NS",
+    "CIPLA": "CIPLA.NS",
+    "HEROMOTOCO": "HEROMOTOCO.NS",
+    "EICHERMOT": "EICHERMOT.NS",
+    "APOLLOHOSP": "APOLLOHOSP.NS",
+    "DIVISLAB": "DIVISLAB.NS",
+    "DRREDDY": "DRREDDY.NS",
+    "HINDALCO": "HINDALCO.NS",
+    "BRITANNIA": "BRITANNIA.NS",
+    "TRENT": "TRENT.NS",
+    "BEL": "BEL.NS",
+    "HAL": "HAL.NS",
+    "VBL": "VBL.NS",
+    "ZOMATO": "ZOMATO.NS",
+    "JIOFIN": "JIOFIN.NS",
     "NIFTYBEES": "NIFTYBEES.NS",
     "JUNIORBEES": "JUNIORBEES.NS",
     "BANKBEES": "BANKBEES.NS",
     "GOLDBEES": "GOLDBEES.NS",
-    "MON100": "MON100.NS"
+    "MON100": "MON100.NS",
+    "LIQUIDBEES": "LIQUIDBEES.NS",
+    "SILVERBEES": "SILVERBEES.NS",
+    "CPSEETF": "CPSEETF.NS",
+    "MAFANG": "MAFANG.NS",
+    "HDFCNIFTY": "HDFCNIFTY.NS",
+    "SETFNIF50": "SETFNIF50.NS",
+    "AUTOBEES": "AUTOBEES.NS",
+    "PHARMABEES": "PHARMABEES.NS",
+    "INFRABEES": "INFRABEES.NS"
 }
 
 INDEX_MAPPINGS = {
@@ -105,7 +148,7 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
     # 3. Indian Equities & ETFs
     if s_upper in INDIA_STOCK_MAPPINGS:
         canonical = INDIA_STOCK_MAPPINGS[s_upper]
-        is_etf = "BEES" in canonical or "MON100" in canonical
+        is_etf = "BEES" in canonical or "MON100" in canonical or "ETF" in canonical
         return {
             "canonical_symbol": canonical,
             "provider_symbol": canonical,
@@ -116,7 +159,7 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
         }
 
     if s_upper.endswith(".NS") or s_upper.endswith(".BO"):
-        is_etf = "BEES" in s_upper or "MON100" in s_upper
+        is_etf = "BEES" in s_upper or "MON100" in s_upper or "ETF" in s_upper
         exch = "NSE" if s_upper.endswith(".NS") else "BSE"
         return {
             "canonical_symbol": s_upper,
@@ -126,6 +169,28 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
             "exchange": exch,
             "scheme_code": None
         }
+
+    # Check database instrument master for India market listing before defaulting to US
+    try:
+        from app.models.instrument import Instrument
+        from app.core.database import SessionLocal
+        with SessionLocal() as db:
+            inst = db.query(Instrument).filter(
+                (Instrument.symbol.ilike(s_upper)) |
+                (Instrument.ticker.ilike(s_upper))
+            ).first()
+            if inst and inst.market == "INDIA":
+                is_etf = inst.asset_type == "ETF"
+                return {
+                    "canonical_symbol": inst.symbol,
+                    "provider_symbol": inst.provider_symbol or inst.symbol,
+                    "asset_type": inst.asset_type,
+                    "market": "INDIA",
+                    "exchange": inst.exchange or "NSE",
+                    "scheme_code": inst.scheme_code
+                }
+    except Exception:
+        pass
 
     # 4. Standard US / Global Equities & ETFs (e.g. AAPL, MSFT, SPY, QQQ)
     US_KNOWN_ETFS = {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
@@ -159,38 +224,85 @@ def normalize_market_quote(
     prev_close: Optional[float] = None,
     market_status: str = "OPEN",
     nav_date: Optional[str] = None,
-    raw_timestamp: Optional[str] = None
+    raw_timestamp: Optional[str] = None,
+    is_live: Optional[bool] = None,
+    is_stale: bool = False,
+    data_date: Optional[str] = None,
+    provider_timestamp: Optional[int] = None,
+    change_percent: Optional[float] = None,
+    instrument_type: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Standard canonical internal schema for all SmartVest market quotes.
     Preserves authentic provider fields without fabricating artificial numbers.
+    Enforces strict metadata:
+      - isLive is True ONLY if instrument is STOCK or ETF, market is OPEN, provider tick is active, not stale.
+      - Mutual funds are NEVER live; price is NAV with navDate.
+      - Trade timestamp is strictly the provider-supplied timestamp (NEVER datetime.now()).
     """
     now_utc = datetime.now(timezone.utc)
-    ts_iso = raw_timestamp or now_utc.isoformat()
     as_of = format_ist_timestamp(now_utc)
     
     freshness_str = freshness.value if hasattr(freshness, "value") else sanitize_freshness_state(str(freshness))
 
     p_val = round(float(price), 2) if price is not None else None
     c_val = round(float(change), 2) if change is not None else None
-    cp_val = round(float(change_pct), 2) if change_pct is not None else None
-    v_val = int(volume) if volume is not None else (0 if p_val is not None else None)
     
+    # Unify changePct and changePercent
+    cp_in = change_percent if change_percent is not None else change_pct
+    cp_val = round(float(cp_in), 2) if cp_in is not None else None
+    
+    v_val = int(volume) if volume is not None else (0 if p_val is not None else None)
     pc_val = round(float(prev_close), 2) if prev_close is not None else None
 
-    # For mutual funds, price IS the NAV
-    is_mf = asset_type.upper() == "MUTUAL_FUND"
+    # Determine instrument type
+    inst_type = (instrument_type or asset_type or "STOCK").upper()
+    is_mf = inst_type == "MUTUAL_FUND" or asset_type.upper() == "MUTUAL_FUND"
+
+    # Mutual fund invariant: NEVER live, always PUBLISHED / NAV
+    if is_mf:
+        is_live_flag = False
+        inst_type = "MUTUAL_FUND"
+        asset_type = "MUTUAL_FUND"
+        if market_status in ["OPEN", "CLOSED"]:
+            market_status = "PUBLISHED"
+    else:
+        # Stock or ETF: strictly check session state
+        if market_status in ["CLOSED", "WEEKEND", "HOLIDAY", "PRE_OPEN", "UNKNOWN"]:
+            is_live_flag = False
+        elif is_live is not None:
+            is_live_flag = bool(is_live and (not is_stale) and (market_status == "OPEN"))
+        elif freshness_str in ["REALTIME", "LIVE"]:
+            is_live_flag = (not is_stale) and (market_status == "OPEN") and (inst_type in ["STOCK", "ETF", "INDEX"])
+        else:
+            is_live_flag = False
+
+    # Timestamp rule: NEVER use datetime.now() as the trade timestamp
+    # If raw_timestamp is missing, we preserve None or the provider timestamp
+    ts_iso = raw_timestamp
+    if not ts_iso and provider_timestamp:
+        try:
+            # Handle milliseconds or seconds
+            pts = provider_timestamp / 1000.0 if provider_timestamp > 1e11 else provider_timestamp
+            dt = datetime.fromtimestamp(pts, tz=timezone.utc)
+            ts_iso = dt.isoformat()
+            if not data_date:
+                data_date = dt.strftime("%Y-%m-%d")
+        except Exception:
+            pass
 
     return {
         "symbol": symbol,
         "name": name,
         "exchange": exchange,
         "assetType": asset_type,
+        "instrumentType": inst_type,
         "price": p_val,
         "nav": p_val if is_mf else None,
         "currency": currency,
         "change": c_val,
         "changePct": cp_val,
+        "changePercent": cp_val,
         "volume": v_val,
         "open": round(float(open_price), 2) if open_price is not None else None,
         "high": round(float(high_price), 2) if high_price is not None else None,
@@ -198,9 +310,13 @@ def normalize_market_quote(
         "prevClose": pc_val,
         "previousClose": pc_val,
         "timestamp": ts_iso,
+        "dataDate": data_date or nav_date,
+        "providerTimestamp": provider_timestamp,
         "marketStatus": market_status,
         "freshness": freshness_str,
         "source": source,
+        "isLive": is_live_flag,
+        "isStale": is_stale,
         "asOf": as_of,
         "navDate": nav_date
     }
@@ -217,21 +333,27 @@ def create_unavailable_quote(
         "name": symbol,
         "exchange": "UNKNOWN",
         "assetType": "UNKNOWN",
+        "instrumentType": "UNKNOWN",
         "price": None,
         "nav": None,
         "currency": "INR",
         "change": None,
         "changePct": None,
+        "changePercent": None,
         "volume": None,
         "open": None,
         "high": None,
         "low": None,
         "prevClose": None,
         "previousClose": None,
-        "timestamp": now_utc.isoformat(),
+        "timestamp": None,
+        "dataDate": None,
+        "providerTimestamp": None,
         "marketStatus": market_status,
         "freshness": DataFreshness.UNAVAILABLE.value,
         "source": None,
+        "isLive": False,
+        "isStale": True,
         "asOf": format_ist_timestamp(now_utc),
         "navDate": None,
         "message": message

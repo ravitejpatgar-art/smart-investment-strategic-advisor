@@ -97,12 +97,32 @@ export function resolveQuoteStatus(quote?: Partial<MarketQuote> | null): MarketD
   if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') return 'UNAVAILABLE';
   if (quote.price === null || (quote.price !== undefined && isNaN(quote.price))) return 'UNAVAILABLE';
   
+  // Mutual funds are NEVER live intraday quotes
+  const isMF = quote.assetType === 'MUTUAL_FUND' || quote.instrumentType === 'MUTUAL_FUND';
+  if (isMF) {
+    return 'FALLBACK';
+  }
+
+  // Market closed or stale quotes can NEVER be LIVE
+  const isClosed = quote.marketStatus === 'CLOSED' || quote.marketStatus === 'WEEKEND' || quote.marketStatus === 'HOLIDAY' || quote.marketStatus === 'PRE_OPEN';
+  if (isClosed || quote.isStale === true) {
+    return quote.status === 'DELAYED' ? 'DELAYED' : 'FALLBACK';
+  }
+
+  // Explicit isLive metadata from provider
+  if (quote.isLive === true) {
+    return 'LIVE';
+  }
+  if (quote.isLive === false && quote.status === 'LIVE') {
+    return 'DELAYED';
+  }
+
   if (quote.status) return quote.status;
   if (quote.freshness === 'REALTIME') return 'LIVE';
   if (quote.freshness === 'DELAYED') return 'DELAYED';
   if (quote.freshness === 'MODEL_ASSUMPTION' || quote.source?.includes('Deterministic Demo')) return 'DEMO';
   if (quote.freshness === 'LATEST_AVAILABLE' || quote.freshness === 'END_OF_DAY' || quote.freshness === 'HISTORICAL') {
-    return quote.source?.includes('Backend') || quote.source?.includes('Live') ? 'LIVE' : 'FALLBACK';
+    return 'FALLBACK';
   }
   return 'FALLBACK';
 }
@@ -112,16 +132,21 @@ export interface MarketQuote {
   name: string;
   exchange: string;
   assetType: string;
+  instrumentType?: string;
   price: number | null;
+  nav?: number | null;
   currency: string;
   change: number | null;
   changePct: number | null;
+  changePercent?: number | null;
   volume: number | null;
   open?: number | null;
   high?: number | null;
   low?: number | null;
   prevClose?: number | null;
+  previousClose?: number | null;
   timestamp: string;
+  dataDate?: string | null;
   marketStatus: string;
   freshness: FreshnessType;
   status?: MarketDataStatus;
@@ -129,7 +154,9 @@ export interface MarketQuote {
   asOf: string;
   navDate?: string | null;
   message?: string;
+  isLive?: boolean;
   isStale?: boolean;
+  providerTimestamp?: number | null;
 }
 
 export interface MarketCandleObservation {

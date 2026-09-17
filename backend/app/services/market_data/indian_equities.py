@@ -94,22 +94,21 @@ class IndianEquitiesProvider(BaseMarketDataProvider):
             if chart_raw:
                 q_snap = parse_yahoo_chart_quote(chart_raw)
                 if q_snap and q_snap.get("price") is not None:
-                    # Strict freshness classification based on verified runtime entitlement
-                    if self.capabilities.entitlement_verified and self.capabilities.realtime and m_status.get("status") == "OPEN":
-                        freshness = DataFreshness.REALTIME
-                        source_label = self.name
-                    else:
-                        freshness = DataFreshness.DELAYED
-                        source_label = "NSE / Yahoo Finance Fallback (15m Delayed)"
+                    # Yahoo fallback is strictly 15m DELAYED during open session, never LIVE
+                    is_mkt_open = m_status.get("status") == "OPEN" and m_status.get("isOpen") is True
+                    freshness = DataFreshness.DELAYED if is_mkt_open else DataFreshness.LATEST_AVAILABLE
+                    source_label = "NSE / Yahoo Finance Fallback (15m Delayed)"
 
                     quote = normalize_market_quote(
                         symbol=canonical_sym,
                         name=q_snap.get("name") or canonical_sym,
                         exchange="NSE",
-                        asset_type="INDEX" if yf_sym.startswith("^") else "EQUITY",
+                        asset_type="INDEX" if yf_sym.startswith("^") else "STOCK",
+                        instrument_type="INDEX" if yf_sym.startswith("^") else "STOCK",
                         price=q_snap["price"],
                         change=q_snap["change"],
                         change_pct=q_snap["change_pct"],
+                        change_percent=q_snap.get("changePercent", q_snap["change_pct"]),
                         volume=q_snap["volume"],
                         open_price=q_snap["open"],
                         high_price=q_snap["high"],
@@ -118,11 +117,16 @@ class IndianEquitiesProvider(BaseMarketDataProvider):
                         currency="INR",
                         freshness=freshness,
                         source=source_label,
-                        market_status=m_status.get("status", "OPEN")
+                        market_status=m_status.get("status", "CLOSED"),
+                        raw_timestamp=q_snap.get("timestamp"),
+                        data_date=q_snap.get("data_date"),
+                        provider_timestamp=q_snap.get("provider_timestamp"),
+                        is_live=False,
+                        is_stale=False
                     )
                     valid, _ = validate_quote_data(quote)
                     if valid:
-                        market_cache.set(cache_key, quote, ttl_seconds=30)
+                        market_cache.set(cache_key, quote, ttl_seconds=30, provider_timestamp=q_snap.get("provider_timestamp"))
                         return quote
         except Exception:
             pass
@@ -151,21 +155,25 @@ class IndianEquitiesProvider(BaseMarketDataProvider):
                 info = ticker.info or {}
                 name = info.get("shortName") or info.get("longName") or canonical_sym
 
-                if self.capabilities.entitlement_verified and self.capabilities.realtime and m_status.get("status") == "OPEN":
-                    freshness = DataFreshness.REALTIME
-                    source_label = self.name
-                else:
-                    freshness = DataFreshness.DELAYED
-                    source_label = "NSE / Yahoo Finance Fallback (15m Delayed)"
+                is_mkt_open = m_status.get("status") == "OPEN" and m_status.get("isOpen") is True
+                freshness = DataFreshness.DELAYED if is_mkt_open else DataFreshness.LATEST_AVAILABLE
+                source_label = "NSE / Yahoo Finance Fallback (15m Delayed)"
+
+                # Extract last index date from history
+                last_dt = hist.index[-1]
+                ts_iso = last_dt.isoformat() if hasattr(last_dt, "isoformat") else str(last_dt)
+                data_d = last_dt.strftime("%Y-%m-%d") if hasattr(last_dt, "strftime") else None
 
                 quote = normalize_market_quote(
                     symbol=canonical_sym,
                     name=name,
                     exchange="NSE",
-                    asset_type="INDEX" if yf_sym.startswith("^") else "EQUITY",
+                    asset_type="INDEX" if yf_sym.startswith("^") else "STOCK",
+                    instrument_type="INDEX" if yf_sym.startswith("^") else "STOCK",
                     price=current_price,
                     change=change,
                     change_pct=change_pct,
+                    change_percent=change_pct,
                     volume=volume,
                     open_price=open_p,
                     high_price=high_p,
@@ -174,7 +182,11 @@ class IndianEquitiesProvider(BaseMarketDataProvider):
                     currency="INR",
                     freshness=freshness,
                     source=source_label,
-                    market_status=m_status.get("status", "OPEN")
+                    market_status=m_status.get("status", "CLOSED"),
+                    raw_timestamp=ts_iso,
+                    data_date=data_d,
+                    is_live=False,
+                    is_stale=False
                 )
 
                 valid, _ = validate_quote_data(quote)
@@ -188,6 +200,9 @@ class IndianEquitiesProvider(BaseMarketDataProvider):
         stale = market_cache.get(cache_key, allow_stale=True)
         if stale:
             stale["freshness"] = DataFreshness.STALE.value
+            stale["isLive"] = False
+            stale["isStale"] = True
+            stale["marketStatus"] = m_status.get("status", "CLOSED")
             return stale
 
         # 5. Return explicit unavailable

@@ -1,0 +1,23 @@
+/**
+ * SMARTVEST ACADEMY — LESSON CATALOGUE
+ * 12 structured, beginner-friendly investing lessons with comprehensive educational transcripts,
+ * learning points, key takeaways, multiple-choice quizzes, AI video prompts, and 8-language multilingual support.
+ * All master videos are >= 120 seconds in duration.
+ */
+
+import type { InvestmentLesson, InvestmentLessonCategory } from '../types/investmentAcademy';
+
+export interface AcademyCategoryOption {
+  id: InvestmentLessonCategory;
+  label: string;
+}
+
+export const ACADEMY_CATEGORIES: AcademyCategoryOption[] = [
+  { id: 'Fundamentals', label: 'Fundamentals' },
+  { id: 'Investment Products', label: 'Products' },
+  { id: 'Investing Strategy', label: 'Strategy' },
+  { id: 'India Investing', label: 'India' },
+  { id: 'Core Principles', label: 'Principles' },
+];
+
+export const INVESTMENT_LESSONS: InvestmentLesson[] = 

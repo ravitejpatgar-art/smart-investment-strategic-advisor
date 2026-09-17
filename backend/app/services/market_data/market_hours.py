@@ -14,11 +14,19 @@ US_HOLIDAYS = {
     "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25"
 }
 
+def is_indian_equity_market_open() -> bool:
+    """Returns True ONLY when regular continuous trading session is active (09:15 to 15:30 IST, Mon-Fri, non-holiday)."""
+    status = get_indian_market_status()
+    return status.get("status") == "OPEN" and status.get("isOpen") is True
+
 def get_indian_market_status() -> Dict[str, Any]:
     """
     Evaluates NSE/BSE trading status based on IST (UTC+5:30).
-    Normal trading: 09:15 AM - 03:30 PM IST (Mon-Fri)
-    Pre-market: 09:00 AM - 09:15 AM IST
+    Normal trading: 09:15 AM - 03:30 PM IST (Mon-Fri) -> status: OPEN, isOpen: True
+    Pre-market: 09:00 AM - 09:15 AM IST -> status: PRE_OPEN, isOpen: False
+    After-hours / Closed: after 03:30 PM IST -> status: CLOSED, isOpen: False
+    Weekend: Saturday/Sunday -> status: WEEKEND, isOpen: False
+    Exchange Holiday: status: HOLIDAY, isOpen: False
     """
     utc_now = datetime.now(timezone.utc)
     ist_now = utc_now + timedelta(hours=5, minutes=30)
@@ -30,7 +38,8 @@ def get_indian_market_status() -> Dict[str, Any]:
             "market": "NSE / BSE",
             "country": "IN",
             "timezone": "IST (UTC+5:30)",
-            "status": "CLOSED",
+            "status": "WEEKEND",
+            "marketStatus": "WEEKEND",
             "reason": "WEEKEND",
             "isOpen": False,
             "nextOpen": "Monday 09:15 AM IST",
@@ -42,7 +51,8 @@ def get_indian_market_status() -> Dict[str, Any]:
             "market": "NSE / BSE",
             "country": "IN",
             "timezone": "IST (UTC+5:30)",
-            "status": "CLOSED",
+            "status": "HOLIDAY",
+            "marketStatus": "HOLIDAY",
             "reason": "EXCHANGE_HOLIDAY",
             "isOpen": False,
             "nextOpen": "Next Trading Day 09:15 AM IST",
@@ -57,9 +67,10 @@ def get_indian_market_status() -> Dict[str, Any]:
             "market": "NSE / BSE",
             "country": "IN",
             "timezone": "IST (UTC+5:30)",
-            "status": "PRE_MARKET",
+            "status": "PRE_OPEN",
+            "marketStatus": "PRE_OPEN",
             "reason": "PRE_OPEN_SESSION",
-            "isOpen": True,
+            "isOpen": False,
             "nextOpen": "09:15 AM IST (Regular Trading)",
             "currentTime": ist_now.strftime("%I:%M:%S %p IST")
         }
@@ -69,6 +80,7 @@ def get_indian_market_status() -> Dict[str, Any]:
             "country": "IN",
             "timezone": "IST (UTC+5:30)",
             "status": "OPEN",
+            "marketStatus": "OPEN",
             "reason": "REGULAR_TRADING",
             "isOpen": True,
             "nextClose": "03:30 PM IST",
@@ -80,6 +92,7 @@ def get_indian_market_status() -> Dict[str, Any]:
             "country": "IN",
             "timezone": "IST (UTC+5:30)",
             "status": "CLOSED",
+            "marketStatus": "CLOSED",
             "reason": "AFTER_HOURS",
             "isOpen": False,
             "nextOpen": "Tomorrow 09:15 AM IST" if weekday < 4 else "Monday 09:15 AM IST",

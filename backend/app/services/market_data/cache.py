@@ -79,17 +79,31 @@ class MarketDataCache:
             self._misses += 1
             return None
 
-    def set(self, key: str, value: Dict[str, Any], ttl_seconds: Optional[int] = None) -> None:
+    def set(self, key: str, value: Dict[str, Any], ttl_seconds: Optional[int] = None, provider_timestamp: Optional[float] = None) -> None:
         actual_ttl = ttl_seconds if ttl_seconds is not None else getattr(settings, "MARKET_DATA_CACHE_TTL_SECONDS", 30)
-
-        if self._redis is not None:
-            try:
-                self._redis.setex(key, actual_ttl, json.dumps(value))
-            except Exception:
-                pass
+        
+        # Extract provider timestamp if not explicitly supplied
+        pts = provider_timestamp
+        if pts is None and isinstance(value, dict):
+            pts = value.get("providerTimestamp") or value.get("provider_timestamp")
 
         with self._store_lock:
             now = time.time()
+
+            # Protect newer provider ticks: Never overwrite a newer provider tick with an older quote
+            if key in self._store:
+                existing_item = self._store[key]
+                existing_pts = existing_item.get("provider_timestamp")
+                if existing_pts is not None and pts is not None and pts < existing_pts:
+                    # Ignore older quote
+                    return
+
+            if self._redis is not None:
+                try:
+                    self._redis.setex(key, actual_ttl, json.dumps(value))
+                except Exception:
+                    pass
+
             # Bounded capacity eviction
             if len(self._store) >= self.MAX_IN_MEMORY_ENTRIES and key not in self._store:
                 # First try to evict expired items
@@ -106,10 +120,15 @@ class MarketDataCache:
             self._store[key] = {
                 "value": value,
                 "expires_at": now + actual_ttl,
-                "cached_at": now
+                "cached_at": now,
+                "provider_timestamp": pts
             }
             self._store.move_to_end(key)
             self._sets += 1
+
+    def set_tick(self, key: str, quote: Dict[str, Any], provider_timestamp: Optional[float] = None, ttl_seconds: Optional[int] = None) -> None:
+        """Dedicated method to cache incoming real-time WebSocket ticks."""
+        self.set(key, quote, ttl_seconds=ttl_seconds, provider_timestamp=provider_timestamp)
 
     def clear(self) -> None:
         with self._store_lock:

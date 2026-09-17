@@ -66,27 +66,37 @@ class ETFProvider(BaseMarketDataProvider):
             if chart_raw:
                 q_snap = parse_yahoo_chart_quote(chart_raw)
                 if q_snap and q_snap.get("price") is not None:
+                    is_mkt_open = m_status.get("status") == "OPEN" and m_status.get("isOpen") is True
+                    freshness = DataFreshness.DELAYED if is_mkt_open else DataFreshness.LATEST_AVAILABLE
+
                     quote = normalize_market_quote(
                         symbol=canonical_sym,
                         name=q_snap.get("name") or canonical_sym,
                         exchange="NSE",
                         asset_type="ETF",
+                        instrument_type="ETF",
                         price=q_snap["price"],
                         change=q_snap["change"],
                         change_pct=q_snap["change_pct"],
+                        change_percent=q_snap.get("changePercent", q_snap["change_pct"]),
                         volume=q_snap["volume"],
                         open_price=q_snap["open"],
                         high_price=q_snap["high"],
                         low_price=q_snap["low"],
                         prev_close=q_snap["prev_close"],
                         currency="INR",
-                        freshness=DataFreshness.DELAYED,
-                        source="NSE / Yahoo Finance (15m Delayed)",
-                        market_status=m_status.get("status", "OPEN")
+                        freshness=freshness,
+                        source="NSE / Yahoo Finance Fallback (15m Delayed)",
+                        market_status=m_status.get("status", "CLOSED"),
+                        raw_timestamp=q_snap.get("timestamp"),
+                        data_date=q_snap.get("data_date"),
+                        provider_timestamp=q_snap.get("provider_timestamp"),
+                        is_live=False,
+                        is_stale=False
                     )
                     valid, _ = validate_quote_data(quote)
                     if valid:
-                        market_cache.set(cache_key, quote, ttl_seconds=30)
+                        market_cache.set(cache_key, quote, ttl_seconds=30, provider_timestamp=q_snap.get("provider_timestamp"))
                         return quote
         except Exception:
             pass
@@ -115,23 +125,36 @@ class ETFProvider(BaseMarketDataProvider):
                 info = ticker.info or {}
                 name = info.get("shortName") or info.get("longName") or canonical_sym
 
+                is_mkt_open = m_status.get("status") == "OPEN" and m_status.get("isOpen") is True
+                freshness = DataFreshness.DELAYED if is_mkt_open else DataFreshness.LATEST_AVAILABLE
+
+                last_dt = hist.index[-1]
+                ts_iso = last_dt.isoformat() if hasattr(last_dt, "isoformat") else str(last_dt)
+                data_d = last_dt.strftime("%Y-%m-%d") if hasattr(last_dt, "strftime") else None
+
                 quote = normalize_market_quote(
                     symbol=canonical_sym,
                     name=name,
                     exchange="NSE",
                     asset_type="ETF",
+                    instrument_type="ETF",
                     price=current_price,
                     change=change,
                     change_pct=change_pct,
+                    change_percent=change_pct,
                     volume=volume,
                     open_price=open_p,
                     high_price=high_p,
                     low_price=low_p,
                     prev_close=prev_close,
                     currency="INR",
-                    freshness=DataFreshness.DELAYED,
-                    source="NSE / Yahoo Finance (15m Delayed)",
-                    market_status=m_status.get("status", "OPEN")
+                    freshness=freshness,
+                    source="NSE / Yahoo Finance Fallback (15m Delayed)",
+                    market_status=m_status.get("status", "CLOSED"),
+                    raw_timestamp=ts_iso,
+                    data_date=data_d,
+                    is_live=False,
+                    is_stale=False
                 )
 
                 valid, _ = validate_quote_data(quote)
@@ -141,9 +164,13 @@ class ETFProvider(BaseMarketDataProvider):
         except Exception:
             pass
 
+        # 3. Check Stale Cache Fallback
         stale = market_cache.get(cache_key, allow_stale=True)
         if stale:
             stale["freshness"] = DataFreshness.STALE.value
+            stale["isLive"] = False
+            stale["isStale"] = True
+            stale["marketStatus"] = m_status.get("status", "CLOSED")
             return stale
 
         return create_unavailable_quote(canonical_sym, "ETF quote temporarily unavailable.")

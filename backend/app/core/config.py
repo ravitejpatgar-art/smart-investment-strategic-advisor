@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     TRUEDATA_API_KEY: str = os.getenv("TRUEDATA_API_KEY", "")
     TRUEDATA_API_SECRET: str = os.getenv("TRUEDATA_API_SECRET", "")
     
+    # Angel One SmartAPI Real-Time WebSocket Provider Configuration
+    ANGEL_API_KEY: str = os.getenv("ANGEL_API_KEY", "")
+    ANGEL_CLIENT_CODE: str = os.getenv("ANGEL_CLIENT_CODE", "")
+    ANGEL_PIN: str = os.getenv("ANGEL_PIN", "")
+    ANGEL_TOTP: str = os.getenv("ANGEL_TOTP", "")
+    ANGEL_FEED_TOKEN: str = os.getenv("ANGEL_FEED_TOKEN", "")
+    
     US_MARKET_DATA_PROVIDER: str = os.getenv("US_MARKET_DATA_PROVIDER", "yfinance")
     US_MARKET_DATA_API_KEY: str = os.getenv("US_MARKET_DATA_API_KEY", "")
     US_MARKET_DATA_API_KEY_BACKUP: str = os.getenv("US_MARKET_DATA_API_KEY_BACKUP", "")
