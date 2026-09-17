@@ -91,8 +91,15 @@ INDEX_MAPPINGS = {
     "NASDAQ": "^IXIC",
     "NASDAQ 100": "^NDX",
     "DOW JONES": "^DJI",
-    "DOW": "^DJI"
+    "DOW": "^DJI",
+    "RUSSELL 2000": "^RUT",
+    "RUSSELL2000": "^RUT",
+    "RUSSELL": "^RUT",
+    "^RUT": "^RUT"
 }
+
+# Known US ETFs that must NEVER receive or retain .NS suffix
+US_KNOWN_ETFS = {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
 
 def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
     """
@@ -145,7 +152,19 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
             "scheme_code": None
         }
 
-    # 3. Indian Equities & ETFs
+    # 3. US ETFs Validation - US ETFs must NEVER receive or retain .NS suffix (e.g. SPY.NS -> SPY, QQQ.NS -> QQQ, VOO.NS -> VOO, VTI.NS -> VTI)
+    clean_us_sym = s_upper[:-3] if s_upper.endswith(".NS") else s_upper
+    if clean_us_sym in US_KNOWN_ETFS:
+        return {
+            "canonical_symbol": clean_us_sym,
+            "provider_symbol": clean_us_sym,
+            "asset_type": "ETF",
+            "market": "US",
+            "exchange": "NASDAQ" if clean_us_sym in ["QQQ"] else "NYSE",
+            "scheme_code": None
+        }
+
+    # 4. Indian Equities & ETFs
     if s_upper in INDIA_STOCK_MAPPINGS:
         canonical = INDIA_STOCK_MAPPINGS[s_upper]
         is_etf = "BEES" in canonical or "MON100" in canonical or "ETF" in canonical
@@ -192,8 +211,7 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
     except Exception:
         pass
 
-    # 4. Standard US / Global Equities & ETFs (e.g. AAPL, MSFT, SPY, QQQ)
-    US_KNOWN_ETFS = {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
+    # 5. Standard US / Global Equities & ETFs (e.g. AAPL, MSFT, SPY, QQQ)
     is_us_etf = s_upper in US_KNOWN_ETFS or "ETF" in s_upper
 
     return {

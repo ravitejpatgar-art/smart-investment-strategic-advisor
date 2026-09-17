@@ -45,14 +45,23 @@ class YahooFinanceProvider(BaseMarketDataProvider):
             return "^IXIC"
         if s.upper() == "DOW JONES" or s.upper() == "DOW":
             return "^DJI"
+        if s.upper() in ["RUSSELL 2000", "RUSSELL2000", "RUSSELL", "^RUT"]:
+            return "^RUT"
         if s.upper() == "GOLD" or s.upper() == "GOLD (10G)":
             return "GC=F"
         if s.upper() == "SILVER":
             return "SI=F"
+        # Validation: US ETFs must never receive or retain .NS suffix
+        s_upper = s.upper()
+        if s_upper.endswith(".NS"):
+            base = s_upper[:-3]
+            if base in {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}:
+                return base
         return s
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         target_sym = self._normalize_symbol(symbol)
+        is_us_etf = target_sym in {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
         
         # 1. First attempt fast v8 chart quote
         chart_res = fetch_yahoo_chart_data(target_sym, range_period="1d", interval="1d", timeout=5)
@@ -63,14 +72,14 @@ class YahooFinanceProvider(BaseMarketDataProvider):
             change = round(float(price - prev_close), 2)
             change_pct = round((change / prev_close * 100), 2) if prev_close > 0 else 0.0
 
-            currency = meta.get("currency") or ("INR" if ".NS" in target_sym or ".BO" in target_sym or target_sym.startswith("^NSE") else "USD")
+            currency = meta.get("currency") or ("INR" if (".NS" in target_sym or ".BO" in target_sym or target_sym.startswith("^NSE")) and not is_us_etf else "USD")
             exchange = meta.get("exchangeName") or meta.get("exchangeTimezoneName") or "GLOBAL"
 
             return normalize_market_quote(
                 symbol=symbol,
                 name=meta.get("shortName") or meta.get("symbol") or symbol,
                 exchange=exchange,
-                asset_type="STOCK" if not target_sym.startswith("^") else "INDEX",
+                asset_type="INDEX" if target_sym.startswith("^") else ("ETF" if is_us_etf else "STOCK"),
                 price=float(price),
                 change=change,
                 change_pct=change_pct,
@@ -99,7 +108,7 @@ class YahooFinanceProvider(BaseMarketDataProvider):
                     symbol=symbol,
                     name=symbol,
                     exchange=getattr(fi, "exchange", "GLOBAL") or "GLOBAL",
-                    asset_type="STOCK",
+                    asset_type="INDEX" if target_sym.startswith("^") else ("ETF" if is_us_etf else "STOCK"),
                     price=p,
                     change=ch,
                     change_pct=ch_pct,

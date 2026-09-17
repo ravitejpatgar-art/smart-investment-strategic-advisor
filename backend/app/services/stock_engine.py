@@ -1,6 +1,7 @@
 import math
 from typing import Dict, Any, List, Optional
 import yfinance as yf
+from app.services.market_data.normalizer import normalize_global_symbol
 
 # In-memory cache for fast responsive stock quotes
 _STOCK_CACHE: Dict[str, Dict[str, Any]] = {}
@@ -71,7 +72,8 @@ def calculate_bollinger_bands(prices: List[float], period: int = 20, num_std: fl
     }
 
 def get_stock_data(symbol: str) -> Dict[str, Any]:
-    symbol_clean = symbol.upper().strip()
+    norm_meta = normalize_global_symbol(symbol)
+    symbol_clean = norm_meta.get("provider_symbol") or norm_meta.get("canonical_symbol") or symbol.upper().strip()
     
     # Try fetching live from yfinance
     try:

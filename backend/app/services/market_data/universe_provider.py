@@ -1070,6 +1070,21 @@ GLOBAL_INDICES_CATALOGUE: List[Dict[str, Any]] = [
         "aliases": ["S&P 500", "SP500", "S&P 500 Index", "SPX"]
     },
     {
+        "canonical_id": "INDEX:RUT",
+        "symbol": "^RUT",
+        "ticker": "^RUT",
+        "name": "Russell 2000 Index",
+        "short_name": "Russell 2000",
+        "asset_type": "INDEX",
+        "asset_class": "INDEX",
+        "market": "US",
+        "country": "US",
+        "exchange": "INDEX",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "aliases": ["RUSSELL 2000", "Russell 2000", "RUT", "^RUT", "Russell 2000 Index"]
+    },
+    {
         "canonical_id": "COMMODITY:GOLD",
         "symbol": "GC=F",
         "ticker": "GOLD",

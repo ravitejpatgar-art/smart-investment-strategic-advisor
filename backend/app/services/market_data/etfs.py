@@ -5,9 +5,12 @@ from app.services.market_data.base import BaseMarketDataProvider, ProviderCapabi
 from app.services.market_data.freshness import DataFreshness
 from app.services.market_data.normalizer import normalize_market_quote, create_unavailable_quote
 from app.services.market_data.validator import validate_quote_data
-from app.services.market_data.market_hours import get_indian_market_status
+from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.cache import market_cache
 from app.services.market_data.yahoo_client import fetch_yahoo_chart_data, parse_yahoo_chart_candles, parse_yahoo_chart_quote
+
+# Known US ETFs that must NEVER receive or retain .NS suffix
+US_KNOWN_ETFS = {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
 
 ETF_SYMBOL_MAP = {
     "NIFTYBEES": "NIFTYBEES.NS",
@@ -22,7 +25,16 @@ ETF_SYMBOL_MAP = {
     "MOTILAL OSWAL NASDAQ 100 ETF (MON100)": "MON100.NS",
     "JUNIORBEES": "JUNIORBEES.NS",
     "BANKBEES": "BANKBEES.NS",
-    "ITBEES": "ITBEES.NS"
+    "ITBEES": "ITBEES.NS",
+    # US ETFs must NEVER receive .NS suffix
+    "SPY": "SPY",
+    "SPY.NS": "SPY",
+    "QQQ": "QQQ",
+    "QQQ.NS": "QQQ",
+    "VOO": "VOO",
+    "VOO.NS": "VOO",
+    "VTI": "VTI",
+    "VTI.NS": "VTI",
 }
 
 class ETFProvider(BaseMarketDataProvider):
@@ -47,6 +59,10 @@ class ETFProvider(BaseMarketDataProvider):
 
     def resolve_symbol(self, symbol: str) -> str:
         s_upper = symbol.upper().strip()
+        # Validation: US ETFs must never receive .NS suffix; strip if present
+        base_sym = s_upper[:-3] if s_upper.endswith(".NS") else s_upper
+        if base_sym in US_KNOWN_ETFS:
+            return base_sym
         return ETF_SYMBOL_MAP.get(s_upper, s_upper if "." in s_upper else f"{s_upper}.NS")
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
@@ -58,7 +74,11 @@ class ETFProvider(BaseMarketDataProvider):
         if cached:
             return cached
 
-        m_status = get_indian_market_status()
+        is_us = yf_sym in US_KNOWN_ETFS or canonical_sym in US_KNOWN_ETFS
+        m_status = get_us_market_status() if is_us else get_indian_market_status()
+        currency = "USD" if is_us else "INR"
+        exchange = "NASDAQ" if yf_sym == "QQQ" else ("NYSE" if is_us else "NSE")
+        source_label = "US Markets / Delayed Feed (15m Delayed)" if is_us else "NSE / Yahoo Finance Fallback (15m Delayed)"
 
         # 1. Try Direct Fast Yahoo Chart Snapshot
         try:
@@ -72,7 +92,7 @@ class ETFProvider(BaseMarketDataProvider):
                     quote = normalize_market_quote(
                         symbol=canonical_sym,
                         name=q_snap.get("name") or canonical_sym,
-                        exchange="NSE",
+                        exchange=exchange,
                         asset_type="ETF",
                         instrument_type="ETF",
                         price=q_snap["price"],
@@ -84,9 +104,9 @@ class ETFProvider(BaseMarketDataProvider):
                         high_price=q_snap["high"],
                         low_price=q_snap["low"],
                         prev_close=q_snap["prev_close"],
-                        currency="INR",
+                        currency=currency,
                         freshness=freshness,
-                        source="NSE / Yahoo Finance Fallback (15m Delayed)",
+                        source=source_label,
                         market_status=m_status.get("status", "CLOSED"),
                         raw_timestamp=q_snap.get("timestamp"),
                         data_date=q_snap.get("data_date"),
@@ -135,7 +155,7 @@ class ETFProvider(BaseMarketDataProvider):
                 quote = normalize_market_quote(
                     symbol=canonical_sym,
                     name=name,
-                    exchange="NSE",
+                    exchange=exchange,
                     asset_type="ETF",
                     instrument_type="ETF",
                     price=current_price,
@@ -147,9 +167,9 @@ class ETFProvider(BaseMarketDataProvider):
                     high_price=high_p,
                     low_price=low_p,
                     prev_close=prev_close,
-                    currency="INR",
+                    currency=currency,
                     freshness=freshness,
-                    source="NSE / Yahoo Finance Fallback (15m Delayed)",
+                    source=source_label,
                     market_status=m_status.get("status", "CLOSED"),
                     raw_timestamp=ts_iso,
                     data_date=data_d,
@@ -293,6 +313,15 @@ class ETFProvider(BaseMarketDataProvider):
 
     def get_instrument_metadata(self, symbol: str) -> Dict[str, Any]:
         canonical_sym = symbol.upper().strip()
+        yf_sym = self.resolve_symbol(canonical_sym)
+        if yf_sym in US_KNOWN_ETFS:
+            return {
+                "symbol": yf_sym,
+                "exchange": "NASDAQ" if yf_sym == "QQQ" else "NYSE",
+                "country": "US",
+                "currency": "USD",
+                "assetType": "ETF"
+            }
         return {
             "symbol": canonical_sym,
             "exchange": "NSE",

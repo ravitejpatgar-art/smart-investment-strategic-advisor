@@ -147,12 +147,15 @@ class ProviderRouter:
         if asset_type == "MUTUAL_FUND" or s.startswith("AMFI:") or s.isdigit() or any(w in s for w in ["PARAG", "QUANT", "NIPPON", "MUTUAL", "GROWTH", "DIRECT", "UTI"]):
             return [self.mutual_funds, self.yahoo]
 
-        # 3. ETFs -> Angel One SmartAPI (if active) -> Global ETF Provider -> Yahoo Finance -> Indian Equities
+        # 3. ETFs -> Angel One SmartAPI (if active, Indian only) -> Global ETF Provider -> Yahoo Finance -> Indian Equities (Indian only)
         if asset_type == "ETF" or "ETF" in s or "BEES" in s or s in ["MON100.NS", "MON100", "SP500.NS", "QQQ", "SPY", "VOO", "VTI"]:
             chain = []
-            if self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
+            is_us_etf = s in ["QQQ", "SPY", "VOO", "VTI"] or norm.get("market") == "US"
+            if not is_us_etf and self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
                 chain.append(self.angel)
-            chain.extend([self.etf_provider, self.yahoo, self.indian_equities])
+            chain.extend([self.etf_provider, self.yahoo])
+            if not is_us_etf:
+                chain.append(self.indian_equities)
             return chain
 
         # 4. Indian Equities & Indices priority -> Angel One SmartAPI (Real-Time WebSocket) -> TrueData (if configured) -> NSE -> Yahoo Finance

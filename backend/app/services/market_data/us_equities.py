@@ -23,6 +23,8 @@ US_SYMBOL_MAP = {
     "DOW JONES": "^DJI",
     "^DJI": "^DJI",
     "RUSSELL 2000": "^RUT",
+    "RUSSELL2000": "^RUT",
+    "RUSSELL": "^RUT",
     "^RUT": "^RUT",
     "AAPL": "AAPL",
     "MSFT": "MSFT",
@@ -36,7 +38,13 @@ US_SYMBOL_MAP = {
     "NFLX": "NFLX",
     "QQQ": "QQQ",
     "SPY": "SPY",
-    "VTI": "VTI"
+    "VOO": "VOO",
+    "VTI": "VTI",
+    # Validation against .NS suffix for US ETFs
+    "SPY.NS": "SPY",
+    "QQQ.NS": "QQQ",
+    "VOO.NS": "VOO",
+    "VTI.NS": "VTI"
 }
 
 class USEquitiesProvider(BaseMarketDataProvider):
@@ -69,6 +77,11 @@ class USEquitiesProvider(BaseMarketDataProvider):
 
     def resolve_symbol(self, symbol: str) -> str:
         s_upper = symbol.upper().strip()
+        # Validation: US ETFs must never receive or retain .NS suffix
+        if s_upper.endswith(".NS"):
+            base = s_upper[:-3]
+            if base in {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}:
+                return base
         return US_SYMBOL_MAP.get(s_upper, s_upper)
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
@@ -102,7 +115,7 @@ class USEquitiesProvider(BaseMarketDataProvider):
                         symbol=canonical_sym,
                         name=q_snap.get("name") or canonical_sym,
                         exchange="NASDAQ" if yf_sym.startswith("^I") or canonical_sym in ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "QQQ"] else "NYSE",
-                        asset_type="INDEX" if yf_sym.startswith("^") else ("ETF" if canonical_sym in ["QQQ", "SPY", "VTI"] else "EQUITY"),
+                        asset_type="INDEX" if yf_sym.startswith("^") else ("ETF" if canonical_sym in ["QQQ", "SPY", "VOO", "VTI"] else "EQUITY"),
                         price=q_snap["price"],
                         change=q_snap["change"],
                         change_pct=q_snap["change_pct"],
@@ -161,7 +174,7 @@ class USEquitiesProvider(BaseMarketDataProvider):
                     symbol=canonical_sym,
                     name=name,
                     exchange="NASDAQ" if yf_sym.startswith("^I") or canonical_sym in ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "QQQ"] else "NYSE",
-                    asset_type="INDEX" if yf_sym.startswith("^") else ("ETF" if canonical_sym in ["QQQ", "SPY", "VTI"] else "EQUITY"),
+                    asset_type="INDEX" if yf_sym.startswith("^") else ("ETF" if canonical_sym in ["QQQ", "SPY", "VOO", "VTI"] else "EQUITY"),
                     price=current_price,
                     change=change,
                     change_pct=change_pct,
@@ -308,11 +321,11 @@ class USEquitiesProvider(BaseMarketDataProvider):
             return {"symbol": canonical_sym, "freshness": DataFreshness.UNAVAILABLE.value, "message": "Fundamentals unavailable"}
 
     def get_instrument_metadata(self, symbol: str) -> Dict[str, Any]:
-        canonical_sym = symbol.upper().strip()
+        canonical_sym = self.resolve_symbol(symbol)
         return {
             "symbol": canonical_sym,
             "exchange": "NASDAQ" if canonical_sym in ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "QQQ"] else "NYSE",
             "country": "US",
             "currency": "USD",
-            "assetType": "INDEX" if canonical_sym in ["NASDAQ", "S&P 500", "DOW JONES", "RUSSELL 2000"] else ("ETF" if canonical_sym in ["QQQ", "SPY", "VTI"] else "EQUITY")
+            "assetType": "INDEX" if canonical_sym in ["NASDAQ", "S&P 500", "DOW JONES", "^RUT"] or canonical_sym.startswith("^") else ("ETF" if canonical_sym in ["QQQ", "SPY", "VOO", "VTI"] else "EQUITY")
         }

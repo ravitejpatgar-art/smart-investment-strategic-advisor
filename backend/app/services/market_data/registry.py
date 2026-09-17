@@ -205,7 +205,7 @@ class MarketDataProviderRegistry:
             return cached
 
         india_symbols = ["NIFTY 50", "SENSEX", "BANKNIFTY", "NIFTY IT", "NIFTY AUTO"]
-        us_symbols = ["NASDAQ", "S&P 500", "DOW JONES", "RUSSELL 2000"]
+        us_symbols = ["NASDAQ", "S&P 500", "DOW JONES", "^RUT"]
         stock_symbols = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "TATAMOTORS", "NVDA", "AAPL", "TSLA", "TSM", "ASML"]
 
         india_quotes = [self.get_quote(s) for s in india_symbols]
