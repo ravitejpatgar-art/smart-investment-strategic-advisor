@@ -41,7 +41,25 @@ interface MarketExplorerViewProps {
 }
 
 export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVestIQWithQuery }) => {
-  const { setActiveView } = useFintechStore();
+  const { setActiveView, strategy } = useFintechStore();
+
+  // Cross-reference user strategy allocations for portfolio integration
+  const userOwnedMap = useMemo(() => {
+    const map = new Map<string, { weight: number; role: string }>();
+    if (strategy?.allocations) {
+      strategy.allocations.forEach(alloc => {
+        const wt = alloc.percentage || 0;
+        const role = alloc.portfolioRole || alloc.category || 'Core Portfolio';
+        if (alloc.ticker) map.set(alloc.ticker.toUpperCase(), { weight: wt, role });
+        if (alloc.name) map.set(alloc.name.toUpperCase(), { weight: wt, role });
+        if (alloc.id) map.set(alloc.id.toUpperCase(), { weight: wt, role });
+        if (alloc.suggestedInstruments) {
+          alloc.suggestedInstruments.forEach(inst => map.set(inst.toUpperCase(), { weight: wt, role }));
+        }
+      });
+    }
+    return map;
+  }, [strategy]);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -737,6 +755,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
             onAction={handleResetFilters}
           />
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {instrumentsData.items.map((item) => {
               const quote = item.quote;
@@ -750,11 +769,77 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
               const hasPrice = displayPrice !== null && displayPrice !== undefined;
               const hasNav = displayNav !== null && displayNav !== undefined;
 
+              // AI Signal Badge & Risk Attributes
+              const signal = item.signalBadge?.signal || item.signal || 'HOLD';
+              const confidence = item.signalBadge?.confidence ?? item.confidence ?? 75;
+              const riskScore = item.signalBadge?.riskScore || item.riskScore || 'MEDIUM';
+
+              // User Portfolio Integration
+              const symUpper = (item.symbol || '').toUpperCase();
+              const tickerUpper = (item.ticker || '').toUpperCase();
+              const nameUpper = (item.name || '').toUpperCase();
+              const isOwned = Boolean(userOwnedMap.has(symUpper) || userOwnedMap.has(tickerUpper) || userOwnedMap.has(nameUpper));
+              const ownedInfo = userOwnedMap.get(symUpper) || userOwnedMap.get(tickerUpper) || userOwnedMap.get(nameUpper);
+
+              // Calculate Suggested Action based on institutional signal
+              let suggestedAction = 'HOLD';
+              if (signal === 'STRONG BUY') suggestedAction = 'BUY MORE';
+              else if (signal === 'BUY') suggestedAction = 'ACCUMULATE';
+              else if (signal === 'HOLD') suggestedAction = 'HOLD';
+              else if (signal === 'SELL') suggestedAction = 'REDUCE';
+              else if (signal === 'STRONG SELL') suggestedAction = 'EXIT';
+
+              // Exact institutional color mapping
+              const getSignalColor = (sig: string) => {
+                switch (sig) {
+                  case 'STRONG BUY':
+                    return 'bg-emerald-950 text-emerald-300 border-emerald-700';
+                  case 'BUY':
+                    return 'bg-emerald-600 text-white border-emerald-500';
+                  case 'HOLD':
+                    return 'bg-blue-600 text-white border-blue-500';
+                  case 'SELL':
+                    return 'bg-amber-600 text-white border-amber-500';
+                  case 'STRONG SELL':
+                    return 'bg-red-600 text-white border-red-500';
+                  default:
+                    return 'bg-slate-700 text-white border-slate-600';
+                }
+              };
+
+              const getActionColor = (act: string) => {
+                switch (act) {
+                  case 'BUY MORE':
+                    return 'bg-emerald-900 text-emerald-200 border-emerald-700';
+                  case 'ACCUMULATE':
+                    return 'bg-emerald-700 text-emerald-100 border-emerald-600';
+                  case 'HOLD':
+                    return 'bg-blue-700 text-blue-100 border-blue-600';
+                  case 'REDUCE':
+                    return 'bg-amber-700 text-amber-100 border-amber-600';
+                  case 'EXIT':
+                    return 'bg-red-700 text-red-100 border-red-600';
+                  default:
+                    return 'bg-slate-700 text-slate-200 border-slate-600';
+                }
+              };
+
+              // Volume formatting
+              const rawVol = quote?.volume;
+              let formattedVol = '—';
+              if (rawVol && !isNaN(Number(rawVol)) && Number(rawVol) > 0) {
+                const v = Number(rawVol);
+                if (v >= 1e7) formattedVol = `${(v / 1e7).toFixed(1)}Cr`;
+                else if (v >= 1e6) formattedVol = `${(v / 1e6).toFixed(1)}M`;
+                else if (v >= 1e3) formattedVol = `${(v / 1e3).toFixed(0)}K`;
+                else formattedVol = v.toLocaleString();
+              }
+
               return (
                 <div
                   key={item.canonicalId}
                   onClick={() => handleOpenDetail(item)}
-                  className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between gap-3.5 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all shadow-xs group"
+                  className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between gap-3 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all shadow-xs group"
                 >
                   {/* Top Row: Symbol, Badges, Watchlist */}
                   <div className="flex items-start justify-between gap-2">
@@ -816,8 +901,28 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                     </button>
                   </div>
 
-                  {/* Price & Change Row */}
-                  <div className="flex items-baseline justify-between pt-2.5 border-t border-slate-100">
+                  {/* AI Signal Badge & Confidence Row */}
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold font-mono tracking-wide uppercase border shadow-2xs ${getSignalColor(signal)}`}>
+                        {signal}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-600">
+                        Conf: <strong className="text-slate-900">{confidence}%</strong>
+                      </span>
+                    </div>
+
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border font-mono ${
+                      riskScore === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
+                      riskScore === 'LOW' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      Risk: {riskScore}
+                    </span>
+                  </div>
+
+                  {/* Price, Change & Volume Row */}
+                  <div className="flex items-baseline justify-between pt-2 border-t border-slate-100">
                     <div>
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
                         {isMf ? 'Latest NAV' : 'Price'}
@@ -845,14 +950,33 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                           {quote?.freshness || 'HISTORICAL'}
                         </span>
                       )}
-                      <span className="text-[10.5px] text-slate-500 block truncate max-w-[140px]">
-                        {item.fundHouse || item.sector || item.category || 'Institutional Asset'}
-                      </span>
+                      <div className="text-[10.5px] font-mono text-slate-500">
+                        Vol: <strong className="text-slate-700">{formattedVol}</strong>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Portfolio Integration Banner if owned by user */}
+                  {isOwned && (
+                    <div className="p-2 rounded-xl bg-teal-50/70 border border-teal-200 text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-ping" />
+                          <span>Owned in Portfolio</span>
+                        </span>
+                        <span className={`px-2 py-0.2 rounded text-[10px] font-bold font-mono border ${getActionColor(suggestedAction)}`}>
+                          {suggestedAction}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-teal-800">
+                        <span>Weight: <strong>{ownedInfo?.weight || 0}%</strong></span>
+                        <span className="truncate max-w-[120px] text-[10.5px]">{ownedInfo?.role || 'Core Asset'}</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Footer Action & Freshness Strip */}
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100">
                     <div className="flex items-center gap-1.5">
                       <Badge 
                         variant={getFreshnessVariant(quote?.status, quote?.freshness)} 
@@ -872,6 +996,12 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
               );
             })}
           </div>
+
+          {/* Compliance Disclaimer Banner */}
+          <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-[11px] text-slate-500 leading-relaxed">
+            Signals are AI-generated analytical insights based on market data, technical indicators and fundamental metrics. They are not financial advice.
+          </div>
+        </>
         )}
 
         {/* 4. SERVER-SIDE PAGINATION CONTROLS */}

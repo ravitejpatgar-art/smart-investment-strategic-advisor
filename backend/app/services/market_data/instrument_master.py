@@ -257,6 +257,29 @@ class GlobalInstrumentMasterRegistry:
             else:
                 enriched_items = []
 
+            # Hydrate items with institutional AI signal badges
+            try:
+                from app.services.market_data.signal_engine import market_signal_engine
+                for it in enriched_items:
+                    try:
+                        sig = market_signal_engine.get_signal_for_instrument(
+                            symbol=it.get("symbol", ""),
+                            asset_type=it.get("assetType", "STOCK"),
+                            quote=it.get("quote")
+                        )
+                        it["signalBadge"] = {
+                            "signal": sig["overallSignal"],
+                            "confidence": sig["confidence"],
+                            "riskScore": sig["riskScore"]
+                        }
+                        it["signal"] = sig["overallSignal"]
+                        it["confidence"] = sig["confidence"]
+                        it["riskScore"] = sig["riskScore"]
+                    except Exception:
+                        it["signalBadge"] = None
+            except Exception:
+                pass
+
             return {
                 "items": enriched_items,
                 "total": total_count,

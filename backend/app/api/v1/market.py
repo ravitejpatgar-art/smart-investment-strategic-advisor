@@ -66,7 +66,10 @@ def trigger_universe_sync(
 
 @router.get("/instruments")
 def list_market_instruments(
+    request: Request,
     q: Optional[str] = Query(None, description="Search query across symbol, name, alias, ISIN"),
+    query: Optional[str] = Query(None, description="Alias for q"),
+    search: Optional[str] = Query(None, description="Alias for q"),
     asset_type: Optional[str] = Query(None, description="Filter: STOCK, ETF, MUTUAL_FUND, INDEX, COMMODITY, ALL"),
     market: Optional[str] = Query(None, description="Filter: INDIA, US, GLOBAL, ALL"),
     exchange: Optional[str] = Query(None, description="Filter: NSE, BSE, NASDAQ, NYSE, AMFI, LSE, MCX, ALL"),
@@ -86,8 +89,18 @@ def list_market_instruments(
             detail="Pagination limit must be between 1 and 100."
         )
 
+    search_term = (
+        query
+        or q
+        or search
+        or request.query_params.get("query")
+        or request.query_params.get("q")
+        or request.query_params.get("search")
+        or ""
+    ).strip()
+
     return instrument_master.search(
-        query=q,
+        query=search_term if search_term else None,
         asset_type=asset_type,
         market=market,
         exchange=exchange,
@@ -198,6 +211,23 @@ def get_instrument_research(
         asset_type=asset_type
     )
 
+    # ── 5b. Institutional AI Signal & Research Engine (Multi-Horizon & Targets) ──
+    from app.services.market_data.signal_engine import market_signal_engine
+    institutional_signal = None
+    try:
+        institutional_signal = market_signal_engine.get_signal_for_instrument(
+            symbol=actual_symbol,
+            asset_type=asset_type,
+            quote=quote,
+            technicals=technicals,
+            fundamentals=fundamentals,
+            valuation=valuation,
+            etf_data=etf_data,
+            mf_data=mf_data
+        )
+    except Exception:
+        institutional_signal = None
+
     # ── 6. Build capabilities from actual data (not hardcoded true) ──
     has_exp_ratio = (
         bool(instrument_data and instrument_data.get("expenseRatio"))
@@ -205,60 +235,119 @@ def get_instrument_research(
         or bool(mf_data and mf_data.get("expenseRatio"))
     )
     capabilities: Dict[str, bool] = {
-        "hasQuote":           has_quote,
-        "hasHistorical":      instrument_data is not None,
-        "hasFundamentals":    bool(fundamentals),
-        "hasValuation":       bool(valuation),
-        "hasDividends":       bool(dividends),
-        "hasRisk":            bool(risk),
-        "hasCashFlow":        bool(cash_flow),
-        "hasEarnings":        bool(earnings),
-        "hasOwnership":       bool(ownership),
-        "hasProfile":         bool(profile),
-        "hasAnalyst":         bool(analyst),
-        "hasNews":            bool(news and len(news) > 0),
-        "hasResearchSignal":  bool(research_signal and research_signal.get("signal") != "INSUFFICIENT DATA"),
-        "hasETFData":         bool(etf_data),
-        "hasMFData":          bool(mf_data),
-        "hasExpenseRatio":    has_exp_ratio,
-        "hasAUM":             bool((etf_data or mf_data or {}).get("aum")),
-        "hasBenchmark":       bool(instrument_data and instrument_data.get("benchmark")),
-        "hasNAV":             asset_type == "MUTUAL_FUND",
-        "hasFundManager":     False,
-        "hasHoldings":        False,
-        "hasSectorBreakdown": False,
-        "hasCountryBreakdown":False,
-        "hasTechnicals":      bool(technicals and technicals.get("available")),
-        "hasPerformance":     bool(etf_data and (
+        "hasQuote":               has_quote,
+        "hasHistorical":          instrument_data is not None,
+        "hasFundamentals":        bool(fundamentals),
+        "hasValuation":           bool(valuation),
+        "dividends":              bool(dividends),
+        "hasDividends":           bool(dividends),
+        "hasRisk":                bool(risk),
+        "hasCashFlow":            bool(cash_flow),
+        "hasEarnings":            bool(earnings),
+        "hasOwnership":           bool(ownership),
+        "hasProfile":             bool(profile),
+        "hasAnalyst":             bool(analyst),
+        "hasNews":                bool(news and len(news) > 0),
+        "hasResearchSignal":      bool(research_signal and research_signal.get("signal") != "INSUFFICIENT DATA"),
+        "hasInstitutionalSignal": bool(institutional_signal),
+        "hasPriceTargets":        bool(institutional_signal and institutional_signal.get("priceTargets")),
+        "hasETFData":             bool(etf_data),
+        "hasMFData":              bool(mf_data),
+        "hasExpenseRatio":        has_exp_ratio,
+        "hasAUM":                 bool((etf_data or mf_data or {}).get("aum")),
+        "hasBenchmark":           bool(instrument_data and instrument_data.get("benchmark")),
+        "hasNAV":                 asset_type == "MUTUAL_FUND",
+        "hasFundManager":         False,
+        "hasHoldings":            False,
+        "hasSectorBreakdown":     False,
+        "hasCountryBreakdown":    False,
+        "hasTechnicals":          bool(technicals and technicals.get("available")),
+        "hasPerformance":         bool(etf_data and (
             etf_data.get("ytdReturn") is not None
             or etf_data.get("threeYearReturn") is not None
         )),
     }
 
     return {
-        "instrument":       instrument_data,
-        "quote":            quote,
-        "fundamentals":     fundamentals,
-        "valuation":        valuation,
-        "dividends":        dividends,
-        "risk":             risk,
-        "cashFlow":         cash_flow,
-        "earnings":         earnings,
-        "ownership":        ownership,
-        "profile":          profile,
-        "analystConsensus": analyst,
-        "news":             news,
-        "researchSignal":   research_signal,
-        "technicals":       technicals,
-        "etfData":          etf_data,
-        "mfData":           mf_data,
-        "capabilities":     capabilities,
+        "instrument":           instrument_data,
+        "quote":                quote,
+        "fundamentals":         fundamentals,
+        "valuation":            valuation,
+        "dividends":            dividends,
+        "risk":                 risk,
+        "cashFlow":             cash_flow,
+        "earnings":             earnings,
+        "ownership":            ownership,
+        "profile":              profile,
+        "analystConsensus":     analyst,
+        "news":                 news,
+        "researchSignal":       research_signal,
+        "institutionalSignal":  institutional_signal,
+        "priceTargets":         institutional_signal.get("priceTargets") if institutional_signal else None,
+        "technicals":           technicals,
+        "etfData":              etf_data,
+        "mfData":               mf_data,
+        "capabilities":         capabilities,
         "sources": {
             "quote":       quote.get("source")    if quote           else None,
             "research":    research_data.get("source"),
             "freshness":   research_data.get("freshness", "UNAVAILABLE"),
         },
     }
+
+
+@router.get("/signals/{symbol:path}")
+def get_instrument_signals(
+    symbol: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Dedicated Institutional AI Signal & Price Targets endpoint.
+    Returns multi-horizon signals (Short-Term, Swing, Long-Term), confidence scores,
+    VestIQ institutional research panels, and price targets.
+    """
+    clean_symbol = symbol.strip()
+    instrument_data = None
+    try:
+        instrument_data = instrument_master.get_instrument_by_id(clean_symbol, db=db)
+    except Exception:
+        pass
+
+    actual_symbol = instrument_data["symbol"] if instrument_data else clean_symbol
+    asset_type = instrument_data.get("assetType", "STOCK") if instrument_data else "STOCK"
+
+    quote = None
+    try:
+        quote = market_registry.get_quote(actual_symbol)
+    except Exception:
+        pass
+
+    research_data = {}
+    try:
+        research_data = get_enhanced_fundamentals(actual_symbol, asset_type=asset_type)
+    except Exception:
+        pass
+
+    technicals = None
+    try:
+        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y")
+        if candles_res and candles_res.get("observations"):
+            technicals = calculate_technical_indicators(candles_res["observations"])
+    except Exception:
+        pass
+
+    from app.services.market_data.signal_engine import market_signal_engine
+    return market_signal_engine.get_signal_for_instrument(
+        symbol=actual_symbol,
+        asset_type=asset_type,
+        quote=quote,
+        technicals=technicals,
+        fundamentals=research_data.get("fundamentals"),
+        valuation=research_data.get("valuation"),
+        etf_data=research_data.get("etfData"),
+        mf_data=research_data.get("mfData")
+    )
+
 
 
 @router.get("/watchlist")

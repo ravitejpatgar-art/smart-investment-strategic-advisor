@@ -3,6 +3,7 @@ import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_, cast, String
 from app.models.instrument import Instrument
 from app.core.database import SessionLocal
 
@@ -407,8 +408,243 @@ GLOBAL_EQUITIES_CATALOGUE: List[Dict[str, Any]] = [
         "figi": "BBG000GZQ728",
         "isin": "US46625H1005",
         "aliases": ["JPMorgan", "JPM", "Chase", "Jamie Dimon"]
+    },
+    {
+        "canonical_id": "NYSE:V",
+        "symbol": "V",
+        "ticker": "V",
+        "name": "Visa Inc. Class A",
+        "short_name": "Visa",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Financials",
+        "industry": "Payment Processing",
+        "isin": "US92826C8394",
+        "aliases": ["Visa", "V", "Visa Cards"]
+    },
+    {
+        "canonical_id": "NYSE:MA",
+        "symbol": "MA",
+        "ticker": "MA",
+        "name": "Mastercard Incorporated Class A",
+        "short_name": "Mastercard",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Financials",
+        "industry": "Payment Processing",
+        "isin": "US57636Q1040",
+        "aliases": ["Mastercard", "MA", "Master Card"]
+    },
+    {
+        "canonical_id": "NYSE:WMT",
+        "symbol": "WMT",
+        "ticker": "WMT",
+        "name": "Walmart Inc.",
+        "short_name": "Walmart",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Consumer Staples",
+        "industry": "Hypermarkets & Supercenters",
+        "isin": "US9311421039",
+        "aliases": ["Walmart", "WMT", "Wal-Mart"]
+    },
+    {
+        "canonical_id": "NYSE:PG",
+        "symbol": "PG",
+        "ticker": "PG",
+        "name": "The Procter & Gamble Company",
+        "short_name": "Procter & Gamble",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Consumer Staples",
+        "industry": "Household & Personal Products",
+        "isin": "US7427181091",
+        "aliases": ["P&G", "PG", "Procter & Gamble"]
+    },
+    {
+        "canonical_id": "NYSE:JNJ",
+        "symbol": "JNJ",
+        "ticker": "JNJ",
+        "name": "Johnson & Johnson",
+        "short_name": "Johnson & Johnson",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Healthcare",
+        "industry": "Pharmaceuticals & MedTech",
+        "isin": "US4781601046",
+        "aliases": ["JNJ", "Johnson and Johnson", "J&J"]
+    },
+    {
+        "canonical_id": "NYSE:LLY",
+        "symbol": "LLY",
+        "ticker": "LLY",
+        "name": "Eli Lilly and Company",
+        "short_name": "Eli Lilly",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Healthcare",
+        "industry": "Pharmaceuticals & Biotechnology",
+        "isin": "US5324571083",
+        "aliases": ["Eli Lilly", "LLY", "Mounjaro", "Zepbound"]
+    },
+    {
+        "canonical_id": "NASDAQ:COST",
+        "symbol": "COST",
+        "ticker": "COST",
+        "name": "Costco Wholesale Corporation",
+        "short_name": "Costco",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NASDAQ",
+        "exchange_mic": "XNAS",
+        "currency": "USD",
+        "sector": "Consumer Staples",
+        "industry": "Consumer Retail & Wholesale",
+        "isin": "US22160K1051",
+        "aliases": ["Costco", "COST", "Costco Wholesale"]
+    },
+    {
+        "canonical_id": "NASDAQ:NFLX",
+        "symbol": "NFLX",
+        "ticker": "NFLX",
+        "name": "Netflix Inc.",
+        "short_name": "Netflix",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NASDAQ",
+        "exchange_mic": "XNAS",
+        "currency": "USD",
+        "sector": "Communication Services",
+        "industry": "Digital Streaming & Media",
+        "isin": "US64110L1061",
+        "aliases": ["Netflix", "NFLX", "Streaming"]
+    },
+    {
+        "canonical_id": "NYSE:DIS",
+        "symbol": "DIS",
+        "ticker": "DIS",
+        "name": "The Walt Disney Company",
+        "short_name": "Disney",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Communication Services",
+        "industry": "Entertainment & Theme Parks",
+        "isin": "US2546871060",
+        "aliases": ["Disney", "DIS", "Walt Disney", "Disney Plus"]
+    },
+    {
+        "canonical_id": "NYSE:ORCL",
+        "symbol": "ORCL",
+        "ticker": "ORCL",
+        "name": "Oracle Corporation",
+        "short_name": "Oracle",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Technology",
+        "industry": "Enterprise Cloud & Database Software",
+        "isin": "US68389X1054",
+        "aliases": ["Oracle", "ORCL", "Oracle Cloud"]
+    },
+    {
+        "canonical_id": "NASDAQ:ADBE",
+        "symbol": "ADBE",
+        "ticker": "ADBE",
+        "name": "Adobe Inc.",
+        "short_name": "Adobe",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NASDAQ",
+        "exchange_mic": "XNAS",
+        "currency": "USD",
+        "sector": "Technology",
+        "industry": "Creative Software & Cloud",
+        "isin": "US00724F1012",
+        "aliases": ["Adobe", "ADBE", "Photoshop", "Creative Cloud"]
+    },
+    {
+        "canonical_id": "NYSE:CRM",
+        "symbol": "CRM",
+        "ticker": "CRM",
+        "name": "Salesforce Inc.",
+        "short_name": "Salesforce",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSE",
+        "exchange_mic": "XNYS",
+        "currency": "USD",
+        "sector": "Technology",
+        "industry": "Enterprise Cloud CRM",
+        "isin": "US79466L3024",
+        "aliases": ["Salesforce", "CRM", "Agentforce"]
+    },
+    {
+        "canonical_id": "NASDAQ:QCOM",
+        "symbol": "QCOM",
+        "ticker": "QCOM",
+        "name": "QUALCOMM Incorporated",
+        "short_name": "Qualcomm",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NASDAQ",
+        "exchange_mic": "XNAS",
+        "currency": "USD",
+        "sector": "Semiconductors",
+        "industry": "Wireless & Snapdragon Mobile Processors",
+        "isin": "US7475251036",
+        "aliases": ["Qualcomm", "QCOM", "Snapdragon"]
     }
 ]
+
 
 # Indian Equities Universe (Top NSE / BSE Bluechips & Growth Equities)
 INDIAN_EQUITIES_CATALOGUE: List[Dict[str, Any]] = [
@@ -852,8 +1088,540 @@ GLOBAL_ETF_CATALOGUE: List[Dict[str, Any]] = [
         "benchmark": "NIFTY IT Index",
         "isin": "INF204KB1U55",
         "aliases": ["ITBEES", "Nifty IT ETF", "IT BeES"]
+    },
+    # Indian Commodity & Precious Metals ETFs
+    {
+        "canonical_id": "NSE:SILVERBEES",
+        "symbol": "SILVERBEES.NS",
+        "ticker": "SILVERBEES",
+        "name": "Nippon India ETF Silver BeES",
+        "short_name": "Silver BeES",
+        "asset_type": "ETF",
+        "asset_class": "COMMODITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "Domestic Price of Physical Silver",
+        "isin": "INF204KB10R9",
+        "aliases": ["SILVERBEES", "Silver BeES", "Silver ETF", "Nippon Silver"]
+    },
+    {
+        "canonical_id": "NSE:HDFCSILVER",
+        "symbol": "HDFCSILVER.NS",
+        "ticker": "HDFCSILVER",
+        "name": "HDFC Silver ETF",
+        "short_name": "HDFC Silver",
+        "asset_type": "ETF",
+        "asset_class": "COMMODITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "HDFC Mutual Fund",
+        "benchmark": "Domestic Price of Silver",
+        "isin": "INF179KC1CF9",
+        "aliases": ["HDFCSILVER", "HDFC Silver ETF"]
+    },
+    # Indian Index & Sectoral ETFs
+    {
+        "canonical_id": "NSE:JUNIORBEES",
+        "symbol": "JUNIORBEES.NS",
+        "ticker": "JUNIORBEES",
+        "name": "Nippon India ETF Nifty Next 50 Junior BeES",
+        "short_name": "Junior BeES",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY Next 50 Index",
+        "isin": "INF204KB14L6",
+        "aliases": ["JUNIORBEES", "Junior BeES", "Nifty Next 50 ETF"]
+    },
+    {
+        "canonical_id": "NSE:MID150BEES",
+        "symbol": "MID150BEES.NS",
+        "ticker": "MID150BEES",
+        "name": "Nippon India ETF Nifty Midcap 150",
+        "short_name": "Midcap 150 BeES",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY Midcap 150 Index",
+        "isin": "INF204KB19S9",
+        "aliases": ["MID150BEES", "Nifty Midcap ETF", "Midcap 150"]
+    },
+    {
+        "canonical_id": "NSE:AUTOBEES",
+        "symbol": "AUTOBEES.NS",
+        "ticker": "AUTOBEES",
+        "name": "Nippon India ETF Nifty Auto",
+        "short_name": "Auto BeES",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY Auto Index",
+        "isin": "INF204KB12W7",
+        "aliases": ["AUTOBEES", "Nifty Auto ETF", "Auto BeES"]
+    },
+    {
+        "canonical_id": "NSE:PHARMABEES",
+        "symbol": "PHARMABEES.NS",
+        "ticker": "PHARMABEES",
+        "name": "Nippon India ETF Nifty Pharma",
+        "short_name": "Pharma BeES",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY Pharma Index",
+        "isin": "INF204KB18V6",
+        "aliases": ["PHARMABEES", "Nifty Pharma ETF", "Pharma BeES"]
+    },
+    {
+        "canonical_id": "NSE:CPSEETF",
+        "symbol": "CPSEETF.NS",
+        "ticker": "CPSEETF",
+        "name": "CPSE ETF",
+        "short_name": "CPSE ETF",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY CPSE Index",
+        "isin": "INF204KB16I7",
+        "aliases": ["CPSEETF", "CPSE ETF", "PSU ETF"]
+    },
+    {
+        "canonical_id": "NSE:BHARAT22",
+        "symbol": "BHARAT22.NS",
+        "ticker": "BHARAT22",
+        "name": "ICICI Prudential BHARAT 22 ETF",
+        "short_name": "Bharat 22 ETF",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "ICICI Prudential Mutual Fund",
+        "benchmark": "S&P BSE BHARAT 22 Index",
+        "isin": "INF109K015Y2",
+        "aliases": ["BHARAT22", "Bharat 22", "Bharat 22 ETF"]
+    },
+    # Indian Debt & Liquid ETFs
+    {
+        "canonical_id": "NSE:LIQUIDBEES",
+        "symbol": "LIQUIDBEES.NS",
+        "ticker": "LIQUIDBEES",
+        "name": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+        "short_name": "Liquid BeES",
+        "asset_type": "ETF",
+        "asset_class": "DEBT",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY 1D Rate Index",
+        "isin": "INF204KB17D6",
+        "aliases": ["LIQUIDBEES", "Liquid BeES", "Liquid ETF"]
+    },
+    {
+        "canonical_id": "NSE:LIQUIDCASE",
+        "symbol": "LIQUIDCASE.NS",
+        "ticker": "LIQUIDCASE",
+        "name": "Zerodha Nifty 1D Rate Liquid ETF",
+        "short_name": "Zerodha Liquid ETF",
+        "asset_type": "ETF",
+        "asset_class": "DEBT",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Zerodha Fund House",
+        "benchmark": "NIFTY 1D Rate Index",
+        "isin": "INF0QN601015",
+        "aliases": ["LIQUIDCASE", "Zerodha Liquid", "Zerodha Liquid ETF"]
+    },
+    {
+        "canonical_id": "NSE:GSEC10YR",
+        "symbol": "GSEC10YR.NS",
+        "ticker": "GSEC10YR",
+        "name": "Nippon India ETF Nifty 8-13 yr G-Sec",
+        "short_name": "G-Sec 10Y ETF",
+        "asset_type": "ETF",
+        "asset_class": "DEBT",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Nippon Life India Asset Management",
+        "benchmark": "NIFTY 8-13 yr G-Sec Index",
+        "isin": "INF204KB18V6",
+        "aliases": ["GSEC10YR", "G-Sec ETF", "10 Year G-Sec"]
+    },
+    # Indian International ETFs
+    {
+        "canonical_id": "NSE:MAFANG",
+        "symbol": "MAFANG.NS",
+        "ticker": "MAFANG",
+        "name": "Mirae Asset NYSE FANG+ ETF",
+        "short_name": "Mirae FANG+ ETF",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Mirae Asset Mutual Fund",
+        "benchmark": "NYSE FANG+ Index (INR)",
+        "isin": "INF769K01HK2",
+        "aliases": ["MAFANG", "Mirae FANG+", "FANG ETF India"]
+    },
+    {
+        "canonical_id": "NSE:MOFSP500",
+        "symbol": "MOFSP500.NS",
+        "ticker": "MOFSP500",
+        "name": "Motilal Oswal S&P 500 Index ETF",
+        "short_name": "Motilal S&P 500",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "fund_house": "Motilal Oswal Asset Management",
+        "benchmark": "S&P 500 Index (INR)",
+        "isin": "INF247L01BK3",
+        "aliases": ["MOFSP500", "Motilal S&P 500", "S&P 500 India ETF"]
+    },
+    # US Market Major ETFs
+    {
+        "canonical_id": "NYSEARCA:SPY",
+        "symbol": "SPY",
+        "ticker": "SPY",
+        "name": "SPDR S&P 500 ETF Trust",
+        "short_name": "SPDR S&P 500",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "State Street Global Advisors",
+        "benchmark": "S&P 500 Index",
+        "isin": "US78462F1030",
+        "aliases": ["SPY", "SPDR S&P 500", "S&P 500 ETF"]
+    },
+    {
+        "canonical_id": "NYSEARCA:IWM",
+        "symbol": "IWM",
+        "ticker": "IWM",
+        "name": "iShares Russell 2000 ETF",
+        "short_name": "iShares Russell 2000",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "BlackRock iShares",
+        "benchmark": "Russell 2000 Index",
+        "isin": "US4642876555",
+        "aliases": ["IWM", "Russell 2000 ETF", "US Small Cap ETF"]
+    },
+    {
+        "canonical_id": "NYSEARCA:DIA",
+        "symbol": "DIA",
+        "ticker": "DIA",
+        "name": "SPDR Dow Jones Industrial Average ETF Trust",
+        "short_name": "SPDR Dow Jones",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "State Street Global Advisors",
+        "benchmark": "Dow Jones Industrial Average",
+        "isin": "US78467X1090",
+        "aliases": ["DIA", "Dow Jones ETF", "Dow ETF"]
+    },
+    {
+        "canonical_id": "NASDAQ:BND",
+        "symbol": "BND",
+        "ticker": "BND",
+        "name": "Vanguard Total Bond Market ETF",
+        "short_name": "Vanguard Total Bond",
+        "asset_type": "ETF",
+        "asset_class": "DEBT",
+        "market": "US",
+        "country": "US",
+        "exchange": "NASDAQ",
+        "exchange_mic": "XNAS",
+        "currency": "USD",
+        "fund_house": "Vanguard Group",
+        "benchmark": "Bloomberg U.S. Aggregate Float Adjusted Index",
+        "isin": "US9219378356",
+        "aliases": ["BND", "Total Bond ETF", "Vanguard Bond"]
+    },
+    {
+        "canonical_id": "NASDAQ:TLT",
+        "symbol": "TLT",
+        "ticker": "TLT",
+        "name": "iShares 20+ Year Treasury Bond ETF",
+        "short_name": "iShares 20+ Year Treasury",
+        "asset_type": "ETF",
+        "asset_class": "DEBT",
+        "market": "US",
+        "country": "US",
+        "exchange": "NASDAQ",
+        "exchange_mic": "XNAS",
+        "currency": "USD",
+        "fund_house": "BlackRock iShares",
+        "benchmark": "ICE U.S. Treasury 20+ Year Bond Index",
+        "isin": "US4642874329",
+        "aliases": ["TLT", "20 Year Treasury ETF", "US Treasuries"]
+    },
+    {
+        "canonical_id": "NYSEARCA:SLV",
+        "symbol": "SLV",
+        "ticker": "SLV",
+        "name": "iShares Silver Trust",
+        "short_name": "iShares Silver",
+        "asset_type": "ETF",
+        "asset_class": "COMMODITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "BlackRock iShares",
+        "benchmark": "LBMA Silver Price",
+        "isin": "US46428Q1094",
+        "aliases": ["SLV", "Silver ETF US", "iShares Silver"]
+    },
+    {
+        "canonical_id": "NYSEARCA:XLK",
+        "symbol": "XLK",
+        "ticker": "XLK",
+        "name": "Technology Select Sector SPDR Fund",
+        "short_name": "Tech SPDR",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "State Street Global Advisors",
+        "benchmark": "Technology Select Sector Index",
+        "isin": "US81369Y8030",
+        "aliases": ["XLK", "US Tech Sector ETF", "Tech SPDR"]
+    },
+    {
+        "canonical_id": "NYSEARCA:XLF",
+        "symbol": "XLF",
+        "ticker": "XLF",
+        "name": "Financial Select Sector SPDR Fund",
+        "short_name": "Financial SPDR",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "State Street Global Advisors",
+        "benchmark": "Financial Select Sector Index",
+        "isin": "US81369Y6059",
+        "aliases": ["XLF", "Financial Sector ETF", "US Bank ETF"]
+    },
+    {
+        "canonical_id": "NYSEARCA:SOXX",
+        "symbol": "SOXX",
+        "ticker": "SOXX",
+        "name": "iShares Semiconductor ETF",
+        "short_name": "iShares Semiconductor",
+        "asset_type": "ETF",
+        "asset_class": "EQUITY",
+        "market": "US",
+        "country": "US",
+        "exchange": "NYSEARCA",
+        "exchange_mic": "ARCX",
+        "currency": "USD",
+        "fund_house": "BlackRock iShares",
+        "benchmark": "NYSE Semiconductor Index",
+        "isin": "US4642875235",
+        "aliases": ["SOXX", "Semiconductor ETF", "Chippies"]
     }
 ]
+
+# Indian REITs & InvITs Catalogue
+INDIAN_REIT_INVIT_CATALOGUE: List[Dict[str, Any]] = [
+    {
+        "canonical_id": "NSE:EMBASSY",
+        "symbol": "EMBASSY.NS",
+        "ticker": "EMBASSY",
+        "name": "Embassy Office Parks REIT",
+        "short_name": "Embassy REIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Real Estate",
+        "industry": "Commercial Office REIT",
+        "isin": "INE041025011",
+        "aliases": ["EMBASSY", "Embassy REIT", "Embassy Office Parks"]
+    },
+    {
+        "canonical_id": "NSE:MINDSPACE",
+        "symbol": "MINDSPACE.NS",
+        "ticker": "MINDSPACE",
+        "name": "Mindspace Business Parks REIT",
+        "short_name": "Mindspace REIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Real Estate",
+        "industry": "Commercial Office REIT",
+        "isin": "INE0CCU25019",
+        "aliases": ["MINDSPACE", "Mindspace REIT", "Mindspace Business Parks"]
+    },
+    {
+        "canonical_id": "NSE:BIRET",
+        "symbol": "BIRET.NS",
+        "ticker": "BIRET",
+        "name": "Brookfield India Real Estate Trust",
+        "short_name": "Brookfield REIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Real Estate",
+        "industry": "Commercial Office REIT",
+        "isin": "INE0FDU25010",
+        "aliases": ["BIRET", "Brookfield REIT", "Brookfield India"]
+    },
+    {
+        "canonical_id": "NSE:NEXUS",
+        "symbol": "NEXUS.NS",
+        "ticker": "NEXUS",
+        "name": "Nexus Select Trust REIT",
+        "short_name": "Nexus Select REIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Real Estate",
+        "industry": "Retail Shopping Mall REIT",
+        "isin": "INE0OD725013",
+        "aliases": ["NEXUS", "Nexus REIT", "Nexus Select Trust"]
+    },
+    {
+        "canonical_id": "NSE:PGINVIT",
+        "symbol": "PGINVIT.NS",
+        "ticker": "PGINVIT",
+        "name": "POWERGRID Infrastructure Investment Trust",
+        "short_name": "PowerGrid InvIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Utilities",
+        "industry": "Power Transmission Infrastructure",
+        "isin": "INE0GGX23010",
+        "aliases": ["PGINVIT", "Powergrid InvIT", "Powergrid Infrastructure"]
+    },
+    {
+        "canonical_id": "NSE:IRBINVIT",
+        "symbol": "IRBINVIT.NS",
+        "ticker": "IRBINVIT",
+        "name": "IRB InvIT Fund",
+        "short_name": "IRB InvIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Infrastructure",
+        "industry": "Toll Roads & Highways InvIT",
+        "isin": "INE183W23014",
+        "aliases": ["IRBINVIT", "IRB InvIT", "IRB Infrastructure"]
+    },
+    {
+        "canonical_id": "NSE:INDIGRID",
+        "symbol": "INDIGRID.NS",
+        "ticker": "INDIGRID",
+        "name": "India Grid Trust",
+        "short_name": "IndiGrid InvIT",
+        "asset_type": "STOCK",
+        "asset_class": "EQUITY",
+        "market": "INDIA",
+        "country": "IN",
+        "exchange": "NSE",
+        "exchange_mic": "XNSE",
+        "currency": "INR",
+        "sector": "Utilities",
+        "industry": "Power Transmission Infrastructure",
+        "isin": "INE219X23014",
+        "aliases": ["INDIGRID", "IndiGrid", "India Grid Trust"]
+    }
+]
+
 
 # AMFI Direct Mutual Funds Catalogue
 AMFI_MUTUAL_FUNDS_CATALOGUE: List[Dict[str, Any]] = [
@@ -1104,6 +1872,7 @@ GLOBAL_INDICES_CATALOGUE: List[Dict[str, Any]] = [
 ALL_CANONICAL_SEEDS = (
     GLOBAL_EQUITIES_CATALOGUE +
     INDIAN_EQUITIES_CATALOGUE +
+    INDIAN_REIT_INVIT_CATALOGUE +
     GLOBAL_ETF_CATALOGUE +
     AMFI_MUTUAL_FUNDS_CATALOGUE +
     GLOBAL_INDICES_CATALOGUE
@@ -1235,7 +2004,7 @@ class GlobalUniverseManager:
         limit: int = 25
     ) -> Dict[str, Any]:
         """
-        Server-side ranked search across global instruments with exact symbol/ISIN matching,
+        Server-side multi-stage ranked search across global instruments with exact ticker/symbol/ISIN matching,
         prefix matching, alias matching, and bounded database pagination.
         """
         # Ensure base seeding exists
@@ -1246,7 +2015,10 @@ class GlobalUniverseManager:
         safe_page = max(1, page)
         safe_limit = max(1, min(limit, 100))
 
-        q = (query or "").strip()
+        # Normalize query: uppercase, trim spaces, remove extra whitespace
+        q_raw = (query or "").strip()
+        q_clean = " ".join(re.split(r'\s+', q_raw)).upper() if q_raw else ""
+
         raw_type = (asset_type or "").strip().upper()
         # Normalize filter string aliases (e.g. STOCKS -> STOCK, MUTUAL_FUNDS -> MUTUAL_FUND)
         type_mapping = {
@@ -1281,14 +2053,13 @@ class GlobalUniverseManager:
         if currency and currency.upper() != "ALL":
             query_builder = query_builder.filter(Instrument.currency == currency.upper())
 
-        all_candidates = query_builder.all()
-
-        if not q:
-            # Default sorting by asset type priority then name
+        # If no query string, apply default sorting (Index -> ETF -> Stock -> MF -> Commodity)
+        if not q_clean:
             def default_rank(item: Instrument):
                 type_prio = {"INDEX": 1, "ETF": 2, "STOCK": 3, "MUTUAL_FUND": 4, "COMMODITY": 5}
                 return (type_prio.get(item.asset_type, 9), item.name)
 
+            all_candidates = query_builder.all()
             sorted_candidates = sorted(all_candidates, key=default_rank)
             total = len(sorted_candidates)
             start_idx = (safe_page - 1) * safe_limit
@@ -1303,60 +2074,110 @@ class GlobalUniverseManager:
                 "has_next": end_idx < total
             }
 
-        # Multi-tiered Ranking Algorithm
-        q_lower = q.lower()
-        q_upper = q.upper()
-        scored_items = []
+        # Multi-stage Candidate Pre-Filtering across all search fields:
+        # ticker, symbol, name, shortName, isin, sector, industry, fundHouse, aliases
+        tokens = [t for t in q_clean.split() if len(t) > 1]
+        
+        filter_clauses = [
+            Instrument.ticker.ilike(f"%{q_clean}%"),
+            Instrument.symbol.ilike(f"%{q_clean}%"),
+            Instrument.name.ilike(f"%{q_clean}%"),
+            Instrument.short_name.ilike(f"%{q_clean}%"),
+            Instrument.isin.ilike(f"{q_clean}%"),
+            Instrument.scheme_code.ilike(f"{q_clean}%"),
+            Instrument.sector.ilike(f"%{q_clean}%"),
+            Instrument.industry.ilike(f"%{q_clean}%"),
+            Instrument.fund_house.ilike(f"%{q_clean}%"),
+            Instrument.fund_category.ilike(f"%{q_clean}%"),
+            cast(Instrument.aliases, String).ilike(f"%{q_clean}%")
+        ]
 
-        for inst in all_candidates:
-            ticker_lower = (inst.ticker or "").lower()
-            symbol_lower = (inst.symbol or "").lower()
-            name_lower = (inst.name or "").lower()
-            short_lower = (inst.short_name or "").lower()
-            isin_lower = (inst.isin or "").lower()
-            scheme_code_str = (inst.scheme_code or "").lower()
-            aliases = [a.lower() for a in (inst.aliases or [])]
+        if len(tokens) > 1:
+            filter_clauses.append(and_(*[
+                or_(
+                    Instrument.name.ilike(f"%{t}%"),
+                    Instrument.ticker.ilike(f"%{t}%"),
+                    Instrument.symbol.ilike(f"%{t}%"),
+                    Instrument.fund_house.ilike(f"%{t}%"),
+                    Instrument.fund_category.ilike(f"%{t}%"),
+                    Instrument.sector.ilike(f"%{t}%"),
+                    Instrument.industry.ilike(f"%{t}%"),
+                    cast(Instrument.aliases, String).ilike(f"%{t}%")
+                ) for t in tokens
+            ]))
 
-            score = 0
+        candidates = query_builder.filter(or_(*filter_clauses)).all()
 
-            # 1. Exact Match on Ticker / Symbol
-            if q_lower == ticker_lower or q_lower == symbol_lower:
-                score = 1000
-            # 2. Exact Match on ISIN
-            elif inst.isin and q_upper == inst.isin.upper():
-                score = 950
-            # 3. Exact Match on Scheme Code or Short Name
-            elif (scheme_code_str and q_lower == scheme_code_str) or q_lower == short_lower or q_lower == name_lower:
-                score = 900
-            # 4. Exact match in aliases
-            elif any(q_lower == a for a in aliases):
-                score = 850
-            # 5. Symbol / Ticker prefix match
-            elif ticker_lower.startswith(q_lower) or symbol_lower.startswith(q_lower):
-                score = 750
-            # 6. Company name / Short name prefix match
-            elif name_lower.startswith(q_lower) or short_lower.startswith(q_lower):
-                score = 600
-            # 7. Partial substring in ticker, symbol or aliases
-            elif q_lower in ticker_lower or q_lower in symbol_lower or any(q_lower in a for a in aliases):
-                score = 500
-            # 8. Partial substring in company name, fund house, or benchmark
-            elif q_lower in name_lower or q_lower in (inst.fund_house or "").lower() or q_lower in (inst.benchmark or "").lower():
-                score = 400
-            # 9. Word-boundary / token containment
-            else:
-                words = [w for w in re.findall(r'\w+', q_lower) if len(w) > 1]
-                if words:
-                    matched_words = sum(1 for w in words if w in name_lower or w in ticker_lower or w in (inst.fund_house or "").lower())
-                    if matched_words > 0:
-                        score = 100 + (matched_words * 30)
+        # Multi-stage ranking algorithm
+        def score_candidate(inst: Instrument) -> int:
+            ticker_up = (inst.ticker or "").upper().strip()
+            symbol_up = (inst.symbol or "").upper().strip()
+            base_sym_up = symbol_up.split(".")[0] if "." in symbol_up else symbol_up
+            name_up = (inst.name or "").upper().strip()
+            short_up = (inst.short_name or "").upper().strip()
+            isin_up = (inst.isin or "").upper().strip()
+            scheme_up = (inst.scheme_code or "").upper().strip()
+            sector_up = (inst.sector or "").upper().strip()
+            industry_up = (inst.industry or "").upper().strip()
+            fund_house_up = (inst.fund_house or "").upper().strip()
+            fund_cat_up = (inst.fund_category or "").upper().strip()
+            aliases_up = [str(a).upper().strip() for a in (inst.aliases or [])]
 
+            # Priority 1: Exact ticker match (e.g. QQQ == QQQ, AAPL == AAPL, MON100 == MON100, RELIANCE == RELIANCE)
+            if ticker_up == q_clean:
+                return 100000
+
+            # Priority 2: Exact symbol match (e.g. MON100.NS == MON100.NS or base MON100 == MON100, exact ISIN, exact scheme code)
+            if symbol_up == q_clean or base_sym_up == q_clean:
+                return 80000
+            if isin_up == q_clean or (scheme_up and scheme_up == q_clean):
+                return 75000
+
+            # Priority 3: Starts-with match (e.g. RELIANCE -> RELIANCEPOWER, etc.)
+            if ticker_up.startswith(q_clean):
+                return 65000 - min(len(ticker_up) - len(q_clean), 1000)
+            if symbol_up.startswith(q_clean) or base_sym_up.startswith(q_clean):
+                return 60000 - min(len(symbol_up) - len(q_clean), 1000)
+            if name_up.startswith(q_clean) or short_up.startswith(q_clean):
+                return 55000 - min(len(name_up) - len(q_clean), 2000)
+
+            # Priority 4: Contains match (e.g. HDFC Flexi Cap, Parag Parikh Flexi Cap)
+            if q_clean in ticker_up:
+                return 45000
+            if q_clean in symbol_up:
+                return 40000
+            if q_clean in name_up or q_clean in short_up:
+                return 35000 - min(len(name_up) - len(q_clean), 2000)
+            if tokens and all(t in name_up for t in tokens):
+                return 30000 - min(len(name_up) - len(q_clean), 2000)
+
+            # Priority 5: Alias match
+            if any(q_clean == a for a in aliases_up):
+                return 25000
+            if any(a.startswith(q_clean) for a in aliases_up):
+                return 22000
+            if any(q_clean in a for a in aliases_up):
+                return 20000
+
+            # Priority 6: Sector / category match
+            if q_clean in fund_house_up or q_clean in fund_cat_up or q_clean in sector_up or q_clean in industry_up:
+                return 10000
+            if tokens and all(t in (fund_house_up + " " + fund_cat_up + " " + sector_up + " " + industry_up) for t in tokens):
+                return 7500
+            if tokens and any(t in (fund_house_up + " " + fund_cat_up + " " + sector_up + " " + industry_up) for t in tokens):
+                return 5000
+
+            return 0
+
+        scored_candidates = []
+        for inst in candidates:
+            score = score_candidate(inst)
             if score > 0:
-                scored_items.append((score, inst))
+                scored_candidates.append((score, inst))
 
-        # Sort by score descending then alphabetical
-        scored_items.sort(key=lambda x: (-x[0], x[1].name))
-        ranked_instruments = [item for _, item in scored_items]
+        # Sort only filtered candidates: score descending, shorter names first, then alphabetical
+        scored_candidates.sort(key=lambda x: (-x[0], len(x[1].name), x[1].name))
+        ranked_instruments = [item for _, item in scored_candidates]
 
         total = len(ranked_instruments)
         start_idx = (safe_page - 1) * safe_limit

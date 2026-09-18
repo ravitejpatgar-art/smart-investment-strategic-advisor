@@ -250,6 +250,99 @@ export interface MarketInstrument {
   isTradable?: boolean;
   lastUpdated?: string;
   quote?: MarketQuote | null;
+  signalBadge?: SignalBadge | null;
+  signal?: InstitutionalSignalType | string;
+  confidence?: number;
+  riskScore?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+}
+
+export type InstitutionalSignalType = 'STRONG BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG SELL';
+
+export interface SignalBadge {
+  signal: InstitutionalSignalType;
+  confidence: number;
+  riskScore: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface HorizonSignal {
+  signal: InstitutionalSignalType;
+  horizon: string;
+  score: number;
+  rationale: string;
+}
+
+export interface PriceTargetTier {
+  price: number;
+  targetPrice?: number;
+  upsidePct: number;
+  upsidePercent?: number;
+  horizon: string;
+  label: string;
+  reasoning?: string;
+}
+
+export interface InstitutionalPriceTargets {
+  conservative: PriceTargetTier;
+  base: PriceTargetTier;
+  aggressive: PriceTargetTier;
+  currency: string;
+  reasoning: string;
+  disclaimer?: string;
+}
+
+export interface VestIQInstitutionalResearch {
+  bullCase: string[];
+  bearCase: string[];
+  riskFactors: string[];
+  growthDrivers: string[];
+  valuationSummary: string;
+}
+
+export interface SignalHistoryItem {
+  date: string;
+  signal: InstitutionalSignalType;
+  price?: number;
+  returnSincePct?: number;
+}
+
+export interface InstitutionalSignal {
+  symbol: string;
+  overallSignal?: InstitutionalSignalType;
+  signal?: InstitutionalSignalType;
+  confidence: number;
+  riskScore: 'LOW' | 'MEDIUM' | 'HIGH';
+  currentPrice: number;
+  currency: string;
+  compositeScore?: number;
+  horizons: {
+    shortTerm: HorizonSignal;
+    swing: HorizonSignal;
+    longTerm: HorizonSignal;
+  };
+  reasons: {
+    bullish: string[];
+    bearish: string[];
+  };
+  factors?: {
+    bullish: string[];
+    bearish: string[];
+  };
+  priceTargets: InstitutionalPriceTargets;
+  institutionalResearch: VestIQInstitutionalResearch;
+  research?: VestIQInstitutionalResearch;
+  signalHistory: SignalHistoryItem[];
+  history?: SignalHistoryItem[];
+  technicalsSummary?: {
+    rsi?: number;
+    macdTrend?: string;
+    trendDirection?: string;
+    supportResistance?: Record<string, any>;
+    breakoutStatus?: string;
+    volatilityPct?: number;
+  };
+  coveragePct?: number;
+  disclaimer: string;
+  generatedAt: string;
 }
 
 export interface MarketResearchSignal {
@@ -285,6 +378,8 @@ export interface InstrumentResearchBundle {
   profile?: any;
   analystConsensus?: AnalystConsensusData;
   researchSignal?: MarketResearchSignal;
+  institutionalSignal?: InstitutionalSignal | null;
+  priceTargets?: InstitutionalPriceTargets | null;
   etfData?: any;
   mfData?: any;
   capabilities?: Record<string, boolean>;
@@ -1074,6 +1169,18 @@ export const marketApi = {
       };
     } catch {
       return getDemoResearch(symbol);
+    }
+  },
+
+  getSignal: async (symbol: string): Promise<InstitutionalSignal | null> => {
+    try {
+      const res = await apiClient.get<InstitutionalSignal>(`/market/signals/${encodeURIComponent(symbol)}`);
+      if (res.data) {
+        return res.data;
+      }
+      return null;
+    } catch {
+      return null;
     }
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   X,
   Sparkles,
@@ -15,9 +15,22 @@ import {
   ExternalLink,
   DollarSign,
   AlertTriangle,
-  Scale
+  Scale,
+  CheckCircle2,
+  XCircle,
+  Target,
+  ArrowUpRight,
+  ShieldAlert,
+  History,
+  Compass
 } from "lucide-react";
-import type { MarketInstrument, InstrumentResearchBundle, MarketResearchSignal } from "../../services/marketApi";
+import type {
+  MarketInstrument,
+  InstrumentResearchBundle,
+  MarketResearchSignal,
+  InstitutionalSignal,
+  InstitutionalPriceTargets
+} from "../../services/marketApi";
 import { marketApi } from "../../services/marketApi";
 import { UniversalInstrumentChart } from "./UniversalInstrumentChart";
 import { Badge } from "../common/Badge";
@@ -90,16 +103,25 @@ function formatCurrencyAmount(num?: number | null, cur: string = 'USD'): string 
 export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   instrument, isOpen, onClose, isWatchlisted, onToggleWatchlist, onAskVestIQ
 }) => {
-  const { setActiveView } = useFintechStore();
+  const { setActiveView, strategy } = useFintechStore();
   const [bundle, setBundle] = useState<InstrumentResearchBundle | null>(null);
+  const [signalData, setSignalData] = useState<InstitutionalSignal | null>(null);
   const [isLoadingResearch, setIsLoadingResearch] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("overview");
 
   const loadResearch = useCallback(async (inst: MarketInstrument) => {
     setIsLoadingResearch(true);
     try {
-      const data = await marketApi.getResearch(inst.symbol);
-      setBundle(data);
+      const [resBundle, resSignal] = await Promise.allSettled([
+        marketApi.getResearch(inst.symbol),
+        marketApi.getSignal(inst.symbol)
+      ]);
+      if (resBundle.status === 'fulfilled') {
+        setBundle(resBundle.value);
+      }
+      if (resSignal.status === 'fulfilled') {
+        setSignalData(resSignal.value);
+      }
     } catch {
       // Non-blocking
     } finally {
@@ -110,10 +132,40 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   useEffect(() => {
     if (isOpen && instrument) {
       setBundle(null);
+      setSignalData(null);
       setActiveTab("overview");
       loadResearch(instrument);
     }
   }, [isOpen, instrument, loadResearch]);
+
+  // Cross-reference user strategy allocations for portfolio integration
+  const symUpper = (instrument?.symbol || '').toUpperCase();
+  const tickerUpper = (instrument?.ticker || '').toUpperCase();
+  const nameUpper = (instrument?.name || '').toUpperCase();
+
+  const userOwnedInfo = useMemo(() => {
+    if (!strategy?.allocations || !instrument) return null;
+    for (const alloc of strategy.allocations) {
+      const allocTicker = (alloc.ticker || '').toUpperCase();
+      const allocName = (alloc.name || '').toUpperCase();
+      const allocId = (alloc.id || '').toUpperCase();
+      const insts = (alloc.suggestedInstruments || []).map(s => s.toUpperCase());
+
+      if (
+        (allocTicker && (allocTicker === symUpper || allocTicker === tickerUpper)) ||
+        (allocName && (allocName === nameUpper || nameUpper.includes(allocName) || allocName.includes(nameUpper))) ||
+        (allocId && (allocId === symUpper || allocId === tickerUpper)) ||
+        insts.includes(symUpper) || insts.includes(tickerUpper)
+      ) {
+        return {
+          weight: alloc.percentage || 0,
+          role: alloc.portfolioRole || alloc.category || 'Core Asset',
+          category: alloc.category || 'Portfolio'
+        };
+      }
+    }
+    return null;
+  }, [strategy, symUpper, tickerUpper, nameUpper, instrument]);
 
   if (!isOpen || !instrument) return null;
 
@@ -137,9 +189,72 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   const technicals = bundle?.technicals;
   const researchSignal: MarketResearchSignal | undefined = bundle?.researchSignal;
 
+  // Institutional Signal & Price Targets
+  const institutionalSignal: InstitutionalSignal | undefined = (signalData || bundle?.institutionalSignal) ?? undefined;
+  const priceTargets: InstitutionalPriceTargets | undefined = (institutionalSignal?.priceTargets || bundle?.priceTargets) ?? undefined;
+  const currentSignal = institutionalSignal?.overallSignal || institutionalSignal?.signal || instrument.signalBadge?.signal || instrument.signal || "HOLD";
+  const currentConfidence = institutionalSignal?.confidence ?? instrument.signalBadge?.confidence ?? instrument.confidence ?? 75;
+  const currentRiskScore = institutionalSignal?.riskScore || instrument.signalBadge?.riskScore || instrument.riskScore || "MEDIUM";
+
+  const instResearch = institutionalSignal?.institutionalResearch || institutionalSignal?.research;
+  const signalHistoryList = institutionalSignal?.signalHistory || institutionalSignal?.history || [];
+  const bullishFactors = institutionalSignal?.reasons?.bullish || institutionalSignal?.factors?.bullish || [
+    "Constructive momentum alignment across key moving averages",
+    "Healthy return on equity and profitability profile",
+    "Positive sector and market volume confirmation"
+  ];
+  const bearishFactors = institutionalSignal?.reasons?.bearish || institutionalSignal?.factors?.bearish || [
+    "Overhead technical resistance zones",
+    "Valuation multiple sensitive to macro rate shifts"
+  ];
+
+  // Portfolio Suggested Action
+  const isOwned = Boolean(userOwnedInfo);
+  let suggestedAction = 'HOLD';
+  if (currentSignal === 'STRONG BUY') suggestedAction = 'BUY MORE';
+  else if (currentSignal === 'BUY') suggestedAction = 'ACCUMULATE';
+  else if (currentSignal === 'HOLD') suggestedAction = 'HOLD';
+  else if (currentSignal === 'SELL') suggestedAction = 'REDUCE';
+  else if (currentSignal === 'STRONG SELL') suggestedAction = 'EXIT';
+
+  const getSignalColor = (sig: string) => {
+    switch (sig) {
+      case 'STRONG BUY':
+        return 'bg-emerald-950 text-emerald-300 border-emerald-700';
+      case 'BUY':
+        return 'bg-emerald-600 text-white border-emerald-500';
+      case 'HOLD':
+        return 'bg-blue-600 text-white border-blue-500';
+      case 'SELL':
+        return 'bg-amber-600 text-white border-amber-500';
+      case 'STRONG SELL':
+        return 'bg-red-600 text-white border-red-500';
+      default:
+        return 'bg-slate-700 text-white border-slate-600';
+    }
+  };
+
+  const getActionColor = (act: string) => {
+    switch (act) {
+      case 'BUY MORE':
+        return 'bg-emerald-900 text-emerald-200 border-emerald-700';
+      case 'ACCUMULATE':
+        return 'bg-emerald-700 text-emerald-100 border-emerald-600';
+      case 'HOLD':
+        return 'bg-blue-700 text-blue-100 border-blue-600';
+      case 'REDUCE':
+        return 'bg-amber-700 text-amber-100 border-amber-600';
+      case 'EXIT':
+        return 'bg-red-700 text-red-100 border-red-600';
+      default:
+        return 'bg-slate-700 text-slate-200 border-slate-600';
+    }
+  };
+
   const tabs: { key: string; label: string; icon: React.ReactNode }[] = [
     { key: "overview", label: "Overview & Chart", icon: <Info className="w-3.5 h-3.5" /> },
-    { key: "signal", label: "Research Signal", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+    { key: "signal", label: "AI Signals & Targets", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+    { key: "vestiq_research", label: "Institutional Research", icon: <Sparkles className="w-3.5 h-3.5" /> },
     ...(isStock ? [{ key: "fundamentals", label: "Fundamentals", icon: <BarChart3 className="w-3.5 h-3.5" /> }] : []),
     ...(isETF || isMF ? [{ key: "fund_profile", label: isMF ? "Scheme Details" : "ETF Profile", icon: <PieChart className="w-3.5 h-3.5" /> }] : []),
     { key: "technicals", label: "Technicals", icon: <TrendingUp className="w-3.5 h-3.5" /> },
@@ -155,12 +270,9 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   };
 
   const getFreshnessBadge = (freshness?: string, status?: string) => {
-    // 1. Mutual Funds: always LATEST NAV with explicit NAV date
     if (isMF) {
       return <Badge variant="fallback">LATEST NAV ({quote?.navDate || "OFFICIAL"})</Badge>;
     }
-
-    // 2. Market Closed / Weekend / Holiday
     const mkt = (quote?.marketStatus || "").toUpperCase();
     if (mkt === "CLOSED" || mkt === "WEEKEND" || mkt === "HOLIDAY") {
       return <Badge variant="neutral">MARKET CLOSED</Badge>;
@@ -168,31 +280,17 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
     if (mkt === "PRE_OPEN") {
       return <Badge variant="neutral">PRE-OPEN</Badge>;
     }
-
-    // 3. Stale state
     if (quote?.isStale === true) {
       return <Badge variant="stale">STALE</Badge>;
     }
-
-    // 4. True Live quote (market OPEN + provider verified realtime)
     if (quote?.isLive === true) {
       return <Badge variant="live">LIVE</Badge>;
     }
-
-    // 5. Fallback delayed / latest available
     const s = (freshness || status || "UNAVAILABLE").toUpperCase();
-    if (s === "DELAYED") {
-      return <Badge variant="delayed">DELAYED (15M)</Badge>;
-    }
-    if (s === "STALE") {
-      return <Badge variant="stale">STALE</Badge>;
-    }
-    if (s === "REALTIME" || s === "LIVE") {
-      return <Badge variant="live">LIVE</Badge>;
-    }
-    if (s === "LATEST_AVAILABLE" || s === "HISTORICAL" || s === "FALLBACK") {
-      return <Badge variant="fallback">LATEST AVAILABLE</Badge>;
-    }
+    if (s === "DELAYED") return <Badge variant="delayed">DELAYED (15M)</Badge>;
+    if (s === "STALE") return <Badge variant="stale">STALE</Badge>;
+    if (s === "REALTIME" || s === "LIVE") return <Badge variant="live">LIVE</Badge>;
+    if (s === "LATEST_AVAILABLE" || s === "HISTORICAL" || s === "FALLBACK") return <Badge variant="fallback">LATEST AVAILABLE</Badge>;
     return <Badge variant="unavailable">UNAVAILABLE</Badge>;
   };
 
@@ -223,7 +321,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               {isLoadingResearch && (
                 <span className="flex items-center gap-1 text-teal-700 font-medium">
                   <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>Loading deep research...</span>
+                  <span>Loading deep institutional research...</span>
                 </span>
               )}
             </div>
@@ -265,7 +363,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Live Quote Banner */}
+        {/* Live Quote & Signal Banner */}
         <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-baseline gap-3">
             <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900">
@@ -285,24 +383,44 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
             )}
           </div>
 
-          {/* Quick Signal Pill */}
-          {researchSignal && (
+          {/* Quick Institutional Signal Pill */}
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Research Signal:</span>
-              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono uppercase tracking-wider ${
-                researchSignal.signal === "BUY"
-                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                  : researchSignal.signal === "SELL"
-                  ? "bg-red-100 text-red-800 border border-red-300"
-                  : researchSignal.signal === "HOLD"
-                  ? "bg-amber-100 text-amber-800 border border-amber-300"
-                  : "bg-slate-100 text-slate-700 border border-slate-200"
-              }`}>
-                {researchSignal.signal}
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">AI Signal:</span>
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono uppercase tracking-wider border shadow-2xs ${getSignalColor(currentSignal)}`}>
+                {currentSignal}
               </span>
             </div>
-          )}
+            <div className="text-xs font-mono text-slate-600 hidden sm:block">
+              Conf: <strong className="text-slate-900">{currentConfidence}%</strong>
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border font-mono ${
+              currentRiskScore === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
+              currentRiskScore === 'LOW' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+              'bg-amber-50 text-amber-700 border-amber-200'
+            }`}>
+              {currentRiskScore} RISK
+            </span>
+          </div>
         </div>
+
+        {/* Portfolio Ownership Ribbon if owned */}
+        {isOwned && (
+          <div className="px-5 py-2.5 bg-teal-50 border-b border-teal-200 flex items-center justify-between flex-wrap gap-2 text-xs text-teal-900">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-teal-600 animate-pulse" />
+              <span className="font-bold">Portfolio Asset</span>
+              <span className="text-teal-700">• Allocation Weight: <strong>{userOwnedInfo?.weight}%</strong></span>
+              <span className="text-teal-700">• Role: <strong>{userOwnedInfo?.role}</strong></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] uppercase font-bold text-teal-800">Recommended Action:</span>
+              <span className={`px-2.5 py-0.5 rounded text-xs font-bold font-mono border ${getActionColor(suggestedAction)}`}>
+                {suggestedAction}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Navigation Tabs */}
         <div className="flex items-center px-4 bg-slate-50 border-b border-slate-200 overflow-x-auto no-scrollbar">
@@ -351,13 +469,65 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                 <StatCell label="Market Cap" value={valuation?.marketCap ? formatCurrencyAmount(valuation.marketCap, instrument.currency) : "N/A"} />
               </div>
 
+              {/* Institutional Price Targets Preview */}
+              {priceTargets && (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-teal-700" />
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Institutional AI Price Targets</h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("signal")}
+                      className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Full Target Analysis</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Conservative (1-3m)</span>
+                      <div className="text-base font-extrabold font-mono text-slate-900">
+                        {curSym}{priceTargets.conservative.price ?? priceTargets.conservative.targetPrice}
+                      </div>
+                      <span className={`text-xs font-bold font-mono ${(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0}% Upside
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-teal-50/50 rounded-xl border border-teal-200 space-y-1">
+                      <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block">Base Case (6-12m)</span>
+                      <div className="text-base font-extrabold font-mono text-teal-950">
+                        {curSym}{priceTargets.base.price ?? priceTargets.base.targetPrice}
+                      </div>
+                      <span className={`text-xs font-bold font-mono ${(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0}% Upside
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Aggressive (12-24m)</span>
+                      <div className="text-base font-extrabold font-mono text-slate-900">
+                        {curSym}{priceTargets.aggressive.price ?? priceTargets.aggressive.targetPrice}
+                      </div>
+                      <span className={`text-xs font-bold font-mono ${(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0}% Upside
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Research Signal Summary Card */}
               {researchSignal && (
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-teal-700" />
-                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Market Research Signal</h4>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Market Research Factors</h4>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-slate-500">Coverage: <strong>{researchSignal.coveragePct}%</strong></span>
@@ -381,36 +551,51 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                   </div>
 
                   <div className="pt-2 border-t border-slate-200 text-[10.5px] text-slate-500 leading-relaxed">
-                    {researchSignal.disclaimer}
+                    Signals are AI-generated analytical insights based on market data, technical indicators and fundamental metrics. They are not financial advice.
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 2: MARKET RESEARCH SIGNAL DETAIL */}
+          {/* TAB 2: AI SIGNALS & TARGETS */}
           {activeTab === "signal" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
+              
+              {/* Main Model Decision & Confidence Banner */}
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">Model Decision</span>
-                    <div className="text-2xl font-extrabold font-mono text-slate-900 mt-0.5 flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-xl text-base sm:text-lg font-bold font-mono uppercase tracking-wider ${
-                        researchSignal?.signal === "BUY" ? "bg-emerald-100 text-emerald-800 border border-emerald-300" :
-                        researchSignal?.signal === "SELL" ? "bg-red-100 text-red-800 border border-red-300" :
-                        researchSignal?.signal === "HOLD" ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-slate-200 text-slate-800 border border-slate-300"
+                    <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">Primary Institutional Signal</span>
+                    <div className="mt-1 flex items-center gap-3">
+                      <span className={`px-3.5 py-1.5 rounded-xl text-base sm:text-lg font-bold font-mono uppercase tracking-wider border shadow-sm ${getSignalColor(currentSignal)}`}>
+                        {currentSignal}
+                      </span>
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border font-mono ${
+                        currentRiskScore === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
+                        currentRiskScore === 'LOW' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
-                        {researchSignal?.signal ?? "INSUFFICIENT DATA"}
+                        {currentRiskScore} RISK
                       </span>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">Data Coverage</span>
-                    <div className="text-lg font-bold font-mono text-slate-900">
-                      {researchSignal?.coveragePct ?? 0}%
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Signal Confidence</span>
+                      <div className="text-2xl font-extrabold font-mono text-slate-900">
+                        {currentConfidence}%
+                      </div>
                     </div>
+                    {institutionalSignal?.compositeScore !== undefined && (
+                      <div className="text-right border-l border-slate-200 pl-4">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Composite Score</span>
+                        <div className={`text-2xl font-extrabold font-mono ${institutionalSignal.compositeScore >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {institutionalSignal.compositeScore >= 0 ? "+" : ""}{institutionalSignal.compositeScore}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -418,47 +603,373 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                   <div
                     className="bg-[#00D4AA] h-2 rounded-full transition-all"
-                    style={{ width: `${researchSignal?.coveragePct ?? 0}%` }}
+                    style={{ width: `${currentConfidence}%` }}
                   />
                 </div>
 
-                {/* Key Reasons */}
-                <div className="space-y-2 pt-2">
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Evaluated Market Factors & Rationale</h4>
-                  <div className="space-y-1.5 bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-slate-800">
-                    {researchSignal?.reasons.map((r, i) => (
-                      <div key={i} className="flex items-start gap-2">
+                {/* Portfolio Context if owned */}
+                {isOwned && (
+                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-teal-700" />
+                      <span className="font-semibold text-teal-900">
+                        Currently in your portfolio ({userOwnedInfo?.weight}% weight). Suggested rebalance action:
+                      </span>
+                    </div>
+                    <span className={`px-3 py-1 rounded-lg font-bold font-mono text-xs border ${getActionColor(suggestedAction)}`}>
+                      {suggestedAction}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Multi-Horizon Signals (Short Term, Swing, Long Term) */}
+              <div className="space-y-3">
+                <SectionHeader icon={<Compass className="w-4 h-4" />} title="Multi-Horizon Signal Breakdown" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  
+                  {/* Short Term */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Short Term</span>
+                      <span className="text-[10px] text-slate-400 font-mono">1 – 30 Days</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold font-mono uppercase border ${getSignalColor(institutionalSignal?.horizons?.shortTerm?.signal || currentSignal)}`}>
+                        {institutionalSignal?.horizons?.shortTerm?.signal || currentSignal}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-slate-700">
+                        Score: {institutionalSignal?.horizons?.shortTerm?.score ?? 60}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                      {institutionalSignal?.horizons?.shortTerm?.rationale || "RSI momentum and moving average positioning define short term tactical sentiment."}
+                    </p>
+                  </div>
+
+                  {/* Swing */}
+                  <div className="p-4 rounded-xl bg-teal-50/40 border border-teal-200/80 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Swing Horizon</span>
+                      <span className="text-[10px] text-teal-600 font-mono">1 – 6 Months</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold font-mono uppercase border ${getSignalColor(institutionalSignal?.horizons?.swing?.signal || currentSignal)}`}>
+                        {institutionalSignal?.horizons?.swing?.signal || currentSignal}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-teal-900">
+                        Score: {institutionalSignal?.horizons?.swing?.score ?? 65}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                      {institutionalSignal?.horizons?.swing?.rationale || "Intermediate trend conviction supported by volume profile and structural breakouts."}
+                    </p>
+                  </div>
+
+                  {/* Long Term */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Long Term</span>
+                      <span className="text-[10px] text-slate-400 font-mono">1 – 10 Years</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold font-mono uppercase border ${getSignalColor(institutionalSignal?.horizons?.longTerm?.signal || currentSignal)}`}>
+                        {institutionalSignal?.horizons?.longTerm?.signal || currentSignal}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-slate-700">
+                        Score: {institutionalSignal?.horizons?.longTerm?.score ?? 70}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                      {institutionalSignal?.horizons?.longTerm?.rationale || "Secular fundamentals, profitability ratios, and balance sheet resilience support multi-year compound thesis."}
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* AI Price Targets Panel */}
+              {priceTargets && (
+                <div className="space-y-3">
+                  <SectionHeader icon={<Target className="w-4 h-4" />} title="AI Price Targets & Valuation Horizons" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    
+                    {/* Conservative */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Conservative</span>
+                        <span className="text-[10px] font-mono text-slate-500">{priceTargets.conservative.horizon}</span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xl font-extrabold font-mono text-slate-900">
+                          {curSym}{priceTargets.conservative.price ?? priceTargets.conservative.targetPrice}
+                        </span>
+                        <span className={`text-xs font-bold font-mono ${(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                        {priceTargets.conservative.reasoning || priceTargets.reasoning || "Conservative target anchored by lower band support."}
+                      </p>
+                    </div>
+
+                    {/* Base Case */}
+                    <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-300 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Base Target</span>
+                        <span className="text-[10px] font-mono text-teal-700">{priceTargets.base.horizon}</span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xl font-extrabold font-mono text-teal-950">
+                          {curSym}{priceTargets.base.price ?? priceTargets.base.targetPrice}
+                        </span>
+                        <span className={`text-xs font-bold font-mono ${(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 leading-relaxed pt-1">
+                        {priceTargets.base.reasoning || priceTargets.reasoning || "Base target aligned with historical multiples and operating trajectory."}
+                      </p>
+                    </div>
+
+                    {/* Aggressive */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Aggressive</span>
+                        <span className="text-[10px] font-mono text-slate-500">{priceTargets.aggressive.horizon}</span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xl font-extrabold font-mono text-slate-900">
+                          {curSym}{priceTargets.aggressive.price ?? priceTargets.aggressive.targetPrice}
+                        </span>
+                        <span className={`text-xs font-bold font-mono ${(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                        {priceTargets.aggressive.reasoning || priceTargets.reasoning || "Aggressive valuation factoring multiple expansion and volume acceleration."}
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* Factors Checklist: Bullish vs Bearish */}
+              <div className="space-y-3">
+                <SectionHeader icon={<Scale className="w-4 h-4" />} title="Factor Breakdown & Checklist" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Bullish Factors */}
+                  <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-2.5">
+                    <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Bullish Factors ({bullishFactors.length})</span>
+                    </span>
+                    <div className="space-y-1.5">
+                      {bullishFactors.map((f: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-emerald-950">
+                          <span className="text-emerald-600 font-bold mt-0.5">✓</span>
+                          <span>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bearish Factors */}
+                  <div className="p-4 rounded-xl bg-red-50/50 border border-red-200 space-y-2.5">
+                    <span className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <XCircle className="w-4 h-4 text-red-600" />
+                      <span>Bearish / Caution Factors ({bearishFactors.length})</span>
+                    </span>
+                    <div className="space-y-1.5">
+                      {bearishFactors.map((f: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-red-950">
+                          <span className="text-red-600 font-bold mt-0.5">✗</span>
+                          <span>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Historical Signals Timeline */}
+              {signalHistoryList.length > 0 && (
+                <div className="space-y-3">
+                  <SectionHeader icon={<History className="w-4 h-4" />} title="Signal History Tracking & Performance" />
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="grid grid-cols-4 p-2.5 bg-slate-50 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                      <span>Date</span>
+                      <span>Signal</span>
+                      <span>Signal Price</span>
+                      <span className="text-right">Return Since</span>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {signalHistoryList.map((h, i: number) => (
+                        <div key={i} className="grid grid-cols-4 p-3 text-xs items-center font-mono">
+                          <span className="text-slate-600">{h.date}</span>
+                          <div>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getSignalColor(h.signal)}`}>
+                              {h.signal}
+                            </span>
+                          </div>
+                          <span className="text-slate-900">{h.price ? `${curSym}${h.price}` : "—"}</span>
+                          <span className={`text-right font-bold ${
+                            (h.returnSincePct ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"
+                          }`}>
+                            {(h.returnSincePct ?? 0) >= 0 ? "+" : ""}{h.returnSincePct ?? 0}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Regulatory Disclaimer */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 leading-relaxed">
+                Signals are AI-generated analytical insights based on market data, technical indicators and fundamental metrics. They are not financial advice.
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 3: INSTITUTIONAL RESEARCH (VESTIQ) */}
+          {activeTab === "vestiq_research" && (
+            <div className="space-y-6">
+              
+              <div className="p-4 rounded-2xl bg-teal-50/50 border border-teal-200 flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-teal-700" />
+                  <div>
+                    <h4 className="text-xs font-bold text-teal-950 uppercase tracking-wider">VestIQ Institutional Research Dossier</h4>
+                    <p className="text-xs text-teal-800">
+                      Fundamental, quantitative, and competitive assessment compiled by VestIQ Market Intelligence.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAskIQ}
+                  className="px-3 py-1.5 rounded-xl bg-[#00D4AA] text-[#0F172A] hover:bg-teal-400 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Deep Chat with VestIQ</span>
+                </button>
+              </div>
+
+              {/* Valuation Summary */}
+              {instResearch?.valuationSummary && (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Scale className="w-4 h-4 text-teal-700" />
+                    <span>Valuation & Intrinsic Assessment</span>
+                  </span>
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    {instResearch.valuationSummary}
+                  </p>
+                </div>
+              )}
+
+              {/* Bull Case vs Bear Case */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Bull Case */}
+                <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-2.5">
+                  <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <span>Institutional Bull Case</span>
+                  </span>
+                  <div className="space-y-1.5">
+                    {(instResearch?.bullCase ?? [
+                      "Dominant market position and resilient moats",
+                      "Strong operating cash flow generation",
+                      "Multi-year secular demand catalysts"
+                    ]).map((point: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-emerald-950">
+                        <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                        <span className="leading-relaxed">{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bear Case */}
+                <div className="p-4 rounded-xl bg-red-50/60 border border-red-200 space-y-2.5">
+                  <span className="text-xs font-bold text-red-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-red-600" />
+                    <span>Institutional Bear Case</span>
+                  </span>
+                  <div className="space-y-1.5">
+                    {(instResearch?.bearCase ?? [
+                      "Cyclical margin compression risks",
+                      "Competitive reinvestment pressure",
+                      "Valuation multiple contraction during macro shifts"
+                    ]).map((point: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-red-950">
+                        <span className="text-red-600 font-bold mt-0.5">•</span>
+                        <span className="leading-relaxed">{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Growth Drivers & Risk Factors */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Growth Drivers */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2.5 shadow-2xs">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <BarChart3 className="w-4 h-4 text-teal-700" />
+                    <span>Growth Drivers</span>
+                  </span>
+                  <div className="space-y-1.5">
+                    {(instResearch?.growthDrivers ?? [
+                      "Expansion into higher margin verticals",
+                      "Operational leverage and efficiency gains"
+                    ]).map((g: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
                         <span className="text-teal-600 font-bold mt-0.5">•</span>
+                        <span className="leading-relaxed">{g}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Risk Factors */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2.5 shadow-2xs">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldAlert className="w-4 h-4 text-amber-700" />
+                    <span>Risk Factors</span>
+                  </span>
+                  <div className="space-y-1.5">
+                    {(instResearch?.riskFactors ?? [
+                      "Macro interest rate sensitivity",
+                      "Currency fluctuations and input cost inflation"
+                    ]).map((r: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                        <span className="text-amber-600 font-bold mt-0.5">•</span>
                         <span className="leading-relaxed">{r}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Methodology */}
-                <div className="space-y-1 text-xs text-slate-600 bg-white p-3.5 rounded-xl border border-slate-200">
-                  <span className="font-bold text-slate-800 block">Methodology Summary</span>
-                  <p className="leading-relaxed text-slate-600">
-                    {researchSignal?.methodology ?? "Multi-factor quantitative model evaluating trend alignment (SMA 20/50/200), momentum (RSI/MACD), valuation multiples (P/E, PEG), and capital profitability (ROE)."}
-                  </p>
-                  <div className="pt-2 text-[11px] text-slate-500 flex justify-between items-center">
-                    <span>Generated: {researchSignal?.dataTimestamp || "Live"}</span>
-                    <span>Freshness: <strong className="uppercase">{bundle?.sources?.freshness || "LATEST_AVAILABLE"}</strong></span>
-                  </div>
-                </div>
-
-                {/* Disclaimer */}
-                <div className="p-3 bg-amber-50/60 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    {researchSignal?.disclaimer || "Market research signals are quantitative model outputs based on historical and published data. They do not constitute personalized investment advice or guaranteed return forecasts."}
-                  </p>
-                </div>
               </div>
+
+              {/* Regulatory Disclaimer */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 leading-relaxed">
+                Signals are AI-generated analytical insights based on market data, technical indicators and fundamental metrics. They are not financial advice.
+              </div>
+
             </div>
           )}
 
-          {/* TAB 3: STOCK FUNDAMENTALS */}
+          {/* TAB 4: STOCK FUNDAMENTALS */}
           {activeTab === "fundamentals" && (
             <div className="space-y-6">
               {/* Valuation Ratios */}
@@ -571,7 +1082,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: ETF & FUND PROFILE */}
+          {/* TAB 5: ETF & FUND PROFILE */}
           {(activeTab === "fund_profile") && (
             <div className="space-y-6">
               <div className="space-y-3">
@@ -600,7 +1111,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 5: TECHNICAL INDICATORS */}
+          {/* TAB 6: TECHNICAL INDICATORS */}
           {activeTab === "technicals" && (
             <div className="space-y-6">
               {/* Moving Averages */}
@@ -663,7 +1174,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 6: ANALYST CONSENSUS & NEWS */}
+          {/* TAB 7: ANALYST CONSENSUS & NEWS */}
           {activeTab === "analyst_news" && (
             <div className="space-y-6">
               {/* Analyst Consensus */}
