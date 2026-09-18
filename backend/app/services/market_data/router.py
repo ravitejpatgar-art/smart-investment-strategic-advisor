@@ -198,7 +198,12 @@ class ProviderRouter:
         # Check cache
         cache_key = f"quote:router:{s_clean.upper()}"
         cached = market_cache.get(cache_key, allow_stale=False)
-        if cached:
+        if cached and not cached.get("isStale", False):
+            # If cached quote is from fallback, check if Angel One now has a fresh live quote
+            if cached.get("source") != "Angel One SmartAPI" and self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
+                angel_q = self.angel.get_quote(s_clean)
+                if angel_q and angel_q.get("price") is not None and not angel_q.get("isStale", False) and angel_q.get("freshness") != "UNAVAILABLE":
+                    return angel_q
             return cached
 
         chain = self._get_provider_chain(s_clean)
@@ -224,7 +229,7 @@ class ProviderRouter:
                     quote = provider.get_quote(s_clean)
                     latency = (time.time() - t_start) * 1000
                     
-                    if quote and quote.get("price") is not None and quote.get("freshness") != "UNAVAILABLE":
+                    if quote and quote.get("price") is not None and quote.get("freshness") != "UNAVAILABLE" and not quote.get("isStale", False):
                         if tracker:
                             tracker.record_success(latency)
                         
@@ -241,7 +246,12 @@ class ProviderRouter:
                         market_cache.set(cache_key, quote, ttl_seconds=ttl)
                         return quote
                     else:
-                        # Non-exception empty response
+                        if quote and quote.get("isStale", False):
+                            clean_base = s_clean.replace(".NS", "").replace(".BO", "")
+                            with market_cache._store_lock:
+                                market_cache._store.pop(f"quote:india:{clean_base}.NS", None)
+                                market_cache._store.pop(f"quote:india:{clean_base}", None)
+                        # Non-exception empty or stale response
                         break
                 except Exception as e:
                     err_str = str(e)

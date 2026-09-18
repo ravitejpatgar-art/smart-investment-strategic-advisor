@@ -139,6 +139,24 @@ class MarketDataProviderRegistry:
         if not symbol or not symbol.strip():
             return create_unavailable_quote("UNKNOWN", "Symbol cannot be empty.")
             
+        # 1. Prefer Angel One SmartAPI live quote cache when available, valid, and not stale
+        if hasattr(self.router, "angel") and self.router.angel and self.router.angel.is_configured:
+            try:
+                angel_q = self.router.angel.get_quote(symbol)
+                if not angel_q:
+                    norm = normalize_global_symbol(symbol)
+                    s_clean = norm.get("canonical_symbol", symbol).strip()
+                    clean_base = s_clean.replace(".NS", "").replace(".BO", "")
+                    for ck in [f"quote:router:{s_clean}", f"quote:router:{clean_base}", f"quote:india:{clean_base}.NS"]:
+                        c = market_cache.get(ck, allow_stale=False)
+                        if c and c.get("source") == "Angel One SmartAPI" and not c.get("isStale", False) and c.get("price") is not None:
+                            angel_q = c
+                            break
+                if angel_q and angel_q.get("price") is not None and not angel_q.get("isStale", False) and angel_q.get("freshness") != "UNAVAILABLE":
+                    return angel_q
+            except Exception:
+                pass
+
         # First try specialized adapter if it's MF or Gold
         provider = self.resolve_provider(symbol)
         if provider.name in ["MutualFunds", "MutualFundsProvider", "Gold", "GoldProvider"]:
