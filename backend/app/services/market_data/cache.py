@@ -155,9 +155,45 @@ class MarketDataCache:
                 "defaultTtlSeconds": getattr(settings, "MARKET_DATA_CACHE_TTL_SECONDS", 30)
             }
 
+    def invalidate_legacy_quotes(self) -> int:
+        """Purges old loose symbol quote keys to prevent cross-contamination."""
+        with self._store_lock:
+            purged = 0
+            keys_to_remove = [k for k in list(self._store.keys()) if k.startswith("quote:") and not k.startswith("quote:id:")]
+            for k in keys_to_remove:
+                self._store.pop(k, None)
+                purged += 1
+            if self._redis:
+                try:
+                    for k in keys_to_remove:
+                        self._redis.delete(k)
+                except Exception:
+                    pass
+            return purged
+
+
+def build_quote_cache_key(
+    canonical_id: Optional[str] = None,
+    exchange: Optional[str] = None,
+    token: Optional[str] = None,
+    provider: Optional[str] = None,
+    symbol: Optional[str] = None
+) -> str:
+    """
+    Builds a collision-free stable identity cache key.
+    Format: quote:id:{provider}:{exchange}:{token or canonical_id or symbol}
+    """
+    prov = (provider or "UNKNOWN").replace(" ", "_").upper()
+    exch = (exchange or "UNKNOWN").upper()
+    ident = token or canonical_id or symbol or "UNKNOWN"
+    return f"quote:id:{prov}:{exch}:{ident}"
+
+
 def get_user_cache_key(user_id: str, key_suffix: str) -> str:
     """Helper for user-scoped cache keys to prevent cross-user data exposure (Phase 29)."""
     return f"user:{user_id}:{key_suffix}"
 
 # Global singleton instance
 market_cache = MarketDataCache()
+# Invalidate any stale bad quotes from previous sessions on startup
+market_cache.invalidate_legacy_quotes()

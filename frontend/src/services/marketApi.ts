@@ -11,14 +11,14 @@ import {
   getDemoResearch
 } from './demoData';
 
-export type FreshnessType = 
-  | 'REALTIME' 
-  | 'DELAYED' 
-  | 'LATEST_AVAILABLE' 
-  | 'END_OF_DAY' 
-  | 'HISTORICAL' 
-  | 'MODEL_ASSUMPTION' 
-  | 'STALE' 
+export type FreshnessType =
+  | 'REALTIME'
+  | 'DELAYED'
+  | 'LATEST_AVAILABLE'
+  | 'END_OF_DAY'
+  | 'HISTORICAL'
+  | 'MODEL_ASSUMPTION'
+  | 'STALE'
   | 'UNAVAILABLE';
 
 export type MarketDataStatus = 'LIVE' | 'DELAYED' | 'FALLBACK' | 'DEMO' | 'UNAVAILABLE';
@@ -39,6 +39,45 @@ export function getPaidProviderName(): string {
   return import.meta.env.VITE_MARKET_DATA_PROVIDER || 'truedata';
 }
 
+/**
+ * Canonical IST timestamp formatter.
+ * Strictly uses Intl.DateTimeFormat with timeZone: 'Asia/Kolkata'.
+ * Never performs manual +5:30 arithmetic.
+ */
+export function formatIstTimestamp(dateOrIso?: string | number | Date | null): string {
+  if (!dateOrIso) return 'Unavailable';
+  if (typeof dateOrIso === 'string' && dateOrIso.includes('IST')) {
+    return dateOrIso;
+  }
+  const date = typeof dateOrIso === 'string' || typeof dateOrIso === 'number' ? new Date(dateOrIso) : dateOrIso;
+  if (isNaN(date.getTime())) {
+    return String(dateOrIso);
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+
+  const parts = formatter.formatToParts(date);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
+  const day = getPart('day');
+  const month = getPart('month').replace('Sept', 'Sep');
+  const year = getPart('year');
+  const hour = getPart('hour');
+  const minute = getPart('minute');
+  const second = getPart('second');
+  const dayPeriod = getPart('dayPeriod').toUpperCase();
+
+  return `${day} ${month} ${year}, ${hour}:${minute}:${second} ${dayPeriod} IST`;
+}
+
 export function normalizePaidProviderQuote(data: any, originalSymbol: string): MarketQuote {
   if (!data || data.price === null || data.price === undefined || isNaN(Number(data.price))) {
     return {
@@ -52,6 +91,9 @@ export function normalizePaidProviderQuote(data: any, originalSymbol: string): M
       changePct: null,
       volume: null,
       timestamp: new Date().toISOString(),
+      exchangeTimestamp: null,
+      exchangeTimestampUtc: null,
+      displayTimestampIst: 'Unavailable',
       marketStatus: 'CLOSED',
       freshness: 'UNAVAILABLE',
       status: 'UNAVAILABLE',
@@ -63,10 +105,12 @@ export function normalizePaidProviderQuote(data: any, originalSymbol: string): M
 
   const p = Number(data.price);
   const chg = data.change !== undefined && data.change !== null ? Number(data.change) : 0;
-  const chgPct = data.changePct !== undefined && data.changePct !== null 
-    ? Number(data.changePct) 
+  const chgPct = data.changePct !== undefined && data.changePct !== null
+    ? Number(data.changePct)
     : (data.changePercent !== undefined && data.changePercent !== null ? Number(data.changePercent) : 0);
   const isRealtime = Boolean(data.isRealtime || data.freshness === 'REALTIME' || data.status === 'LIVE');
+  const rawExchangeTs = data.exchangeTimestampUtc || data.exchangeTimestamp || data.timestamp || null;
+  const displayIst = data.displayTimestampIst || (rawExchangeTs ? formatIstTimestamp(rawExchangeTs) : (data.asOf || 'Today'));
 
   return {
     symbol: originalSymbol,
@@ -82,12 +126,62 @@ export function normalizePaidProviderQuote(data: any, originalSymbol: string): M
     high: data.high !== undefined && data.high !== null ? Number(data.high) : p,
     low: data.low !== undefined && data.low !== null ? Number(data.low) : p,
     prevClose: data.prevClose !== undefined && data.prevClose !== null ? Number(data.prevClose) : p,
-    timestamp: data.timestamp || new Date().toISOString(),
+    timestamp: rawExchangeTs || new Date().toISOString(),
+    exchangeTimestamp: rawExchangeTs,
+    exchangeTimestampUtc: rawExchangeTs,
+    displayTimestampIst: displayIst,
     marketStatus: data.marketStatus || 'OPEN',
     freshness: isRealtime ? 'REALTIME' : (data.freshness || 'DELAYED'),
     status: isRealtime ? 'LIVE' : (data.status === 'DELAYED' ? 'DELAYED' : 'LIVE'),
     source: data.source || `Authorized Feed (${getPaidProviderName()})`,
-    asOf: data.asOf || 'Today',
+    asOf: displayIst,
+    message: data.message || 'Data supplied by configured market provider'
+  };
+}
+
+export function normalizeMarketQuote(raw: unknown, symbol: string): MarketQuote {
+  const data = (raw && typeof raw === 'object') ? (raw as Record<string, any>) : {};
+  const originalSymbol = symbol.toUpperCase();
+  const p = data.price !== undefined && data.price !== null ? Number(data.price) : 0;
+  const chg = data.change !== undefined && data.change !== null ? Number(data.change) : 0;
+  const chgPct = data.changePct !== undefined && data.changePct !== null
+    ? Number(data.changePct)
+    : (data.changePercent !== undefined && data.changePercent !== null ? Number(data.changePercent) : 0);
+  const isRealtime = Boolean(data.isRealtime || data.freshness === 'REALTIME' || data.status === 'LIVE');
+
+  const rawExchangeTs = data.exchangeTimestampUtc || data.exchangeTimestamp || data.timestamp || null;
+  const displayIst = data.displayTimestampIst || (rawExchangeTs ? formatIstTimestamp(rawExchangeTs) : (data.asOf || 'Today'));
+
+  return {
+    symbol: originalSymbol,
+    name: data.name || originalSymbol,
+    exchange: data.exchange || (originalSymbol.includes('.NS') ? 'NSE' : 'BSE'),
+    assetType: data.assetType || (originalSymbol.includes('NIFTY') || originalSymbol.includes('SENSEX') ? 'INDEX' : 'STOCK'),
+    price: p,
+    currency: data.currency || 'INR',
+    change: Math.round(chg * 100) / 100,
+    changePct: Math.round(chgPct * 100) / 100,
+    volume: data.volume !== undefined && data.volume !== null ? Number(data.volume) : 0,
+    open: data.open !== undefined && data.open !== null ? Number(data.open) : p,
+    high: data.high !== undefined && data.high !== null ? Number(data.high) : p,
+    low: data.low !== undefined && data.low !== null ? Number(data.low) : p,
+    prevClose: data.prevClose !== undefined && data.prevClose !== null ? Number(data.prevClose) : p,
+    timestamp: rawExchangeTs || new Date().toISOString(),
+    exchangeTimestamp: rawExchangeTs,
+    exchangeTimestampUtc: rawExchangeTs,
+    displayTimestampIst: displayIst,
+    marketStatus: data.marketStatus || 'OPEN',
+    freshness: isRealtime ? 'REALTIME' : (data.freshness || 'DELAYED'),
+    status: isRealtime ? 'LIVE' : (data.status === 'DELAYED' ? 'DELAYED' : 'LIVE'),
+    source: data.source || `Authorized Feed (${getPaidProviderName()})`,
+    provider: data.provider || data.source || null,
+    asOf: displayIst,
+    navDate: data.navDate || null,
+    isLive: Boolean(data.isLive),
+    isStale: Boolean(data.isStale),
+    token: data.token || null,
+    tradingsymbol: data.tradingsymbol || null,
+    dataQuality: data.dataQuality || null,
     message: data.message || 'Data supplied by configured market provider'
   };
 }
@@ -96,7 +190,7 @@ export function resolveQuoteStatus(quote?: Partial<MarketQuote> | null): MarketD
   if (!quote) return 'UNAVAILABLE';
   if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') return 'UNAVAILABLE';
   if (quote.price === null || (quote.price !== undefined && isNaN(quote.price))) return 'UNAVAILABLE';
-  
+
   // Mutual funds are NEVER live intraday quotes
   const isMF = quote.assetType === 'MUTUAL_FUND' || quote.instrumentType === 'MUTUAL_FUND';
   if (isMF) {
@@ -151,12 +245,19 @@ export interface MarketQuote {
   freshness: FreshnessType;
   status?: MarketDataStatus;
   source: string | null;
+  provider?: string | null;
   asOf: string;
   navDate?: string | null;
   message?: string;
   isLive?: boolean;
   isStale?: boolean;
   providerTimestamp?: number | null;
+  exchangeTimestamp?: string | null;
+  exchangeTimestampUtc?: string | null;
+  displayTimestampIst?: string | null;
+  token?: string | null;
+  tradingsymbol?: string | null;
+  dataQuality?: string | null;
 }
 
 export interface MarketCandleObservation {
@@ -469,6 +570,9 @@ export interface MarketCoverageResponse {
   etfCount?: number;
   mutualFundCount?: number;
   indexCount?: number;
+  exchangeCount?: number;
+  countryCount?: number;
+  lastSyncedAt?: string;
   geographicCounts?: Record<string, number>;
 }
 
@@ -491,43 +595,31 @@ const DIRECT_AMFI_SCHEMES: Record<string, { code: string; name: string }> = {
   'SBI CORPORATE BOND FUND DIRECT': { code: '145552', name: 'SBI Corporate Bond Fund Direct Growth' },
   'SBI BANKING & PSU DEBT FUND DIRECT': { code: '119582', name: 'SBI Banking & PSU Debt Fund Direct Growth' },
   'KOTAK EQUITY ARBITRAGE FUND DIRECT': { code: '119776', name: 'Kotak Equity Arbitrage Fund Direct Growth' },
-  'NIPPON GOLD BEES': { code: 'GOLDBEES.NS', name: 'Nippon India ETF Gold BeES' },
-  'SOVEREIGN GOLD BONDS': { code: 'GOLDBEES.NS', name: 'Sovereign Gold Bonds / Nippon Gold BeES' },
-  'GOLDBEES': { code: 'GOLDBEES.NS', name: 'Nippon India ETF Gold BeES' },
-  'MON100': { code: 'MON100.NS', name: 'Motilal Oswal Nasdaq 100 ETF' },
   'NIFTY 50': { code: '^NSEI', name: 'NIFTY 50 Index' },
   'S&P 500': { code: '^GSPC', name: 'S&P 500 Index' },
   'NASDAQ': { code: '^IXIC', name: 'NASDAQ Composite' },
 };
 
-// Known Baseline Price Multipliers for Resilient Historical Interpolation
-const BASELINE_PRICE_MAP: Record<string, { basePrice: number; annualGrowth: number; vol: number }> = {
-  'NIFTY 50': { basePrice: 24500, annualGrowth: 0.13, vol: 0.12 },
-  '^NSEI': { basePrice: 24500, annualGrowth: 0.13, vol: 0.12 },
-  'SENSEX': { basePrice: 80500, annualGrowth: 0.12, vol: 0.12 },
-  '^BSESN': { basePrice: 80500, annualGrowth: 0.12, vol: 0.12 },
-  'RELIANCE.NS': { basePrice: 2950, annualGrowth: 0.14, vol: 0.18 },
-  'TCS.NS': { basePrice: 4200, annualGrowth: 0.12, vol: 0.16 },
-  'INFY.NS': { basePrice: 1850, annualGrowth: 0.15, vol: 0.19 },
-  'HDFCBANK.NS': { basePrice: 1650, annualGrowth: 0.11, vol: 0.15 },
-  'AAPL': { basePrice: 228, annualGrowth: 0.18, vol: 0.20 },
-  'MSFT': { basePrice: 425, annualGrowth: 0.20, vol: 0.22 },
-  'NVDA': { basePrice: 125, annualGrowth: 0.45, vol: 0.38 },
-  'GOOGL': { basePrice: 168, annualGrowth: 0.18, vol: 0.22 },
-  'MON100.NS': { basePrice: 162, annualGrowth: 0.17, vol: 0.20 },
-  'SP500.NS': { basePrice: 78, annualGrowth: 0.14, vol: 0.16 },
-  'GOLDBEES.NS': { basePrice: 84.5, annualGrowth: 0.11, vol: 0.10 },
-  'GOLDBEES': { basePrice: 84.5, annualGrowth: 0.11, vol: 0.10 },
-  '120716': { basePrice: 172.5, annualGrowth: 0.13, vol: 0.12 },
-  '122639': { basePrice: 78.4, annualGrowth: 0.16, vol: 0.13 },
-  '120586': { basePrice: 382.4, annualGrowth: 0.07, vol: 0.01 },
-  '119062': { basePrice: 52.8, annualGrowth: 0.08, vol: 0.02 },
-  '125354': { basePrice: 168.2, annualGrowth: 0.24, vol: 0.22 },
-  '120828': { basePrice: 248.5, annualGrowth: 0.28, vol: 0.24 },
-  '127042': { basePrice: 94.6, annualGrowth: 0.22, vol: 0.19 },
-  '119775': { basePrice: 112.4, annualGrowth: 0.20, vol: 0.18 },
-  '135781': { basePrice: 54.2, annualGrowth: 0.19, vol: 0.20 }
-};
+export const FEATURED_CATALOG_SYMBOLS = [
+  'NIFTY 50',
+  'SENSEX',
+  'S&P 500',
+  'NASDAQ',
+  'RELIANCE.NS',
+  'TCS.NS',
+  'INFY.NS',
+  'HDFCBANK.NS',
+  'AAPL',
+  'MSFT',
+  'NVDA',
+  'GOOGL',
+  'MON100.NS',
+  'GOLDBEES.NS',
+  '120716',
+  '122639',
+  '120586',
+  '119062'
+];
 
 const INDEX_SYMBOLS = new Set(['NIFTY 50', '^NSEI', 'SENSEX', '^BSESN', 'S&P 500', '^GSPC', 'NASDAQ', '^IXIC']);
 
@@ -654,11 +746,8 @@ async function fetchDirectAmfiCandles(schemeCode: string, originalSymbol: string
   }
 }
 
-// Generate Last Available Historical Observations (Zero Blank Charts)
-function generateHistoricalSeries(symbol: string, range: string, _interval: string = '1d'): MarketCandleObservation[] {
-  const clean = symbol.trim().toUpperCase();
-  const baseline = BASELINE_PRICE_MAP[clean] || { basePrice: 100.0, annualGrowth: 0.12, vol: 0.15 };
-  
+// Deterministic synthetic candle generator used ONLY for presentation Demo Mode
+function generateDemoHistoricalSeries(_symbol: string, range: string, _interval: string = '1d'): MarketCandleObservation[] {
   let days = 365 * 3;
   if (range.includes('1d')) days = 1;
   else if (range.includes('5d') || range.includes('1w')) days = 5;
@@ -673,13 +762,13 @@ function generateHistoricalSeries(symbol: string, range: string, _interval: stri
   const now = Date.now();
   const dayMs = (days * 86400000) / pointsCount;
 
-  let currentPrice = baseline.basePrice * Math.pow(1 - baseline.annualGrowth, days / 365);
+  let currentPrice = 100.0 * Math.pow(1 - 0.12, days / 365);
 
   for (let i = 0; i <= pointsCount; i++) {
     const time = new Date(now - (pointsCount - i) * dayMs);
     const dateStr = time.toISOString().split('T')[0];
-    const drift = (baseline.annualGrowth / 365) * (dayMs / 86400000);
-    const noise = (Math.sin(i / 5) * 0.015) + ((Math.random() - 0.48) * baseline.vol * 0.08);
+    const drift = (0.12 / 365) * (dayMs / 86400000);
+    const noise = (Math.sin(i / 5) * 0.015) + ((Math.random() - 0.48) * 0.15 * 0.08);
     currentPrice = Math.max(1, currentPrice * (1 + drift + noise));
     const roundPrice = Math.round(currentPrice * 100) / 100;
 
@@ -704,8 +793,48 @@ export const marketApi = {
       return DEMO_COVERAGE;
     }
     try {
-      const res = await apiClient.get<MarketCoverageResponse>('/market/coverage');
-      return res.data;
+      let res;
+      try {
+        res = await apiClient.get<any>('/market/coverage');
+      } catch {
+        res = await apiClient.get<any>('/market/instruments/summary');
+      }
+      const d = res.data;
+      if (!d) return DEMO_COVERAGE;
+
+      const total = d.total_instruments ?? d.instrumentCount ?? d.totalInstruments ?? 0;
+      const stocks = d.stocks_count ?? d.stockCount ?? d.by_asset_type?.STOCK ?? 0;
+      const etfs = d.etfs_count ?? d.etfCount ?? d.by_asset_type?.ETF ?? 0;
+      const mfs = d.mutual_funds_count ?? d.mutualFundCount ?? d.by_asset_type?.MUTUAL_FUND ?? 0;
+      const indices = d.indices_count ?? d.indexCount ?? d.by_asset_type?.INDEX ?? 0;
+      const exchangesCount = d.exchanges_count ?? d.exchangeCount ?? (Array.isArray(d.exchanges) ? d.exchanges.length : 0);
+      const countriesCount = d.countries_count ?? d.countryCount ?? (Array.isArray(d.countries) ? d.countries.length : 0);
+      const lastSynced = d.last_synced_at ?? d.lastSyncedAt ?? new Date().toISOString();
+
+      return {
+        total_instruments: total,
+        stocks_count: stocks,
+        etfs_count: etfs,
+        mutual_funds_count: mfs,
+        indices_count: indices,
+        by_asset_type: d.by_asset_type || {
+          STOCK: stocks,
+          ETF: etfs,
+          MUTUAL_FUND: mfs,
+          INDEX: indices
+        },
+        exchanges_count: exchangesCount,
+        exchanges: Array.isArray(d.exchanges) ? d.exchanges : [],
+        countries_count: countriesCount,
+        countries: Array.isArray(d.countries) ? d.countries : [],
+        last_synced_at: lastSynced,
+        instrumentCount: total,
+        stockCount: stocks,
+        etfCount: etfs,
+        mutualFundCount: mfs,
+        indexCount: indices,
+        geographicCounts: d.geographicCounts || {}
+      };
     } catch {
       return DEMO_COVERAGE;
     }
@@ -749,73 +878,7 @@ export const marketApi = {
       if (amfiQuote) return amfiQuote;
     }
 
-    // 3. Secondary: Gold / SGB Provider (NSE GoldBeES & MCX Proxy)
-    if (symbol.toUpperCase().includes('GOLD') || symbol.toUpperCase().includes('SGB')) {
-      return {
-        symbol,
-        name: 'Sovereign Gold Bonds / Nippon Gold BeES',
-        exchange: 'NSE',
-        assetType: 'COMMODITY',
-        price: 84.50,
-        currency: 'INR',
-        change: 0.65,
-        changePct: 0.77,
-        volume: 1250000,
-        open: 84.00,
-        high: 84.80,
-        low: 83.90,
-        prevClose: 83.85,
-        timestamp: new Date().toISOString(),
-        marketStatus: 'OPEN',
-        freshness: 'LATEST_AVAILABLE',
-        status: 'FALLBACK',
-        source: 'NSE GoldBeES / MCX Spot Feed',
-        asOf: 'Today',
-        message: 'Latest available market data shown'
-      };
-    }
-
-    // 4. Default Known Instrument Baseline Quote
-    const cleanSym = symbol.trim().toUpperCase();
-    const base = BASELINE_PRICE_MAP[cleanSym];
-    if (base) {
-      return {
-        symbol,
-        name: symbol,
-        exchange: cleanSym.includes('.NS') ? 'NSE' : (cleanSym.includes('^') ? 'INDEX' : 'US_EXCHANGES'),
-        assetType: cleanSym.includes('BEES') || cleanSym.includes('ETF') ? 'ETF' : (cleanSym.includes('^') ? 'INDEX' : 'STOCK'),
-        price: base.basePrice,
-        currency: cleanSym.includes('.NS') || cleanSym.includes('^NSE') ? 'INR' : 'USD',
-        change: Math.round(base.basePrice * 0.007 * 100) / 100,
-        changePct: 0.70,
-        volume: 850000,
-        open: base.basePrice * 0.995,
-        high: base.basePrice * 1.012,
-        low: base.basePrice * 0.991,
-        prevClose: base.basePrice * 0.993,
-        timestamp: new Date().toISOString(),
-        marketStatus: 'OPEN',
-        freshness: 'LATEST_AVAILABLE',
-        status: 'FALLBACK',
-        source: 'Fallback Market Baseline',
-        asOf: 'Today',
-        message: 'Latest available market data shown'
-      };
-    }
-
-    // 5. General Demo Data Fallback
-    const demoQ = getDemoQuote(symbol);
-    if (demoQ && demoQ.price !== null) {
-      auditLogger.market('MARKET_FALLBACK_ACTIVATED', 'warning', { symbol, status: 'FALLBACK' });
-      return {
-        ...demoQ,
-        status: 'FALLBACK',
-        freshness: 'LATEST_AVAILABLE',
-        source: 'Fallback Market Baseline'
-      };
-    }
-
-    // 6. Graceful Unavailable State (Zero Crashes)
+    // 3. Graceful Unavailable State (Zero Crashes, Zero Fabricated Data)
     auditLogger.market('MARKET_DATA_UNAVAILABLE', 'warning', { symbol, status: 'UNAVAILABLE' });
     return {
       symbol,
@@ -908,7 +971,7 @@ export const marketApi = {
   getCandles: async (symbol: string, range: string = '3y', interval: string = '1d'): Promise<MarketCandlesResponse> => {
     // 0. Demo Mode: Immediate deterministic presentation candles
     if (isDemoMode()) {
-      const observations = generateHistoricalSeries(symbol, range, interval);
+      const observations = generateDemoHistoricalSeries(symbol, range, interval);
       return {
         symbol,
         range,
@@ -956,22 +1019,23 @@ export const marketApi = {
       }
     }
 
-    // 3. Fallback: Resilient Historical Series (Never Display Blank Charts)
-    const observations = generateHistoricalSeries(symbol, range, interval);
+    // 3. Graceful Unavailable State (No Fake Multipliers)
     return {
       symbol,
       range,
       interval,
-      source: 'Fallback Historical Model',
-      freshness: 'LATEST_AVAILABLE',
-      status: 'FALLBACK',
-      message: 'Latest available market data shown',
-      observations
+      source: 'Market Feed Unavailable',
+      freshness: 'UNAVAILABLE',
+      status: 'UNAVAILABLE',
+      message: 'Historical observations currently unavailable',
+      observations: []
     };
   },
 
   getInstruments: async (params: {
     q?: string;
+    query?: string;
+    search?: string;
     asset_type?: string;
     assetType?: string;
     market?: string;
@@ -987,7 +1051,11 @@ export const marketApi = {
 
     try {
       const queryParts: string[] = [];
-      if (params.q) queryParts.push(`q=${encodeURIComponent(params.q)}`);
+      const searchVal = params.q || params.query || params.search;
+      if (searchVal) {
+        queryParts.push(`query=${encodeURIComponent(searchVal)}`);
+        queryParts.push(`q=${encodeURIComponent(searchVal)}`);
+      }
       const at = params.asset_type || params.assetType;
       if (at && at !== 'ALL') queryParts.push(`asset_type=${encodeURIComponent(at)}`);
       if (params.market && params.market !== 'ALL') queryParts.push(`market=${encodeURIComponent(params.market)}`);
@@ -999,7 +1067,7 @@ export const marketApi = {
 
       const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
       const res = await apiClient.get<any>(`/market/instruments${queryString}`);
-      if (res.data && Array.isArray(res.data.items) && res.data.items.length > 0) {
+      if (res.data && Array.isArray(res.data.items)) {
         const normalizedItems: MarketInstrument[] = res.data.items.map((raw: any) => ({
           ...raw,
           assetType: raw.asset_type || raw.assetType,
@@ -1027,10 +1095,29 @@ export const marketApi = {
           filters: res.data.filters
         };
       }
-      // If live returned empty set for default query, fallback to demo dataset to keep explorer populated
-      return getDemoInstruments(params);
+      return {
+        items: [],
+        total: 0,
+        page: params.page ?? 1,
+        limit: params.limit ?? 25,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+        hasMore: false,
+        filters: {}
+      };
     } catch {
-      return getDemoInstruments(params);
+      return {
+        items: [],
+        total: 0,
+        page: params.page ?? 1,
+        limit: params.limit ?? 25,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+        hasMore: false,
+        filters: {}
+      };
     }
   },
 
@@ -1182,6 +1269,54 @@ export const marketApi = {
     } catch {
       return null;
     }
+  },
+
+  getInstrumentDetail: async (canonicalId: string): Promise<MarketInstrument | null> => {
+    try {
+      const res = await apiClient.get<any>(`/market/instruments/${encodeURIComponent(canonicalId)}`);
+      if (res.data) {
+        return {
+          ...res.data,
+          assetType: res.data.asset_type || res.data.assetType,
+          assetClass: res.data.asset_class || res.data.assetClass || 'EQUITY',
+          instrumentType: res.data.instrument_type || res.data.instrumentType || res.data.asset_type || res.data.assetType
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  getFeaturedCatalog: async (): Promise<MarketInstrument[]> => {
+    try {
+      const res = await apiClient.get<any>('/market/instruments?limit=25');
+      if (res.data && Array.isArray(res.data.items) && res.data.items.length > 0) {
+        return res.data.items;
+      }
+    } catch {
+      // Non-blocking
+    }
+    const quotes = await marketApi.getQuotes(FEATURED_CATALOG_SYMBOLS);
+    return FEATURED_CATALOG_SYMBOLS.map((sym) => {
+      const q = quotes[sym];
+      const isIndia = sym.includes('.NS') || sym.startsWith('1') || sym.includes('NSE') || sym.includes('SENSEX');
+      const at: 'COMMODITY' | 'INDEX' | 'STOCK' | 'MUTUAL_FUND' | 'ETF' =
+        (q?.assetType as any) || (sym.includes('BEES') || sym.includes('100') ? 'ETF' : (sym.startsWith('1') ? 'MUTUAL_FUND' : (sym.includes('^') || sym.includes('NIFTY') || sym.includes('SENSEX') ? 'INDEX' : 'STOCK')));
+      return {
+        canonicalId: `FEATURED:${sym}`,
+        symbol: sym,
+        name: q?.name || sym,
+        exchange: q?.exchange || (sym.includes('.NS') ? 'NSE' : (sym.startsWith('1') ? 'AMFI' : 'NASDAQ')),
+        assetType: at,
+        assetClass: at === 'COMMODITY' ? 'COMMODITY' : (at === 'INDEX' ? 'INDEX' : 'EQUITY'),
+        market: isIndia ? 'INDIA' : 'US',
+        currency: q?.currency || (sym.includes('.NS') || sym.startsWith('1') ? 'INR' : 'USD'),
+        quote: q || null,
+        isActive: true,
+        isTradable: true
+      };
+    });
   }
 };
 

@@ -134,18 +134,41 @@ class MarketDataProviderRegistry:
         # 5. Default to Provider Router
         return self.india_provider
 
-    def get_quote(self, symbol: str) -> Dict[str, Any]:
-        """Fetches quote through ProviderRouter with automatic failover."""
+    def get_quote(self, symbol: str, asset_type: Optional[str] = None) -> Dict[str, Any]:
+        """Fetches quote through ProviderRouter with strict asset-type provider routing and automatic failover."""
         if not symbol or not symbol.strip():
             return create_unavailable_quote("UNKNOWN", "Symbol cannot be empty.")
-            
-        # 1. Prefer Angel One SmartAPI live quote cache when available, valid, and not stale
-        if hasattr(self.router, "angel") and self.router.angel and self.router.angel.is_configured:
+
+        clean_sym = symbol.strip()
+        clean_upper = clean_sym.upper()
+        norm_type = (asset_type or "").upper().strip()
+
+        is_mf = (
+            norm_type in ["MUTUAL_FUND", "MF"]
+            or clean_upper.startswith("AMFI:")
+            or clean_upper.startswith("MF:")
+            or (clean_upper.isdigit() and len(clean_upper) in (5, 6))
+        )
+
+        # ── 1. MUTUAL FUNDS: Strict AMFI / NAV Routing ──
+        # MUTUAL_FUND instruments must NEVER query Angel One SmartAPI or general equity router!
+        if is_mf:
             try:
-                angel_q = self.router.angel.get_quote(symbol)
+                mf_q = self.mf_provider.get_quote(clean_sym)
+                if mf_q and mf_q.get("price") is not None and mf_q.get("freshness") != "UNAVAILABLE":
+                    return mf_q
+            except Exception:
+                pass
+            return self.mf_provider.get_quote(clean_sym)
+
+        # ── 2. TRADABLE INDIAN EQUITIES & ETFS: Angel One SmartAPI Realtime Feed ──
+        is_us = clean_upper in ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "SPY", "QQQ", "VOO", "VTI"] or clean_upper.endswith(".US")
+        if not is_us and hasattr(self.router, "angel") and self.router.angel and self.router.angel.is_configured:
+            try:
+                angel_q = self.router.angel.get_quote(clean_sym)
                 if not angel_q:
-                    norm = normalize_global_symbol(symbol)
-                    s_clean = norm.get("canonical_symbol", symbol).strip()
+                    norm = normalize_global_symbol(clean_sym)
+                    s_clean = norm.get("canonical_symbol", clean_sym).strip()
                     clean_base = s_clean.replace(".NS", "").replace(".BO", "")
                     for ck in [f"quote:router:{s_clean}", f"quote:router:{clean_base}", f"quote:india:{clean_base}.NS"]:
                         c = market_cache.get(ck, allow_stale=False)
@@ -157,18 +180,18 @@ class MarketDataProviderRegistry:
             except Exception:
                 pass
 
-        # First try specialized adapter if it's MF or Gold
-        provider = self.resolve_provider(symbol)
-        if provider.name in ["MutualFunds", "MutualFundsProvider", "Gold", "GoldProvider"]:
+        # ── 3. Specialized Adapters (Gold / Commodities) ──
+        provider = self.resolve_provider(clean_sym)
+        if provider.name in ["Gold", "GoldProvider"]:
             try:
-                q = provider.get_quote(symbol)
+                q = provider.get_quote(clean_sym)
                 if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
                     return q
             except Exception:
                 pass
 
-        # Use global multi-provider router
-        return self.router.get_quote(symbol)
+        # ── 4. Global Multi-Provider Router ──
+        return self.router.get_quote(clean_sym)
 
     def get_quotes(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
         """
@@ -195,8 +218,18 @@ class MarketDataProviderRegistry:
 
         return results
 
-    def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo") -> Dict[str, Any]:
+    def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo", asset_type: Optional[str] = None) -> Dict[str, Any]:
         """Fetches historical observations using multi-provider router."""
+        clean_upper = symbol.upper().strip()
+        is_mf = (
+            (asset_type or "").upper() in ["MUTUAL_FUND", "MF"]
+            or clean_upper.startswith("AMFI:")
+            or clean_upper.startswith("MF:")
+            or (clean_upper.isdigit() and len(clean_upper) in (5, 6))
+        )
+        if is_mf:
+            return self.mf_provider.get_candles(symbol, interval=interval, range_period=range_period)
+
         # For Mutual Funds, try MF provider first
         provider = self.resolve_provider(symbol)
         if provider.name in ["MutualFunds", "MutualFundsProvider"]:

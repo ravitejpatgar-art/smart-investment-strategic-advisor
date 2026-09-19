@@ -413,31 +413,31 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 border-t border-slate-100 text-xs text-slate-500">
             <div className="flex items-center gap-1.5 text-teal-800 font-semibold">
               <Database className="w-3.5 h-3.5 text-teal-600" />
-              <span>{Number(coverageData.total_instruments || 0).toLocaleString()} Instruments Universe</span>
+              <span>{Number(coverageData.total_instruments ?? coverageData.instrumentCount ?? 0).toLocaleString()} Instruments Universe</span>
             </div>
             <span className="text-slate-300">•</span>
             <div>
               <span>Stocks: </span>
-              <strong className="text-slate-800 font-mono">{Number(coverageData.stocks_count ?? coverageData.by_asset_type?.STOCK ?? 0).toLocaleString()}</strong>
+              <strong className="text-slate-800 font-mono">{Number(coverageData.stocks_count ?? coverageData.stockCount ?? coverageData.by_asset_type?.STOCK ?? 0).toLocaleString()}</strong>
             </div>
             <span className="text-slate-300">•</span>
             <div>
               <span>ETFs: </span>
-              <strong className="text-slate-800 font-mono">{Number(coverageData.etfs_count ?? coverageData.by_asset_type?.ETF ?? 0).toLocaleString()}</strong>
+              <strong className="text-slate-800 font-mono">{Number(coverageData.etfs_count ?? coverageData.etfCount ?? coverageData.by_asset_type?.ETF ?? 0).toLocaleString()}</strong>
             </div>
             <span className="text-slate-300">•</span>
             <div>
               <span>Mutual Funds: </span>
-              <strong className="text-slate-800 font-mono">{Number(coverageData.mutual_funds_count ?? coverageData.by_asset_type?.MUTUAL_FUND ?? 0).toLocaleString()}</strong>
+              <strong className="text-slate-800 font-mono">{Number(coverageData.mutual_funds_count ?? coverageData.mutualFundCount ?? coverageData.by_asset_type?.MUTUAL_FUND ?? 0).toLocaleString()}</strong>
             </div>
             <span className="text-slate-300">•</span>
             <div>
-              <strong className="text-slate-800 font-mono">{coverageData.exchanges_count || coverageData.exchanges?.length || 0} Exchanges</strong> ({coverageData.countries_count || coverageData.countries?.length || 0} Countries)
+              <strong className="text-slate-800 font-mono">{coverageData.exchanges_count ?? coverageData.exchangeCount ?? coverageData.exchanges?.length ?? 0} Exchanges</strong> ({coverageData.countries_count ?? coverageData.countryCount ?? coverageData.countries?.length ?? 0} Countries)
             </div>
             <span className="text-slate-300">•</span>
             <div className="flex items-center gap-1 text-slate-500">
               <Clock className="w-3 h-3 text-slate-400" />
-              <span>Synced {formatSyncTime(coverageData.last_synced_at)}</span>
+              <span>Synced {formatSyncTime(coverageData.last_synced_at ?? coverageData.lastSyncedAt)}</span>
             </div>
           </div>
         )}

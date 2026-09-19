@@ -10,6 +10,10 @@ from app.services.market_data.instrument_master import instrument_master
 from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.fundamentals import get_enhanced_fundamentals
 from app.services.market_data.technical_analysis import calculate_technical_indicators, compute_market_research_signal
+from app.services.market_data.validator import validate_quote_compatibility, validate_price_sanity
+from app.services.market_data.normalizer import create_unavailable_quote
+from app.models.instrument import Instrument
+
 
 from app.services.market_data.providers.universe_sync_engine import universe_sync_engine
 
@@ -64,6 +68,7 @@ def trigger_universe_sync(
     )
     return stats
 
+@router.get("/search")
 @router.get("/instruments")
 def list_market_instruments(
     request: Request,
@@ -124,8 +129,12 @@ def get_instrument_detail(canonicalId: str):
         )
 
     instrument_copy = dict(instrument)
-    quote = market_registry.get_quote(instrument["symbol"])
-    instrument_copy["quote"] = quote
+    quote = market_registry.get_quote(instrument["symbol"], asset_type=instrument.get("assetType"))
+    is_compat, reason = validate_quote_compatibility(instrument, quote)
+    if is_compat:
+        instrument_copy["quote"] = quote
+    else:
+        instrument_copy["quote"] = create_unavailable_quote(instrument["symbol"], reason)
 
     try:
         fundamentals = market_registry.get_fundamentals(instrument["symbol"])
@@ -164,13 +173,15 @@ def get_instrument_research(
     actual_symbol = instrument_data["symbol"] if instrument_data else clean_symbol
     asset_type = instrument_data.get("assetType", "STOCK") if instrument_data else "STOCK"
 
-    # ── 2. Get quote (isolated failure) ──
+    # ── 2. Get quote (isolated failure with compatibility validation) ──
     quote = None
     has_quote = False
     try:
-        q = market_registry.get_quote(actual_symbol)
-        quote = q
-        has_quote = bool(q and q.get("price") is not None)
+        q = market_registry.get_quote(actual_symbol, asset_type=asset_type)
+        is_compat, _ = validate_quote_compatibility(instrument_data or {"assetType": asset_type, "symbol": actual_symbol}, q)
+        if is_compat and q and q.get("price") is not None:
+            quote = q
+            has_quote = True
     except Exception:
         pass
 
@@ -223,7 +234,9 @@ def get_instrument_research(
             fundamentals=fundamentals,
             valuation=valuation,
             etf_data=etf_data,
-            mf_data=mf_data
+            mf_data=mf_data,
+            candles=candles_res.get("observations") if (candles_res and isinstance(candles_res, dict)) else None,
+            db=db
         )
     except Exception:
         institutional_signal = None
@@ -318,7 +331,10 @@ def get_instrument_signals(
 
     quote = None
     try:
-        quote = market_registry.get_quote(actual_symbol)
+        q = market_registry.get_quote(actual_symbol, asset_type=asset_type)
+        is_compat, _ = validate_quote_compatibility(instrument_data or {"assetType": asset_type, "symbol": actual_symbol}, q)
+        if is_compat and q and q.get("price") is not None:
+            quote = q
     except Exception:
         pass
 
@@ -329,10 +345,12 @@ def get_instrument_signals(
         pass
 
     technicals = None
+    candles_obs = None
     try:
-        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y")
+        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y", asset_type=asset_type)
         if candles_res and candles_res.get("observations"):
-            technicals = calculate_technical_indicators(candles_res["observations"])
+            candles_obs = candles_res["observations"]
+            technicals = calculate_technical_indicators(candles_obs)
     except Exception:
         pass
 
@@ -345,7 +363,9 @@ def get_instrument_signals(
         fundamentals=research_data.get("fundamentals"),
         valuation=research_data.get("valuation"),
         etf_data=research_data.get("etfData"),
-        mf_data=research_data.get("mfData")
+        mf_data=research_data.get("mfData"),
+        candles=candles_obs,
+        db=db
     )
 
 
@@ -499,6 +519,229 @@ def get_sector_heatmap():
 def get_provider_capabilities():
     """Returns provider capability and entitlement matrix."""
     return market_registry.get_capability_matrix()
+
+@router.get("/data-integrity/india")
+def get_india_data_integrity(
+    sample_size: int = Query(25, ge=5, le=100, description="Number of Indian instruments to sample for live quote testing"),
+    db: Session = Depends(get_db)
+):
+    """
+    Diagnostic endpoint that audits Indian market coverage and quotes:
+    - totalIndianInstruments, totalStocks, totalETFs, totalMutualFunds
+    - validQuotes, invalidQuotes, realtimeQuotes, delayedQuotes, staleQuotes, unavailableQuotes
+    - mutualFundsUsingAngel (must be 0)
+    - etfsUsingAngel
+    - stocksUsingAngel
+    - providerMismatches
+    - timestampIssues
+    - sample failures / suspect quotes with reasons
+    - sample successes with resolved token and actual provider-returned price
+    """
+    total_in = db.query(Instrument).filter((Instrument.country == "IN") | (Instrument.market == "INDIA") | (Instrument.currency == "INR")).count()
+    total_stocks = db.query(Instrument).filter(((Instrument.country == "IN") | (Instrument.market == "INDIA")) & (Instrument.asset_type == "STOCK")).count()
+    total_etfs = db.query(Instrument).filter(((Instrument.country == "IN") | (Instrument.market == "INDIA")) & (Instrument.asset_type == "ETF")).count()
+    total_mfs = db.query(Instrument).filter(Instrument.asset_type == "MUTUAL_FUND").count()
+
+    # Priority instruments to always verify
+    core_test_symbols = [
+        ("RELIANCE", "STOCK", "NSE"),
+        ("TCS", "STOCK", "NSE"),
+        ("INFY", "STOCK", "NSE"),
+        ("HDFCBANK", "STOCK", "NSE"),
+        ("ICICIBANK", "STOCK", "NSE"),
+        ("SBIN", "STOCK", "NSE"),
+        ("ITC", "STOCK", "NSE"),
+        ("LT", "STOCK", "NSE"),
+        ("BHARTIARTL", "STOCK", "NSE"),
+        ("ADANIENT", "STOCK", "NSE"),
+        ("MON100", "ETF", "NSE"),
+        ("NIFTYBEES", "ETF", "NSE"),
+        ("GOLDBEES", "ETF", "NSE"),
+        ("BANKBEES", "ETF", "NSE"),
+        ("JUNIORBEES", "ETF", "NSE"),
+        ("AMFI:135001", "MUTUAL_FUND", "AMFI"),
+        ("AMFI:118955", "MUTUAL_FUND", "AMFI"),
+    ]
+
+    instruments_to_test = []
+    seen_symbols = set()
+
+    for sym, atype, exch in core_test_symbols:
+        inst = db.query(Instrument).filter(
+            (Instrument.symbol == sym) |
+            (Instrument.symbol == f"{sym}.NS") |
+            (Instrument.ticker == sym) |
+            (Instrument.canonical_id == sym) |
+            (Instrument.scheme_code == sym.replace("AMFI:", ""))
+        ).first()
+        if inst:
+            instruments_to_test.append(inst)
+            seen_symbols.add(inst.symbol)
+        else:
+            # Instrument representation for testing
+            instruments_to_test.append(Instrument(
+                symbol=sym,
+                canonical_id=f"{exch}:{sym}",
+                asset_type=atype,
+                exchange=exch,
+                currency="INR",
+                name=sym
+            ))
+            seen_symbols.add(sym)
+
+    # Sample additional instruments if sample_size > len(instruments_to_test)
+    needed = max(0, sample_size - len(instruments_to_test))
+    if needed > 0:
+        extra_stocks = db.query(Instrument).filter(
+            ((Instrument.country == "IN") | (Instrument.market == "INDIA")) &
+            (Instrument.asset_type == "STOCK") &
+            (Instrument.is_active == True) &
+            (~Instrument.symbol.in_(seen_symbols))
+        ).limit(needed // 3 + 1).all()
+
+        extra_etfs = db.query(Instrument).filter(
+            ((Instrument.country == "IN") | (Instrument.market == "INDIA")) &
+            (Instrument.asset_type == "ETF") &
+            (Instrument.is_active == True) &
+            (~Instrument.symbol.in_(seen_symbols))
+        ).limit(needed // 3 + 1).all()
+
+        extra_mfs = db.query(Instrument).filter(
+            (Instrument.asset_type == "MUTUAL_FUND") &
+            (Instrument.is_active == True) &
+            (~Instrument.symbol.in_(seen_symbols))
+        ).limit(needed // 3 + 1).all()
+
+        for it in (extra_stocks + extra_etfs + extra_mfs):
+            if len(instruments_to_test) >= sample_size:
+                break
+            if it.symbol not in seen_symbols:
+                instruments_to_test.append(it)
+                seen_symbols.add(it.symbol)
+
+    valid_quotes = 0
+    invalid_quotes = 0
+    realtime_quotes = 0
+    delayed_quotes = 0
+    stale_quotes = 0
+    unavailable_quotes = 0
+    mutual_funds_using_angel = 0
+    etfs_using_angel = 0
+    stocks_using_angel = 0
+    provider_mismatches = 0
+    timestamp_issues = 0
+    sample_failures = []
+    sample_successes = []
+
+    for inst in instruments_to_test:
+        inst_dict = {
+            "symbol": inst.symbol,
+            "assetType": inst.asset_type,
+            "exchange": inst.exchange,
+            "currency": inst.currency or "INR",
+            "name": inst.name
+        }
+        q = market_registry.get_quote(inst.symbol, asset_type=inst.asset_type)
+        is_compat, compat_reason = validate_quote_compatibility(inst_dict, q)
+        quality, suspect_reason = validate_price_sanity(q, inst_dict)
+
+        src = (q.get("provider") or q.get("source") or "").upper()
+        q_exch = (q.get("exchange") or "").upper()
+        fr = (q.get("freshness") or "").upper()
+
+        if inst.asset_type == "MUTUAL_FUND":
+            if "ANGEL" in src or q_exch in ["NSE", "BSE"]:
+                mutual_funds_using_angel += 1
+                provider_mismatches += 1
+        elif inst.asset_type == "ETF":
+            if "ANGEL" in src:
+                etfs_using_angel += 1
+            if "AMFI" in src or q_exch == "AMFI":
+                provider_mismatches += 1
+        elif inst.asset_type == "STOCK":
+            if "ANGEL" in src:
+                stocks_using_angel += 1
+            if "AMFI" in src or q_exch == "AMFI":
+                provider_mismatches += 1
+
+        # Freshness counters
+        if fr in ("REALTIME", "LIVE"):
+            realtime_quotes += 1
+        elif fr in ("DELAYED",):
+            delayed_quotes += 1
+        elif fr in ("UNAVAILABLE",):
+            unavailable_quotes += 1
+
+        if q.get("isStale"):
+            stale_quotes += 1
+
+        # Timestamp checks
+        has_pts = q.get("providerTimestamp") is not None
+        has_ets = q.get("exchangeTimestamp") is not None
+        has_ts = q.get("timestamp") is not None
+        if not (has_pts or has_ets or has_ts):
+            timestamp_issues += 1
+
+        # Determine quote validity
+        p_val = q.get("price")
+        is_valid = (
+            is_compat and
+            quality != "INVALID" and
+            p_val is not None and
+            float(p_val) > 0 and
+            fr != "UNAVAILABLE"
+        )
+
+        if is_valid:
+            valid_quotes += 1
+            sample_successes.append({
+                "symbol": inst.symbol,
+                "assetType": inst.asset_type,
+                "exchange": q.get("exchange"),
+                "tradingSymbol": q.get("tradingsymbol"),
+                "token": q.get("token"),
+                "provider": q.get("provider") or q.get("source"),
+                "ltp": q.get("price"),
+                "providerTimestamp": q.get("providerTimestamp"),
+                "exchangeTimestamp": q.get("exchangeTimestamp"),
+                "freshness": q.get("freshness"),
+                "identityCheck": "PASS",
+                "dataQuality": q.get("dataQuality") or quality
+            })
+        else:
+            invalid_quotes += 1
+            sample_failures.append({
+                "symbol": inst.symbol,
+                "assetType": inst.asset_type,
+                "exchange": inst.exchange,
+                "price": p_val,
+                "reason": compat_reason if not is_compat else (suspect_reason or f"Freshness: {fr}"),
+                "provider": q.get("provider") or q.get("source")
+            })
+
+    return {
+        "status": "PASS" if invalid_quotes == 0 and mutual_funds_using_angel == 0 and provider_mismatches == 0 else "WARNING",
+        "totalIndianInstruments": total_in,
+        "totalStocks": total_stocks,
+        "totalETFs": total_etfs,
+        "totalMutualFunds": total_mfs,
+        "sampleSizeChecked": len(instruments_to_test),
+        "validQuotes": valid_quotes,
+        "invalidQuotes": invalid_quotes,
+        "realtimeQuotes": realtime_quotes,
+        "delayedQuotes": delayed_quotes,
+        "staleQuotes": stale_quotes,
+        "unavailableQuotes": unavailable_quotes,
+        "mutualFundsUsingAngel": mutual_funds_using_angel,
+        "etfsUsingAngel": etfs_using_angel,
+        "stocksUsingAngel": stocks_using_angel,
+        "providerMismatches": provider_mismatches,
+        "timestampIssues": timestamp_issues,
+        "sampleFailures": sample_failures,
+        "sampleSuccesses": sample_successes
+    }
+
+
 
 @router.get("/health")
 def get_market_health():

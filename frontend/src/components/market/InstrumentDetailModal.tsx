@@ -29,9 +29,10 @@ import type {
   InstrumentResearchBundle,
   MarketResearchSignal,
   InstitutionalSignal,
-  InstitutionalPriceTargets
+  InstitutionalPriceTargets,
+  MarketQuote
 } from "../../services/marketApi";
-import { marketApi } from "../../services/marketApi";
+import { marketApi, formatIstTimestamp } from "../../services/marketApi";
 import { UniversalInstrumentChart } from "./UniversalInstrumentChart";
 import { Badge } from "../common/Badge";
 import { useFintechStore } from "../../store/useFintechStore";
@@ -106,21 +107,26 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   const { setActiveView, strategy } = useFintechStore();
   const [bundle, setBundle] = useState<InstrumentResearchBundle | null>(null);
   const [signalData, setSignalData] = useState<InstitutionalSignal | null>(null);
+  const [modalQuote, setModalQuote] = useState<MarketQuote | null>(null);
   const [isLoadingResearch, setIsLoadingResearch] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("overview");
 
   const loadResearch = useCallback(async (inst: MarketInstrument) => {
     setIsLoadingResearch(true);
     try {
-      const [resBundle, resSignal] = await Promise.allSettled([
+      const [resBundle, resSignal, resQuote] = await Promise.allSettled([
         marketApi.getResearch(inst.symbol),
-        marketApi.getSignal(inst.symbol)
+        marketApi.getSignal(inst.symbol),
+        marketApi.getQuote(inst.symbol)
       ]);
       if (resBundle.status === 'fulfilled') {
         setBundle(resBundle.value);
       }
       if (resSignal.status === 'fulfilled') {
         setSignalData(resSignal.value);
+      }
+      if (resQuote.status === 'fulfilled' && resQuote.value && resQuote.value.price !== null) {
+        setModalQuote(resQuote.value);
       }
     } catch {
       // Non-blocking
@@ -133,6 +139,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
     if (isOpen && instrument) {
       setBundle(null);
       setSignalData(null);
+      setModalQuote(null);
       setActiveTab("overview");
       loadResearch(instrument);
     }
@@ -169,7 +176,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
 
   if (!isOpen || !instrument) return null;
 
-  const quote = instrument.quote ?? bundle?.quote;
+  const quote = modalQuote ?? bundle?.quote ?? instrument.quote;
   const isPositive = (quote?.changePct ?? 0) >= 0;
   const curSym = instrument.currency === "USD" ? "$" : (instrument.currency === "TWD" ? "NT$" : (instrument.currency === "GBP" ? "£" : (instrument.currency === "EUR" ? "€" : "₹")));
   const isMF = instrument.assetType === "MUTUAL_FUND";
@@ -312,6 +319,9 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                 {instrument.exchange}
               </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                {quote?.source || (isMF ? "AMFI" : "Angel One SmartAPI")}
+              </span>
               {getFreshnessBadge(quote?.freshness, quote?.status)}
             </div>
             <div className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
@@ -365,7 +375,12 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
 
         {/* Live Quote & Signal Banner */}
         <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-baseline gap-3">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            {isMF && (
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                NAV
+              </span>
+            )}
             <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900">
               {quote?.price !== null && quote?.price !== undefined
                 ? `${curSym}${Number(quote.price).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: isMF ? 4 : 2 })}`
@@ -376,11 +391,24 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                 {isPositive ? "+" : ""}{Number(quote.change).toFixed(2)} ({isPositive ? "+" : ""}{Number(quote.changePct).toFixed(2)}%)
               </span>
             )}
-            {isMF && quote?.navDate && (
+            {isMF && quote?.navDate ? (
               <span className="text-xs text-slate-500 font-sans">
-                As of NAV Date: <strong>{quote.navDate}</strong>
+                As of NAV Date: <strong className="text-slate-700 font-mono">{quote.navDate}</strong>
               </span>
-            )}
+            ) : (quote?.displayTimestampIst || quote?.asOf || quote?.exchangeTimestamp || quote?.timestamp) ? (
+              <span className="text-xs text-slate-500 font-sans">
+                Timestamp: <strong className="text-slate-700 font-mono" title={quote?.exchangeTimestampUtc ? `UTC: ${quote.exchangeTimestampUtc}` : undefined}>
+                  {quote.displayTimestampIst || (quote.exchangeTimestampUtc ? formatIstTimestamp(quote.exchangeTimestampUtc) : (quote.asOf || quote.exchangeTimestamp || quote.timestamp))}
+                </strong>
+              </span>
+            ) : null}
+            <span className={`text-[10.5px] font-mono px-2 py-0.5 rounded font-semibold ${
+              quote?.isLive ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+              quote?.isStale ? "bg-amber-50 text-amber-700 border border-amber-200" :
+              "bg-slate-100 text-slate-600 border border-slate-200"
+            }`}>
+              {quote?.isLive ? "LIVE" : quote?.isStale ? "STALE" : "LATEST AVAILABLE"}
+            </span>
           </div>
 
           {/* Quick Institutional Signal Pill */}
@@ -1246,10 +1274,25 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-3 sm:p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span>
-            Provider: <strong className="text-slate-800 font-semibold">{bundle?.sources?.research || "SmartVest Institutional Feed"}</strong>
-          </span>
+        <div className="p-3 sm:p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500 flex-wrap gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span>
+              Provider: <strong className="text-slate-800 font-semibold">{quote?.source || (isMF ? "AMFI" : "Angel One SmartAPI")}</strong>
+            </span>
+            <span>
+              Exchange: <strong className="text-slate-800 font-mono">{instrument.exchange}</strong>
+            </span>
+            {(quote?.displayTimestampIst || quote?.asOf || quote?.exchangeTimestamp || quote?.timestamp) && (
+              <span>
+                Timestamp: <strong className="text-slate-800 font-mono" title={quote?.exchangeTimestampUtc ? `UTC: ${quote.exchangeTimestampUtc}` : undefined}>
+                  {quote.displayTimestampIst || (quote.exchangeTimestampUtc ? formatIstTimestamp(quote.exchangeTimestampUtc) : (quote.asOf || quote.exchangeTimestamp || quote.timestamp))}
+                </strong>
+              </span>
+            )}
+            <span>
+              State: <strong className="text-slate-800 font-mono">{quote?.isLive ? "LIVE" : quote?.isStale ? "STALE" : "LATEST AVAILABLE"}</strong>
+            </span>
+          </div>
           <button
             type="button"
             onClick={onClose}

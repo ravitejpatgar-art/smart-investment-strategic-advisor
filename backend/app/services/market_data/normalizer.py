@@ -1,12 +1,54 @@
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional, Tuple, Union
+from zoneinfo import ZoneInfo
 from app.services.market_data.freshness import DataFreshness, sanitize_freshness_state
 
-def format_ist_timestamp(dt: Optional[datetime] = None) -> str:
-    """Formats current or given datetime into readable IST format (e.g. 26 Aug 2026, 10:31 AM IST)."""
-    if not dt:
-        dt = datetime.now(timezone.utc)
-    ist_dt = dt + timedelta(hours=5, minutes=30)
+IST_ZONE = ZoneInfo("Asia/Kolkata")
+
+def to_ist_datetime(dt_or_str: Optional[Union[datetime, str, int, float]] = None) -> datetime:
+    """
+    Parses datetime, ISO timestamp, or epoch into a timezone-aware Asia/Kolkata datetime.
+    Never adds or subtracts hours manually.
+    """
+    if dt_or_str is None:
+        return datetime.now(timezone.utc).astimezone(IST_ZONE)
+
+    if isinstance(dt_or_str, (int, float)):
+        sec = dt_or_str / 1000.0 if dt_or_str > 1e11 else float(dt_or_str)
+        return datetime.fromtimestamp(sec, tz=timezone.utc).astimezone(IST_ZONE)
+
+    if isinstance(dt_or_str, str):
+        s = dt_or_str.strip()
+        if not s:
+            return datetime.now(timezone.utc).astimezone(IST_ZONE)
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        try:
+            dt = datetime.fromisoformat(s)
+        except Exception:
+            try:
+                parsed = datetime.strptime(s, "%d-%b-%Y %H:%M:%S")
+                return parsed.replace(tzinfo=IST_ZONE)
+            except Exception:
+                return datetime.now(timezone.utc).astimezone(IST_ZONE)
+    elif isinstance(dt_or_str, datetime):
+        dt = dt_or_str
+    else:
+        return datetime.now(timezone.utc).astimezone(IST_ZONE)
+
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    return dt.astimezone(IST_ZONE)
+
+
+def format_ist_timestamp(dt_or_str: Optional[Union[datetime, str, int, float]] = None) -> str:
+    """
+    Formats a datetime, ISO string, or timestamp into IST format:
+    e.g. '18 Sep 2026, 03:58:33 PM IST'.
+    Uses ZoneInfo('Asia/Kolkata') strictly.
+    """
+    ist_dt = to_ist_datetime(dt_or_str)
     return ist_dt.strftime("%d %b %Y, %I:%M:%S %p IST")
 
 # Canonical Symbol Resolution Map
@@ -309,6 +351,8 @@ def normalize_market_quote(
         except Exception:
             pass
 
+    display_ts_ist = format_ist_timestamp(ts_iso) if ts_iso else as_of
+
     return {
         "symbol": symbol,
         "name": name,
@@ -328,6 +372,9 @@ def normalize_market_quote(
         "prevClose": pc_val,
         "previousClose": pc_val,
         "timestamp": ts_iso,
+        "exchangeTimestamp": ts_iso,
+        "exchangeTimestampUtc": ts_iso,
+        "displayTimestampIst": display_ts_ist,
         "dataDate": data_date or nav_date,
         "providerTimestamp": provider_timestamp,
         "marketStatus": market_status,
@@ -335,7 +382,7 @@ def normalize_market_quote(
         "source": source,
         "isLive": is_live_flag,
         "isStale": is_stale,
-        "asOf": as_of,
+        "asOf": display_ts_ist,
         "navDate": nav_date
     }
 
@@ -346,6 +393,7 @@ def create_unavailable_quote(
 ) -> Dict[str, Any]:
     """Creates a strictly typed unavailable response with zero fake numbers."""
     now_utc = datetime.now(timezone.utc)
+    display_ist = format_ist_timestamp(now_utc)
     return {
         "symbol": symbol,
         "name": symbol,
@@ -365,6 +413,9 @@ def create_unavailable_quote(
         "prevClose": None,
         "previousClose": None,
         "timestamp": None,
+        "exchangeTimestamp": None,
+        "exchangeTimestampUtc": None,
+        "displayTimestampIst": display_ist,
         "dataDate": None,
         "providerTimestamp": None,
         "marketStatus": market_status,
@@ -372,7 +423,7 @@ def create_unavailable_quote(
         "source": None,
         "isLive": False,
         "isStale": True,
-        "asOf": format_ist_timestamp(now_utc),
+        "asOf": display_ist,
         "navDate": None,
         "message": message
     }

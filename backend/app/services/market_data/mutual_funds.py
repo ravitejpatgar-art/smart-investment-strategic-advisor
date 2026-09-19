@@ -59,26 +59,7 @@ MF_SCHEME_MAP = {
     "ICICI PRUDENTIAL CONSERVATIVE HYBRID FUND DIRECT": {"code": "120616", "name": "ICICI Prudential Conservative Hybrid Fund Direct-Growth", "category": "Conservative Hybrid"}
 }
 
-# Reliable Baseline NAV and Historical Growth Rates for Guaranteed Uptime
-MF_BASELINE_NAV: Dict[str, Dict[str, Any]] = {
-    "120716": {"nav": 172.50, "cagr": 0.13, "vol": 0.12},
-    "120717": {"nav": 74.20, "cagr": 0.16, "vol": 0.16},
-    "122639": {"nav": 78.40, "cagr": 0.16, "vol": 0.13},
-    "120586": {"nav": 382.40, "cagr": 0.07, "vol": 0.01},
-    "119062": {"nav": 52.80, "cagr": 0.08, "vol": 0.02},
-    "125354": {"nav": 168.20, "cagr": 0.24, "vol": 0.22},
-    "120616": {"nav": 48.60, "cagr": 0.09, "vol": 0.04},
-    "120828": {"nav": 248.50, "cagr": 0.28, "vol": 0.24},
-    "120823": {"nav": 112.40, "cagr": 0.22, "vol": 0.19},
-    "127042": {"nav": 94.60, "cagr": 0.22, "vol": 0.19},
-    "119775": {"nav": 112.40, "cagr": 0.20, "vol": 0.18},
-    "135781": {"nav": 54.20, "cagr": 0.19, "vol": 0.20},
-    "118989": {"nav": 485.60, "cagr": 0.14, "vol": 0.09},
-    "119588": {"nav": 68.40, "cagr": 0.08, "vol": 0.03},
-    "145552": {"nav": 44.50, "cagr": 0.08, "vol": 0.02},
-    "119582": {"nav": 32.80, "cagr": 0.08, "vol": 0.02},
-    "119776": {"nav": 34.20, "cagr": 0.07, "vol": 0.01},
-}
+
 
 class MutualFundsProvider(BaseMarketDataProvider):
     """
@@ -202,6 +183,16 @@ class MutualFundsProvider(BaseMarketDataProvider):
                 change = round(nav - prev_nav, 4)
                 change_pct = round((change / prev_nav * 100.0), 2) if prev_nav > 0 else 0.0
 
+                raw_ts = None
+                prov_ts = None
+                if nav_date:
+                    try:
+                        dt = datetime.strptime(nav_date.strip(), "%d-%m-%Y").replace(tzinfo=timezone.utc)
+                        raw_ts = dt.isoformat()
+                        prov_ts = int(dt.timestamp() * 1000)
+                    except Exception:
+                        raw_ts = nav_date
+
                 quote = normalize_market_quote(
                     symbol=canonical_sym,
                     name=meta.get("scheme_name", scheme_info["name"]),
@@ -219,7 +210,9 @@ class MutualFundsProvider(BaseMarketDataProvider):
                     freshness=DataFreshness.LATEST_AVAILABLE,
                     source="AMFI Published Daily NAV",
                     market_status="PUBLISHED",
-                    nav_date=nav_date
+                    nav_date=nav_date,
+                    raw_timestamp=raw_ts,
+                    provider_timestamp=prov_ts
                 )
 
                 valid, _ = validate_quote_data(quote)
@@ -227,31 +220,58 @@ class MutualFundsProvider(BaseMarketDataProvider):
                     market_cache.set(cache_key, quote, ttl_seconds=3600)
                     return quote
 
-        # 2. Resilient Baseline Fallback
-        baseline = MF_BASELINE_NAV.get(scheme_code, {"nav": 100.0, "cagr": 0.12, "vol": 0.10})
-        base_nav = baseline["nav"]
-        daily_chg = round(base_nav * 0.0035, 2)
-        quote = normalize_market_quote(
-            symbol=canonical_sym,
-            name=scheme_info["name"],
-            exchange="AMFI",
-            asset_type="MUTUAL_FUND",
-            price=base_nav,
-            change=daily_chg,
-            change_pct=0.35,
-            volume=0,
-            open_price=base_nav,
-            high_price=base_nav * 1.002,
-            low_price=base_nav * 0.998,
-            prev_close=base_nav - daily_chg,
-            currency="INR",
-            freshness=DataFreshness.LATEST_AVAILABLE,
-            source="AMFI Official NAV Feed",
-            market_status="PUBLISHED",
-            nav_date="Latest Published"
-        )
-        market_cache.set(cache_key, quote, ttl_seconds=3600)
-        return quote
+        # 2. Check Database Stored NAV from AMFI Master
+        try:
+            from app.models.instrument import Instrument
+            from app.core.database import SessionLocal
+            with SessionLocal() as db:
+                inst = db.query(Instrument).filter(
+                    (Instrument.scheme_code == scheme_code) |
+                    (Instrument.provider_symbol == scheme_code) |
+                    (Instrument.symbol == canonical_sym)
+                ).first()
+                if inst and inst.nav:
+                    db_nav = float(inst.nav)
+                    if db_nav > 0:
+                        db_ts = None
+                        db_prov_ts = None
+                        if inst.nav_date:
+                            try:
+                                dt = datetime.strptime(inst.nav_date.strip(), "%d-%m-%Y").replace(tzinfo=timezone.utc)
+                                db_ts = dt.isoformat()
+                                db_prov_ts = int(dt.timestamp() * 1000)
+                            except Exception:
+                                db_ts = inst.nav_date
+
+                        quote = normalize_market_quote(
+                            symbol=canonical_sym,
+                            name=inst.name or scheme_info["name"],
+                            exchange="AMFI",
+                            asset_type="MUTUAL_FUND",
+                            price=db_nav,
+                            change=0.0,
+                            change_pct=0.0,
+                            volume=0,
+                            open_price=db_nav,
+                            high_price=db_nav,
+                            low_price=db_nav,
+                            prev_close=db_nav,
+                            currency="INR",
+                            freshness=DataFreshness.LATEST_AVAILABLE,
+                            source="AMFI Published Daily NAV",
+                            market_status="PUBLISHED",
+                            nav_date=inst.nav_date or "Latest Published",
+                            raw_timestamp=db_ts,
+                            provider_timestamp=db_prov_ts
+                        )
+                        market_cache.set(cache_key, quote, ttl_seconds=3600)
+                        return quote
+        except Exception:
+            pass
+
+        # 3. Not Available (Never synthesize fake prices or baseline NAV)
+        return create_unavailable_quote(canonical_sym, "NAV not currently published for this mutual fund scheme.")
+
 
     def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo") -> Dict[str, Any]:
         canonical_sym = symbol.strip()
@@ -343,42 +363,17 @@ class MutualFundsProvider(BaseMarketDataProvider):
                 market_cache.set(cache_key, res, ttl_seconds=3600)
                 return res
 
-        # 2. Resilient Baseline Historical Series
-        baseline = MF_BASELINE_NAV.get(scheme_code, {"nav": 100.0, "cagr": 0.12, "vol": 0.10})
-        total_pts = 30 if r_clean == "1mo" else (90 if r_clean == "3mo" else 200)
-        days = 30 if r_clean == "1mo" else (90 if r_clean == "3mo" else 365)
-        now = datetime.now(timezone.utc)
-        observations = []
-        base_nav = baseline["nav"] * (1 - (baseline["cagr"] * days / 365))
-
-        for i in range(total_pts):
-            d = now - timedelta(days=(total_pts - i) * (days / total_pts))
-            d_str = d.strftime("%Y-%m-%d")
-            base_nav = base_nav * (1 + (baseline["cagr"] / 365) * (days / total_pts))
-            val = round(base_nav, 2)
-            observations.append({
-                "date": d_str,
-                "timestamp": d_str,
-                "nav": val,
-                "close": val,
-                "open": val,
-                "high": val,
-                "low": val,
-                "volume": 0
-            })
-
-        res = {
+        # 2. Historical NAV observations unavailable (Never synthesize fake curves)
+        return {
             "symbol": canonical_sym,
             "name": scheme_info["name"],
             "range": range_period,
             "interval": "1d",
             "source": "AMFI Historical NAV Feed",
-            "freshness": DataFreshness.LATEST_AVAILABLE.value,
-            "observations": observations,
-            "message": "Latest available market data shown"
+            "freshness": DataFreshness.UNAVAILABLE.value,
+            "observations": [],
+            "message": "Historical NAV series unavailable for this scheme"
         }
-        market_cache.set(cache_key, res, ttl_seconds=3600)
-        return res
 
     def get_fundamentals(self, symbol: str) -> Dict[str, Any]:
         canonical_sym = symbol.strip()

@@ -4,16 +4,17 @@ from app.models.portfolio import PortfolioHolding
 from app.models.goal import Goal
 from app.models.conversation import Conversation, ConversationMessage
 from app.models.watchlist import WatchlistItem
-from app.models.instrument import Instrument
+from app.models.instrument import Instrument, InstrumentSignalHistory
 
 __all__ = [
-    "User", 
-    "FinancialProfile", 
-    "Expense", 
-    "PortfolioHolding", 
-    "Goal", 
-    "Conversation", 
+    "User",
+    "FinancialProfile",
+    "Expense",
+    "PortfolioHolding",
+    "Goal",
+    "Conversation",
     "ConversationMessage",
     "WatchlistItem",
-    "Instrument"
+    "Instrument",
+    "InstrumentSignalHistory"
 ]

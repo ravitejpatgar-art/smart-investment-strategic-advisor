@@ -8,6 +8,7 @@ from app.models.instrument import Instrument
 from app.services.market_data.registry import market_registry
 from app.services.market_data.cache import market_cache
 from app.services.market_data.universe_provider import GlobalUniverseManager
+from app.services.market_data.validator import validate_quote_compatibility
 
 class GlobalInstrumentMasterRegistry:
     """
@@ -142,19 +143,21 @@ class GlobalInstrumentMasterRegistry:
             def fetch_quote(it: Dict[str, Any]) -> Dict[str, Any]:
                 item_copy = dict(it)
                 is_mf = it.get("assetType") == "MUTUAL_FUND" or it.get("asset_type") == "MUTUAL_FUND"
-                
+
                 if is_mf:
+                    # 1. Check if database has stored NAV
                     nav_val = it.get("nav")
                     if nav_val is not None:
                         try:
                             nav_float = float(nav_val)
                             if nav_float > 0:
-                                item_copy["quote"] = {
+                                nav_q = {
                                     "symbol": it["symbol"],
                                     "name": it["name"],
-                                    "exchange": it.get("exchange") or "AMFI",
+                                    "exchange": "AMFI",
                                     "assetType": "MUTUAL_FUND",
                                     "price": nav_float,
+                                    "nav": nav_float,
                                     "currency": it.get("currency") or "INR",
                                     "change": 0.0,
                                     "changePct": 0.0,
@@ -168,26 +171,37 @@ class GlobalInstrumentMasterRegistry:
                                     "navDate": it.get("navDate"),
                                     "message": "Latest published scheme NAV shown"
                                 }
-                                item_copy["price"] = nav_float
-                                return item_copy
+                                is_compat, _ = validate_quote_compatibility(it, nav_q)
+                                if is_compat:
+                                    item_copy["quote"] = nav_q
+                                    item_copy["price"] = nav_float
+                                    return item_copy
                         except (ValueError, TypeError):
                             pass
 
-                    # If nav not stored in db, query MF adapter
-                    target_sym = it.get("schemeCode") or it.get("scheme_code") or it["symbol"]
+                    # 2. Query MF provider directly with explicit asset_type
+                    scheme_code = it.get("schemeCode") or it.get("scheme_code")
+                    if not scheme_code and str(it.get("providerSymbol", "")).isdigit():
+                        scheme_code = str(it["providerSymbol"])
+                    if not scheme_code and it.get("symbol", "").startswith("AMFI:"):
+                        scheme_code = it["symbol"][5:]
+
+                    target_sym = f"AMFI:{scheme_code}" if scheme_code else it["symbol"]
                     try:
-                        q = market_registry.get_quote(target_sym)
+                        q = market_registry.get_quote(target_sym, asset_type="MUTUAL_FUND")
                         if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
-                            item_copy["quote"] = q
-                            item_copy["price"] = q.get("price")
-                            return item_copy
+                            is_compat, _ = validate_quote_compatibility(it, q)
+                            if is_compat:
+                                item_copy["quote"] = q
+                                item_copy["price"] = q.get("price")
+                                return item_copy
                     except Exception:
                         pass
 
                     item_copy["quote"] = {
                         "symbol": it["symbol"],
                         "name": it["name"],
-                        "exchange": it.get("exchange") or "AMFI",
+                        "exchange": "AMFI",
                         "assetType": "MUTUAL_FUND",
                         "price": None,
                         "currency": it.get("currency") or "INR",
@@ -212,40 +226,45 @@ class GlobalInstrumentMasterRegistry:
                     market_cache.get(f"quote:{sym_clean}", allow_stale=True)
                 )
                 if cached_quote and cached_quote.get("price") is not None:
-                    item_copy["quote"] = cached_quote
-                    item_copy["price"] = cached_quote.get("price")
-                    item_copy["change"] = cached_quote.get("change")
-                    item_copy["changePct"] = cached_quote.get("changePct")
-                    return item_copy
+                    is_compat, _ = validate_quote_compatibility(it, cached_quote)
+                    if is_compat:
+                        item_copy["quote"] = cached_quote
+                        item_copy["price"] = cached_quote.get("price")
+                        item_copy["change"] = cached_quote.get("change")
+                        item_copy["changePct"] = cached_quote.get("changePct")
+                        return item_copy
 
-                # Try live quote with quick resolution
+                # Try live quote with quick resolution and strict compatibility validation
                 try:
-                    q = market_registry.get_quote(it["symbol"])
+                    q = market_registry.get_quote(it["symbol"], asset_type=it.get("assetType"))
                     if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
-                        item_copy["quote"] = q
-                        item_copy["price"] = q.get("price")
-                        item_copy["change"] = q.get("change")
-                        item_copy["changePct"] = q.get("changePct")
-                    else:
-                        item_copy["quote"] = {
-                            "symbol": it["symbol"],
-                            "name": it["name"],
-                            "exchange": it.get("exchange") or "UNKNOWN",
-                            "assetType": it.get("assetType") or "STOCK",
-                            "price": None,
-                            "currency": it.get("currency") or "USD",
-                            "change": None,
-                            "changePct": None,
-                            "volume": None,
-                            "timestamp": datetime.now(timezone.utc).isoformat(),
-                            "marketStatus": "CLOSED",
-                            "freshness": "UNAVAILABLE",
-                            "status": "UNAVAILABLE",
-                            "source": "Market Feed Unavailable",
-                            "asOf": "Unavailable",
-                            "message": "Quote not currently available"
-                        }
-                        item_copy["price"] = None
+                        is_compat, _ = validate_quote_compatibility(it, q)
+                        if is_compat:
+                            item_copy["quote"] = q
+                            item_copy["price"] = q.get("price")
+                            item_copy["change"] = q.get("change")
+                            item_copy["changePct"] = q.get("changePct")
+                            return item_copy
+
+                    item_copy["quote"] = {
+                        "symbol": it["symbol"],
+                        "name": it["name"],
+                        "exchange": it.get("exchange") or "UNKNOWN",
+                        "assetType": it.get("assetType") or "STOCK",
+                        "price": None,
+                        "currency": it.get("currency") or "USD",
+                        "change": None,
+                        "changePct": None,
+                        "volume": None,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "marketStatus": "CLOSED",
+                        "freshness": "UNAVAILABLE",
+                        "status": "UNAVAILABLE",
+                        "source": "Market Feed Unavailable",
+                        "asOf": "Unavailable",
+                        "message": "Quote not currently available"
+                    }
+                    item_copy["price"] = None
                 except Exception:
                     item_copy["quote"] = None
                     item_copy["price"] = None

@@ -23,7 +23,7 @@ class Instrument(Base):
     provider_symbol = Column(String(80), nullable=False)
     status = Column(String(30), default="ACTIVE", index=True)
     is_active = Column(Boolean, default=True, index=True)
-    
+
     # Fundamental & Classification Metadata
     sector = Column(String(100), nullable=True)
     industry = Column(String(100), nullable=True)
@@ -64,4 +64,21 @@ class Instrument(Base):
         Index('ix_instruments_filter', 'asset_type', 'market', 'exchange'),
         Index('ix_instruments_canonical_provider', 'canonical_id', 'provider'),
         Index('ix_instruments_country_exchange', 'country', 'exchange'),
+    )
+
+
+class InstrumentSignalHistory(Base):
+    __tablename__ = "instrument_signal_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(50), index=True, nullable=False)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    signal = Column(String(30), nullable=False)
+    confidence = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
+    data_quality = Column(String(30), nullable=False)
+    score = Column(Float, nullable=True)
+
+    __table_args__ = (
+        Index('ix_signal_history_symbol_ts', 'symbol', 'timestamp'),
     )

@@ -43,16 +43,16 @@ describe('Market API & Fallback Resilience (P1.2)', () => {
     expect(quote.source).toContain('Backend Live');
   });
 
-  // 2. Live quote failure falls back safely
-  it('gracefully falls back when backend network call rejects without throwing uncaught errors', async () => {
+  // 2. Live quote failure returns UNAVAILABLE without crashing
+  it('gracefully handles quote failure when backend network call rejects without throwing uncaught errors', async () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Network offline in CI'));
 
     const quote = await marketApi.getQuote('RELIANCE.NS');
     expect(quote).toBeDefined();
     expect(quote.symbol).toBe('RELIANCE.NS');
-    expect(quote.price).toBeGreaterThan(0);
-    expect(typeof quote.price).toBe('number');
-    expect(isNaN(quote.price!)).toBe(false);
+    expect(quote.price).toBeNull();
+    expect(quote.freshness).toBe('UNAVAILABLE');
+    expect(quote.status).toBe('UNAVAILABLE');
   });
 
   // 3. Fallback quote contains correct status/source metadata
@@ -60,10 +60,9 @@ describe('Market API & Fallback Resilience (P1.2)', () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Backend API 500 error'));
 
     const quote = await marketApi.getQuote('RELIANCE.NS');
-    expect(quote.status).toBe('FALLBACK');
-    expect(quote.source).toContain('Fallback Market Baseline');
-    expect(quote.freshness).toBe('LATEST_AVAILABLE');
-    expect(quote.message).toContain('Latest available');
+    expect(quote.status).toBe('UNAVAILABLE');
+    expect(quote.freshness).toBe('UNAVAILABLE');
+    expect(quote.price).toBeNull();
   });
 
   // 4. One failed quote does not break batch quotes
@@ -103,29 +102,29 @@ describe('Market API & Fallback Resilience (P1.2)', () => {
     expect(quotes['AAPL'].price).toBe(228.0);
 
     expect(quotes['NIFTY 50']).toBeDefined();
-    expect(quotes['NIFTY 50'].price).toBeGreaterThan(0);
-    expect(quotes['NIFTY 50'].status).toBe('FALLBACK');
+    expect(quotes['NIFTY 50'].price).toBeNull();
+    expect(quotes['NIFTY 50'].status).toBe('UNAVAILABLE');
 
     expect(quotes['SENSEX']).toBeDefined();
-    expect(quotes['SENSEX'].price).toBeGreaterThan(0);
-    expect(quotes['SENSEX'].status).toBe('FALLBACK');
+    expect(quotes['SENSEX'].price).toBeNull();
+    expect(quotes['SENSEX'].status).toBe('UNAVAILABLE');
   });
 
-  // 5. Historical API failure uses safe fallback where configured
+  // 5. Historical API failure handles error safely
   it('uses safe fallback for historical candles when backend API rejects', async () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Candles endpoint offline'));
 
     const candles = await marketApi.getCandles('NIFTY 50', '1y', '1d');
     expect(candles).toBeDefined();
     expect(candles.symbol).toBe('NIFTY 50');
-    expect(candles.status).toBe('FALLBACK');
-    expect(candles.source).toContain('Fallback Historical Model');
-    expect(candles.freshness).toBe('LATEST_AVAILABLE');
+    expect(candles.status).toBe('UNAVAILABLE');
+    expect(candles.freshness).toBe('UNAVAILABLE');
+    expect(candles.observations.length).toBe(0);
   });
 
-  // 6. Historical fallback has valid OHLCV values
-  it('generates non-empty historical fallback candles with valid numeric OHLCV values', async () => {
-    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Candles 503 Service Unavailable'));
+  // 6. Historical demo candles have valid OHLCV values in demo mode
+  it('generates non-empty historical fallback candles with valid numeric OHLCV values in demo mode', async () => {
+    localStorage.setItem('smartvest_demo_mode', 'true');
 
     const candles = await marketApi.getCandles('S&P 500', '1y', '1d');
     expect(candles.observations.length).toBeGreaterThan(0);
@@ -151,11 +150,8 @@ describe('Market API & Fallback Resilience (P1.2)', () => {
     const stockResponse = await marketApi.getInstruments({ asset_type: 'STOCK' });
     expect(stockResponse).toBeDefined();
     expect(Array.isArray(stockResponse.items)).toBe(true);
-    expect(stockResponse.items.length).toBeGreaterThan(0);
-    expect(stockResponse.items.every(i => i.assetType === 'STOCK')).toBe(true);
-
-    const queryResponse = await marketApi.getInstruments({ q: 'nifty' });
-    expect(queryResponse.items.some(i => i.symbol.toLowerCase().includes('nifty') || i.name.toLowerCase().includes('nifty'))).toBe(true);
+    expect(stockResponse.items.length).toBe(0);
+    expect(stockResponse.total).toBe(0);
   });
 
   // 8. Missing benchmark does not break the remaining benchmarks
@@ -207,7 +203,7 @@ describe('Market API & Fallback Resilience (P1.2)', () => {
     const fallbackQuote = await marketApi.getQuote('AAPL');
     expect(fallbackQuote.status).not.toBe('LIVE');
     expect(fallbackQuote.freshness).not.toBe('REALTIME');
-    expect(fallbackQuote.status).toBe('FALLBACK');
+    expect(fallbackQuote.status).toBe('UNAVAILABLE');
 
     // C. Helper resolution check
     expect(resolveQuoteStatus({ freshness: 'MODEL_ASSUMPTION', source: 'Deterministic Demo' })).toBe('DEMO');

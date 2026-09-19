@@ -47,10 +47,11 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
 
     ema20 = ema(closes, 20)
     ema50 = ema(closes, 50)
+    ema200 = ema(closes, 200)
     ema12 = ema(closes, 12)
     ema26 = ema(closes, 26)
 
-    # 3. MACD (12, 26, 9)
+    # 3. MACD (12, 26, 9) - Minimum 35 observations required
     macd_data = None
     if len(closes) >= 35:
         # Calculate EMA12 and EMA26 series
@@ -76,9 +77,9 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
                 "trend": "BULLISH" if hist_val > 0 else "BEARISH"
             }
 
-    # 4. RSI (14 Period)
+    # 4. RSI (14 Period) - Minimum 30 observations required
     rsi_val = None
-    if len(closes) >= 15:
+    if len(closes) >= 30:
         gains, losses = [], []
         for i in range(1, len(closes)):
             diff = closes[i] - closes[i - 1]
@@ -103,7 +104,7 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
             rs = avg_gain / avg_loss
             rsi_val = round(100.0 - (100.0 / (1.0 + rs)), 2)
 
-    # 5. Bollinger Bands (20 Period, 2 Std Dev)
+    # 5. Bollinger Bands (20 Period, 2 Std Dev) - Minimum 20 observations required
     bollinger = None
     if len(closes) >= 20:
         window = closes[-20:]
@@ -122,14 +123,28 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
             "percentB": percent_b
         }
 
-    # 6. 52-Week Range & Position
-    # Assume up to 252 trading days
+    # 6. Volume Trend & Relative Volume - Minimum 20 observations required
+    vols = [float(c.get("volume") or 0.0) for c in candles if c.get("volume") is not None and float(c.get("volume") or 0.0) > 0]
+    volume_metrics = None
+    if len(vols) >= 20:
+        avg_vol_20 = round(sum(vols[-20:]) / 20.0, 2)
+        recent_vol = vols[-1]
+        surge_ratio = round(recent_vol / avg_vol_20, 2) if avg_vol_20 > 0 else 1.0
+        volume_metrics = {
+            "avgVolume20": avg_vol_20,
+            "currentVolume": recent_vol,
+            "relativeVolume": surge_ratio,
+            "surgeRatio": surge_ratio,
+            "trend": "SURGE" if surge_ratio > 1.3 else ("ACCUMULATION" if surge_ratio > 1.0 else ("SUBDUED" if surge_ratio < 0.7 else "NORMAL"))
+        }
+
+    # 7. 52-Week Range & Position
     lookback_52w = closes[-252:] if len(closes) >= 252 else closes
     high_52w = max(lookback_52w)
     low_52w = min(lookback_52w)
     pos_52w = round(((current_price - low_52w) / (high_52w - low_52w) * 100), 2) if (high_52w - low_52w) > 0 else 50.0
 
-    # 7. Annualized Volatility
+    # 8. Annualized Volatility
     returns = []
     for i in range(1, len(closes)):
         if closes[i - 1] > 0:
@@ -141,7 +156,7 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
         daily_std = math.sqrt(var_ret)
         volatility_annualized = round(daily_std * math.sqrt(252) * 100, 2)
 
-    # 8. Max & Current Drawdown
+    # 9. Max & Current Drawdown
     peak = closes[0]
     max_dd = 0.0
     for p in closes:
@@ -154,7 +169,7 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
     all_time_peak = max(closes)
     current_dd = round(((all_time_peak - current_price) / all_time_peak * 100), 2) if all_time_peak > 0 else 0.0
 
-    # 9. Average True Range (ATR 14)
+    # 10. Average True Range (ATR 14) - Minimum 15 observations required
     atr_14 = None
     if len(candles) >= 15:
         tr_list = []
@@ -167,7 +182,7 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
         if len(tr_list) >= 14:
             atr_14 = round(sum(tr_list[-14:]) / 14.0, 2)
 
-    # 10. Pivot Points (Standard Support / Resistance)
+    # 11. Pivot Points (Standard Support / Resistance)
     last_candle = candles[-1]
     last_h = float(last_candle.get("high") or current_price)
     last_l = float(last_candle.get("low") or current_price)
@@ -177,7 +192,7 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
     r2 = round(pivot_p + (last_h - last_l), 2)
     s2 = round(pivot_p - (last_h - last_l), 2)
 
-    # 11. Trend Direction
+    # 12. Trend Direction
     trend_score = 0
     if sma20 and current_price > sma20: trend_score += 1
     elif sma20: trend_score -= 1
@@ -190,8 +205,32 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
 
     trend_direction = "BULLISH" if trend_score >= 2 else "BEARISH" if trend_score <= -2 else "NEUTRAL"
 
+    # Coverage tracking
+    computed_indicators = []
+    missing_indicators = []
+    if rsi_val is not None: computed_indicators.append("RSI(14)")
+    else: missing_indicators.append("RSI(14) (needs >=30 observations)")
+    if macd_data is not None: computed_indicators.append("MACD(12,26,9)")
+    else: missing_indicators.append("MACD(12,26,9) (needs >=35 observations)")
+    if ema20 is not None: computed_indicators.append("EMA20")
+    if ema50 is not None: computed_indicators.append("EMA50")
+    else: missing_indicators.append("EMA50 (needs >=50 observations)")
+    if ema200 is not None: computed_indicators.append("EMA200")
+    else: missing_indicators.append("EMA200 (needs >=200 observations)")
+    if sma50 is not None: computed_indicators.append("SMA50")
+    else: missing_indicators.append("SMA50 (needs >=50 observations)")
+    if sma200 is not None: computed_indicators.append("SMA200")
+    else: missing_indicators.append("SMA200 (needs >=200 observations)")
+    if bollinger is not None: computed_indicators.append("BollingerBands(20,2)")
+    else: missing_indicators.append("BollingerBands(20,2) (needs >=20 observations)")
+    if atr_14 is not None: computed_indicators.append("ATR(14)")
+    else: missing_indicators.append("ATR(14) (needs >=15 observations)")
+    if volume_metrics is not None: computed_indicators.append("VolumeTrend(20)")
+    else: missing_indicators.append("VolumeTrend(20) (needs >=20 volume observations)")
+
     return {
         "available": True,
+        "observationCount": len(closes),
         "currentPrice": current_price,
         "rsi": rsi_val,
         "rsiCondition": "OVERBOUGHT" if (rsi_val and rsi_val >= 70) else "OVERSOLD" if (rsi_val and rsi_val <= 30) else "NEUTRAL",
@@ -202,9 +241,12 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
             "sma100": sma100,
             "sma200": sma200,
             "ema20": ema20,
-            "ema50": ema50
+            "ema50": ema50,
+            "ema200": ema200
         },
         "bollingerBands": bollinger,
+        "volumeMetrics": volume_metrics,
+        "volumeTrend": volume_metrics or {"surgeRatio": 1.0, "trend": "NORMAL"},
         "atr": atr_14,
         "supportResistance": {
             "pivot": pivot_p,
@@ -221,7 +263,12 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
         },
         "volatilityAnnualizedPct": volatility_annualized,
         "maxDrawdownPct": round(max_dd, 2),
-        "currentDrawdownPct": current_dd
+        "currentDrawdownPct": current_dd,
+        "indicatorCoverage": {
+            "computed": computed_indicators,
+            "missing": missing_indicators,
+            "coveragePct": round((len(computed_indicators) / 10.0) * 100, 1)
+        }
     }
 
 

@@ -74,11 +74,17 @@ interface FintechState {
 // Load authoritative session data from UserProfileRepository
 const authActive = isAuthEnabled();
 const storedToken = localStorage.getItem('smartvest_token');
-// Clean up any legacy theme keys
+// Clean up any legacy theme keys and stale market caches
 if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
   try {
     localStorage.removeItem('smartvest_theme');
     localStorage.removeItem('smartvest_theme_v2');
+    localStorage.removeItem('smartvest_market_cache');
+    localStorage.removeItem('smartvest_market_quotes');
+    localStorage.removeItem('smartvest_cached_instruments');
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('smartvest_market_cache');
+    }
   } catch {
     // Ignore
   }

@@ -48,3 +48,6 @@ yarn-debug.log*
 Thumbs.db
 
 backend/app/services/market_data/providers/.angel_session.json
+
+# Generated Angel One instrument master cache
+backend/app/services/market_data/providers/.angel_scrip_master.json

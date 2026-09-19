@@ -1,5 +1,9 @@
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
+from zoneinfo import ZoneInfo
+
+IST_ZONE = ZoneInfo("Asia/Kolkata")
+ET_ZONE = ZoneInfo("America/New_York")
 
 # Indian Public & Exchange Holidays (2025/2026 sample set for validation)
 INDIAN_HOLIDAYS = {
@@ -19,17 +23,24 @@ def is_indian_equity_market_open() -> bool:
     status = get_indian_market_status()
     return status.get("status") == "OPEN" and status.get("isOpen") is True
 
-def get_indian_market_status() -> Dict[str, Any]:
+def get_indian_market_status(reference_dt: Optional[datetime] = None) -> Dict[str, Any]:
     """
-    Evaluates NSE/BSE trading status based on IST (UTC+5:30).
+    Evaluates NSE/BSE trading status based on IST (Asia/Kolkata timezone).
+    Uses ZoneInfo("Asia/Kolkata") strictly with zero manual +5:30 arithmetic.
     Normal trading: 09:15 AM - 03:30 PM IST (Mon-Fri) -> status: OPEN, isOpen: True
     Pre-market: 09:00 AM - 09:15 AM IST -> status: PRE_OPEN, isOpen: False
     After-hours / Closed: after 03:30 PM IST -> status: CLOSED, isOpen: False
     Weekend: Saturday/Sunday -> status: WEEKEND, isOpen: False
     Exchange Holiday: status: HOLIDAY, isOpen: False
     """
-    utc_now = datetime.now(timezone.utc)
-    ist_now = utc_now + timedelta(hours=5, minutes=30)
+    if reference_dt is not None:
+        if reference_dt.tzinfo is None:
+            ist_now = reference_dt.replace(tzinfo=timezone.utc).astimezone(IST_ZONE)
+        else:
+            ist_now = reference_dt.astimezone(IST_ZONE)
+    else:
+        ist_now = datetime.now(timezone.utc).astimezone(IST_ZONE)
+
     date_str = ist_now.strftime("%Y-%m-%d")
     weekday = ist_now.weekday() # 0 = Monday, 6 = Sunday
 
@@ -99,14 +110,22 @@ def get_indian_market_status() -> Dict[str, Any]:
             "currentTime": ist_now.strftime("%I:%M:%S %p IST")
         }
 
-def get_us_market_status() -> Dict[str, Any]:
+def get_us_market_status(reference_dt: Optional[datetime] = None) -> Dict[str, Any]:
     """
-    Evaluates NYSE/NASDAQ status based on Eastern Time (approx UTC-4 during EDT).
+    Evaluates NYSE/NASDAQ status based on Eastern Time (America/New_York timezone).
     Regular trading: 09:30 AM - 04:00 PM ET (Mon-Fri)
     """
-    utc_now = datetime.now(timezone.utc)
-    et_now = utc_now - timedelta(hours=4) # EDT offset
-    ist_now = utc_now + timedelta(hours=5, minutes=30)
+    if reference_dt is not None:
+        if reference_dt.tzinfo is None:
+            et_now = reference_dt.replace(tzinfo=timezone.utc).astimezone(ET_ZONE)
+        else:
+            et_now = reference_dt.astimezone(ET_ZONE)
+        ist_now = et_now.astimezone(IST_ZONE)
+    else:
+        utc_now = datetime.now(timezone.utc)
+        et_now = utc_now.astimezone(ET_ZONE)
+        ist_now = utc_now.astimezone(IST_ZONE)
+
     date_str = et_now.strftime("%Y-%m-%d")
     weekday = et_now.weekday()
 

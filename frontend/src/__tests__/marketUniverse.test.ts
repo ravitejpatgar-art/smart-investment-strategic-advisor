@@ -222,14 +222,14 @@ describe('Global Market Universe & Explorer API (P7.0B)', () => {
   });
 
   // 7. Fallback behavior when API call fails
-  it('falls back to local curated instruments on API error', async () => {
+  it('gracefully handles API errors without crashing', async () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('Network error'));
 
     const result = await marketApi.getInstruments({ q: 'Apple' });
     expect(result).toBeDefined();
-    expect(result.items.length).toBeGreaterThan(0);
-    expect(result.items[0].symbol).toBe('AAPL');
-    expect(result.total).toBeGreaterThan(0);
+    expect(Array.isArray(result.items)).toBe(true);
+    expect(result.items.length).toBe(0);
+    expect(result.total).toBe(0);
   });
 
   // 8. Currency filtering (P7.3)
