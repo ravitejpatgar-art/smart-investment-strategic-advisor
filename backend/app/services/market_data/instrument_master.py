@@ -222,9 +222,15 @@ class GlobalInstrumentMasterRegistry:
                 # For equities / ETFs / Indices / Commodities, check cache first for instant response
                 sym_clean = it["symbol"].upper()
                 cached_quote = (
-                    market_cache.get(f"quote:router:{sym_clean}", allow_stale=True) or
-                    market_cache.get(f"quote:{sym_clean}", allow_stale=True)
+                    market_cache.get(f"quote:router:{sym_clean}", allow_stale=False) or
+                    market_cache.get(f"quote:{sym_clean}", allow_stale=False)
                 )
+                from app.services.market_data.providers.angel_provider import angel_provider
+                is_indian_equity = it.get("country") == "IN" or it.get("exchange") in ("NSE", "BSE")
+                if cached_quote and is_indian_equity and angel_provider.is_configured:
+                    if "Yahoo" in (cached_quote.get("source") or ""):
+                        cached_quote = None
+
                 if cached_quote and cached_quote.get("price") is not None:
                     is_compat, _ = validate_quote_compatibility(it, cached_quote)
                     if is_compat:

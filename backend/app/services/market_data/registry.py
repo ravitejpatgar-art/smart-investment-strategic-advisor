@@ -161,26 +161,7 @@ class MarketDataProviderRegistry:
                 pass
             return self.mf_provider.get_quote(clean_sym)
 
-        # ── 2. TRADABLE INDIAN EQUITIES & ETFS: Angel One SmartAPI Realtime Feed ──
-        is_us = clean_upper in ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "SPY", "QQQ", "VOO", "VTI"] or clean_upper.endswith(".US")
-        if not is_us and hasattr(self.router, "angel") and self.router.angel and self.router.angel.is_configured:
-            try:
-                angel_q = self.router.angel.get_quote(clean_sym)
-                if not angel_q:
-                    norm = normalize_global_symbol(clean_sym)
-                    s_clean = norm.get("canonical_symbol", clean_sym).strip()
-                    clean_base = s_clean.replace(".NS", "").replace(".BO", "")
-                    for ck in [f"quote:router:{s_clean}", f"quote:router:{clean_base}", f"quote:india:{clean_base}.NS"]:
-                        c = market_cache.get(ck, allow_stale=False)
-                        if c and c.get("source") == "Angel One SmartAPI" and not c.get("isStale", False) and c.get("price") is not None:
-                            angel_q = c
-                            break
-                if angel_q and angel_q.get("price") is not None and not angel_q.get("isStale", False) and angel_q.get("freshness") != "UNAVAILABLE":
-                    return angel_q
-            except Exception:
-                pass
-
-        # ── 3. Specialized Adapters (Gold / Commodities) ──
+        # ── 2. Specialized Adapters (Gold / Commodities) ──
         provider = self.resolve_provider(clean_sym)
         if provider.name in ["Gold", "GoldProvider"]:
             try:
@@ -190,7 +171,7 @@ class MarketDataProviderRegistry:
             except Exception:
                 pass
 
-        # ── 4. Global Multi-Provider Router ──
+        # ── 3. Unified Multi-Provider Router (Strict Angel One Priority for Indian Stocks & ETFs) ──
         return self.router.get_quote(clean_sym)
 
     def get_quotes(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:

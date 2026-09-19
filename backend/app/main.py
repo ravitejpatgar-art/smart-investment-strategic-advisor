@@ -10,8 +10,11 @@ from app.api.v1 import (
 
 from app.services.market_data.scheduler import market_scheduler
 
-# Create database tables automatically
-Base.metadata.create_all(bind=engine)
+# Create database tables automatically if not already present
+try:
+    Base.metadata.create_all(bind=engine, checkfirst=True)
+except Exception:
+    pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,6 +25,49 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup():
     market_scheduler.start()
+
+    # 5-point startup diagnostics for Angel One SmartAPI (Strictly safe, never exposes credentials)
+    import logging
+    startup_logger = logging.getLogger("app.market_data.startup")
+    try:
+        from app.services.market_data.providers.angel_provider import angel_provider
+        from app.services.market_data.providers.angel_scrip_master import angel_scrip_master
+
+        auth_status = "NOT_CONFIGURED"
+        if angel_provider.is_configured:
+            try:
+                success = angel_provider.authenticate()
+                auth_status = "SUCCESS" if success else (angel_provider.connection_status or "FAILED")
+            except Exception as e:
+                auth_status = f"FAILED ({str(e)[:50]})"
+
+        session_active = bool(angel_provider.jwt_token and angel_provider.feed_token)
+        scrip_loaded = f"{angel_scrip_master.total_loaded} scrips loaded" if angel_scrip_master.total_loaded > 0 else "FAILED_OR_EMPTY"
+        provider_ready = bool(angel_provider.is_configured and session_active and angel_scrip_master.total_loaded > 0)
+
+        startup_logger.info("=" * 60)
+        startup_logger.info("ANGEL ONE PRODUCTION STARTUP REPORT")
+        startup_logger.info(f"Angel configured: {'YES' if angel_provider.is_configured else 'NO (CREDENTIALS_REQUIRED)'}")
+        startup_logger.info(f"Angel authentication: {auth_status}")
+        startup_logger.info(f"Angel session: {'ACTIVE' if session_active else 'INACTIVE'}")
+        startup_logger.info(f"Scrip master: {scrip_loaded}")
+        startup_logger.info(f"Provider ready: {'YES' if provider_ready else 'NO'}")
+        startup_logger.info("=" * 60)
+    except Exception as e:
+        startup_logger.warning(f"Angel One startup diagnostic notice: {e}")
+
+    # Ensure canonical universe is synchronously seeded so database is never 0 even during cold boot
+    try:
+        from app.core.database import SessionLocal
+        from app.models.instrument import Instrument
+        from app.services.market_data.universe_provider import GlobalUniverseManager
+        with SessionLocal() as db:
+            if db.query(Instrument).count() == 0:
+                GlobalUniverseManager.seed_initial_universe(db=db)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Startup canonical seed notice: {e}")
+
     # Trigger background universe sync if universe is uninitialized or needs auto-sync
     import threading
     def _startup_universe_sync():

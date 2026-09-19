@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 ANGEL_SCRIP_MASTER_URL = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
 CACHE_FILE_PATH = os.path.join(os.path.dirname(__file__), ".angel_scrip_master.json")
+TMP_CACHE_FILE_PATH = os.path.join("/tmp", ".angel_scrip_master.json") if os.name != "nt" else os.path.join(os.environ.get("TEMP", "C:\\Temp"), ".angel_scrip_master.json")
 CACHE_TTL_SECONDS = 86400  # Refresh daily
 
 # Known ETF identification keywords and tickers for dynamic classification
@@ -66,26 +67,28 @@ class AngelScripMasterManager:
         """Loads master from local disk cache if fresh; otherwise downloads from official endpoint."""
         with self._master_lock:
             # 1. Try local disk cache if valid and not expired
-            if not force_download and os.path.exists(CACHE_FILE_PATH):
-                try:
-                    file_mtime = os.path.getmtime(CACHE_FILE_PATH)
-                    if time.time() - file_mtime < CACHE_TTL_SECONDS and os.path.getsize(CACHE_FILE_PATH) > 100000:
-                        logger.info("[AngelScripMaster] Loading instrument master from local disk cache...")
-                        with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
-                            data = json.load(f)
-                        if isinstance(data, list) and len(data) > 1000:
-                            self._index_instruments(data)
-                            self.last_loaded_at = file_mtime
-                            logger.info(f"[AngelScripMaster] Loaded and indexed {self.total_loaded} instruments from disk cache.")
-                            return True
-                except Exception as e:
-                    logger.warning(f"[AngelScripMaster] Failed to read disk cache: {e}. Downloading fresh master.")
+            if not force_download:
+                for path in [CACHE_FILE_PATH, TMP_CACHE_FILE_PATH]:
+                    if os.path.exists(path):
+                        try:
+                            file_mtime = os.path.getmtime(path)
+                            if time.time() - file_mtime < CACHE_TTL_SECONDS and os.path.getsize(path) > 100000:
+                                logger.info(f"[AngelScripMaster] Loading instrument master from disk cache: {path}")
+                                with open(path, "r", encoding="utf-8") as f:
+                                    data = json.load(f)
+                                if isinstance(data, list) and len(data) > 1000:
+                                    self._index_instruments(data)
+                                    self.last_loaded_at = file_mtime
+                                    logger.info(f"[AngelScripMaster] Loaded and indexed {self.total_loaded} instruments from disk cache.")
+                                    return True
+                        except Exception as e:
+                            logger.warning(f"[AngelScripMaster] Failed to read disk cache ({path}): {e}")
 
             # 2. Download from official endpoint
             return self._download_and_index()
 
     def _download_and_index(self) -> bool:
-        """Downloads official OpenAPIScripMaster.json, saves to disk cache, and builds in-memory indexes."""
+        """Downloads official OpenAPIScripMaster.json, builds in-memory indexes immediately, and saves to disk cache."""
         logger.info(f"[AngelScripMaster] Downloading official Angel One instrument master from {ANGEL_SCRIP_MASTER_URL}...")
         try:
             req = urllib.request.Request(
@@ -97,30 +100,41 @@ class AngelScripMasterManager:
                     raw_bytes = resp.read()
                     data = json.loads(raw_bytes.decode("utf-8"))
                     if isinstance(data, list) and len(data) > 1000:
-                        # Save to disk cache atomically
-                        tmp_path = f"{CACHE_FILE_PATH}.tmp"
-                        with open(tmp_path, "w", encoding="utf-8") as f:
-                            json.dump(data, f)
-                        if os.path.exists(CACHE_FILE_PATH):
-                            os.remove(CACHE_FILE_PATH)
-                        os.rename(tmp_path, CACHE_FILE_PATH)
-                        
+                        # Index in memory first so failure to write disk cache never blocks usage
                         self._index_instruments(data)
                         self.last_loaded_at = time.time()
-                        logger.info(f"[AngelScripMaster] Successfully downloaded and indexed {self.total_loaded} instruments.")
+                        logger.info(f"[AngelScripMaster] Successfully downloaded and indexed {self.total_loaded} instruments into memory.")
+
+                        # Save to disk cache atomically (try primary dir, then /tmp)
+                        saved = False
+                        for path in [CACHE_FILE_PATH, TMP_CACHE_FILE_PATH]:
+                            try:
+                                tmp_path = f"{path}.tmp"
+                                with open(tmp_path, "w", encoding="utf-8") as f:
+                                    json.dump(data, f)
+                                if os.path.exists(path):
+                                    os.remove(path)
+                                os.rename(tmp_path, path)
+                                saved = True
+                                logger.info(f"[AngelScripMaster] Saved instrument master cache to {path}")
+                                break
+                            except Exception as save_err:
+                                logger.debug(f"[AngelScripMaster] Cache save to {path} note: {save_err}")
+
                         return True
         except Exception as e:
             logger.error(f"[AngelScripMaster] Failed to download scrip master: {e}")
             # Fallback: if existing cache exists even if older, use it
-            if os.path.exists(CACHE_FILE_PATH):
-                try:
-                    with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    self._index_instruments(data)
-                    logger.info(f"[AngelScripMaster] Used fallback disk cache ({self.total_loaded} instruments).")
-                    return True
-                except Exception:
-                    pass
+            for path in [CACHE_FILE_PATH, TMP_CACHE_FILE_PATH]:
+                if os.path.exists(path):
+                    try:
+                        with open(path, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        self._index_instruments(data)
+                        logger.info(f"[AngelScripMaster] Used fallback disk cache from {path} ({self.total_loaded} instruments).")
+                        return True
+                    except Exception:
+                        pass
         return False
 
     def _index_instruments(self, raw_list: List[Dict[str, Any]]):

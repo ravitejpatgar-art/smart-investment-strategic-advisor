@@ -1892,9 +1892,14 @@ class GlobalUniverseManager:
             close_db = True
 
         count = 0
+        seen_canonical = set()
         try:
             for item in ALL_CANONICAL_SEEDS:
-                existing = db.query(Instrument).filter(Instrument.canonical_id == item["canonical_id"]).first()
+                cid = item["canonical_id"]
+                if cid in seen_canonical:
+                    continue
+                seen_canonical.add(cid)
+                existing = db.query(Instrument).filter(Instrument.canonical_id == cid).first()
                 if not existing:
                     inst = Instrument(
                         canonical_id=item["canonical_id"],
@@ -1943,6 +1948,9 @@ class GlobalUniverseManager:
     @classmethod
     def get_coverage_stats(cls, db: Session) -> Dict[str, Any]:
         total = db.query(Instrument).filter(Instrument.is_active == True).count()
+        if total == 0:
+            cls.seed_initial_universe(db)
+            total = db.query(Instrument).filter(Instrument.is_active == True).count()
         stocks = db.query(Instrument).filter(Instrument.is_active == True, Instrument.asset_type == "STOCK").count()
         etfs = db.query(Instrument).filter(Instrument.is_active == True, Instrument.asset_type == "ETF").count()
         mutual_funds = db.query(Instrument).filter(Instrument.is_active == True, Instrument.asset_type == "MUTUAL_FUND").count()

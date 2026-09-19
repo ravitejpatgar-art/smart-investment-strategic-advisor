@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 # Persistent session cache file path to prevent authentication rate limits
 SESSION_CACHE_FILE = os.path.join(os.path.dirname(__file__), ".angel_session.json")
+TMP_SESSION_CACHE_FILE = os.path.join("/tmp", ".angel_session.json") if os.name != "nt" else os.path.join(os.environ.get("TEMP", "C:\\Temp"), ".angel_session.json")
 
 # Angel One SmartAPI URLs & Constants
 ANGEL_SMARTAPI_LOGIN_URL = "https://apiconnect.angelone.in/rest/auth/angelbroking/user/v1/loginByPassword"
@@ -89,6 +90,13 @@ class SmartStreamWorker:
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
 
+        # Audit & Telemetry Metrics (Task 2 & 3)
+        self.subscription_success_count = 0
+        self.subscription_failure_count = 0
+        self.tick_count = 0
+        self.last_tick_timestamp: Optional[str] = None
+        self.last_subscription_at: Optional[str] = None
+
     def can_accept(self, count: int = 1) -> bool:
         with self._lock:
             return len(self.subscribed_tokens) + count <= self.MAX_TOKENS_PER_CONNECTION
@@ -134,7 +142,7 @@ class SmartStreamWorker:
 
                 # Wire callbacks to provider
                 self._ws.on_open = lambda ws: self._on_worker_open(ws)
-                self._ws.on_data = lambda ws, data: self.provider.on_data(ws, data)
+                self._ws.on_data = lambda ws, data: self._on_worker_data(ws, data)
                 self._ws.on_error = lambda ws, code, reason: self.provider.on_error(ws, code, reason)
                 self._ws.on_close = lambda ws: self._on_worker_close(ws)
 
@@ -147,35 +155,48 @@ class SmartStreamWorker:
         self._thread = threading.Thread(target=_run_ws, daemon=True, name=f"AngelStreamWorker-{self.worker_id}")
         self._thread.start()
 
+    def _on_worker_data(self, wsapp, data):
+        with self._lock:
+            self.tick_count += 1
+            self.last_tick_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.provider.on_data(wsapp, data, worker_id=self.worker_id)
+
     def _on_worker_open(self, wsapp):
         self.is_connected = True
         self.last_heartbeat_at = time.time()
         self.provider.on_open(wsapp)
-        # Resubscribe any registered tokens
+        # Resubscribe any registered tokens in LTP mode (mode 1)
         with self._lock:
             tokens_to_sub = list(self.subscribed_tokens)
         if tokens_to_sub:
-            self.subscribe_tokens(tokens_to_sub, exchange_type=1)
+            self.subscribe_tokens(tokens_to_sub, exchange_type=1, mode=1)
 
     def _on_worker_close(self, wsapp):
         self.is_connected = False
         self.provider.on_close(wsapp)
 
-    def subscribe_tokens(self, tokens: List[str], exchange_type: int = 1):
-        """Transmits subscription message for tokens over active connection."""
+    def subscribe_tokens(self, tokens: List[str], exchange_type: int = 1, mode: int = 1) -> bool:
+        """Transmits subscription message for tokens over active connection in specified mode (default 1: LTP)."""
         if not self._ws or not self.is_connected:
-            return
+            return False
         try:
             str_tokens = [str(t) for t in tokens]
             token_list = [{"exchangeType": exchange_type, "tokens": str_tokens}]
             self._ws.subscribe(
-                correlation_id=f"w{self.worker_id}dyn",
-                mode=2,  # Mode 2: Quote Mode
+                correlation_id=f"w{self.worker_id}_m{mode}",
+                mode=mode,
                 token_list=token_list
             )
-            logger.info(f"[Angel One SmartAPI] TOKEN_SUBSCRIBED: Worker #{self.worker_id} sent Mode 2 quote subscription for tokens: {str_tokens}")
+            with self._lock:
+                self.subscription_success_count += len(str_tokens)
+                self.last_subscription_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            logger.info(f"[Angel One SmartAPI] TOKEN_SUBSCRIBED: Worker #{self.worker_id} subscribed {len(str_tokens)} tokens in Mode {mode}")
+            return True
         except Exception as e:
-            logger.warning(f"[Angel One SmartAPI] SUBSCRIBE_FAILED: Worker #{self.worker_id} dynamic subscribe error: {e}")
+            with self._lock:
+                self.subscription_failure_count += len(tokens)
+            logger.warning(f"[Angel One SmartAPI] SUBSCRIBE_FAILED: Worker #{self.worker_id} subscribe error: {e}")
+            return False
 
     def close_connection(self):
         with self._lock:
@@ -264,6 +285,12 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         self.last_websocket_tick_received_at: Optional[str] = None
         self.last_websocket_exchange_timestamp: Optional[str] = None
 
+        # Provider-level telemetry
+        self.total_requests = 0
+        self.success_count = 0
+        self.error_count = 0
+        self.fallback_count = 0
+
         if not self.credentials_found:
             logger.info(
                 f"[Angel One SmartAPI] Credentials not found in environment (Missing: {', '.join(self.missing_credentials)}). "
@@ -273,6 +300,16 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
             logger.info("[Angel One SmartAPI] Credentials found in environment. Initializing SmartAPI adapter...")
             self._load_cached_session()
             self._start_connection_manager()
+
+    def get_credentials_status(self) -> Dict[str, str]:
+        """Returns safe SET / NOT_SET status for credentials without exposing secret values."""
+        return {
+            "ANGEL_API_KEY": "SET" if bool(self.api_key) else "NOT_SET",
+            "ANGEL_CLIENT_CODE": "SET" if bool(self.client_code) else "NOT_SET",
+            "ANGEL_PIN": "SET" if bool(self.pin) else "NOT_SET",
+            "ANGEL_TOTP": "SET" if bool(self.totp_secret) else "NOT_SET",
+            "ANGEL_FEED_TOKEN": "SET" if bool(self.feed_token) else "NOT_SET",
+        }
 
     def _validate_credentials(self) -> Tuple[bool, List[str]]:
         missing = []
@@ -287,22 +324,23 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         return len(missing) == 0, missing
 
     def _load_cached_session(self) -> bool:
-        try:
-            if os.path.exists(SESSION_CACHE_FILE):
-                with open(SESSION_CACHE_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                jwt = data.get("jwtToken")
-                feed = data.get("feedToken")
-                exp = data.get("exp", 0)
-                if jwt and feed and (exp == 0 or exp > time.time() + 300):
-                    self.jwt_token = jwt
-                    self.feed_token = feed
-                    self.refresh_token = data.get("refreshToken")
-                    self.connection_status = "AUTHENTICATED"
-                    logger.info("[Angel One SmartAPI] Reused active session from persistent cache.")
-                    return True
-        except Exception as e:
-            logger.debug(f"[Angel One SmartAPI] Session cache load note: {e}")
+        for path in [SESSION_CACHE_FILE, TMP_SESSION_CACHE_FILE]:
+            try:
+                if os.path.exists(path):
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    jwt = data.get("jwtToken")
+                    feed = data.get("feedToken")
+                    exp = data.get("exp", 0)
+                    if jwt and feed and (exp == 0 or exp > time.time() + 300):
+                        self.jwt_token = jwt
+                        self.feed_token = feed
+                        self.refresh_token = data.get("refreshToken")
+                        self.connection_status = "AUTHENTICATED"
+                        logger.info(f"[Angel One SmartAPI] Reused active session from persistent cache ({path}).")
+                        return True
+            except Exception as e:
+                logger.debug(f"[Angel One SmartAPI] Session cache load note ({path}): {e}")
         return False
 
     def _save_cached_session(self, jwt_token: str, feed_token: str, refresh_token: Optional[str]):
@@ -322,8 +360,13 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                 "exp": exp,
                 "savedAt": time.time()
             }
-            with open(SESSION_CACHE_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+            for path in [SESSION_CACHE_FILE, TMP_SESSION_CACHE_FILE]:
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2)
+                    break
+                except Exception as save_err:
+                    logger.debug(f"[Angel One SmartAPI] Session cache save to {path} note: {save_err}")
         except Exception as e:
             logger.debug(f"[Angel One SmartAPI] Session cache save note: {e}")
 
@@ -472,13 +515,229 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         worker.connect()
         return worker
 
+    def subscribe_universe(self, mode: int = 1) -> Dict[str, Any]:
+        """
+        Collects all valid Indian STOCK and ETF instruments, resolves their Angel tokens,
+        and subscribes the entire universe distributed across up to 3 SmartStreamWorkers in LTP mode (default 1).
+        Respects the 1,000 tokens per connection limit.
+        """
+        from app.core.database import SessionLocal
+        from app.models.instrument import Instrument
+
+        with SessionLocal() as db:
+            stocks = db.query(Instrument).filter(
+                Instrument.country == 'IN',
+                Instrument.asset_type == 'STOCK',
+                Instrument.is_active == True
+            ).all()
+            etfs = db.query(Instrument).filter(
+                Instrument.country == 'IN',
+                Instrument.asset_type == 'ETF',
+                Instrument.is_active == True
+            ).all()
+
+        stock_count = len(stocks)
+        etf_count = len(etfs)
+        all_instruments = [("STOCK", s) for s in stocks] + [("ETF", e) for e in etfs]
+
+        unique_tokens: Dict[str, Dict[str, Any]] = {}
+        for asset_type, inst in all_instruments:
+            resolved = self.resolve_token(inst.symbol)
+            if not resolved:
+                resolved = self.resolve_token(inst.ticker)
+            if resolved:
+                token = str(resolved["token"])
+                if token not in unique_tokens:
+                    unique_tokens[token] = {
+                        "token": token,
+                        "symbol": inst.symbol,
+                        "trading_symbol": resolved.get("tradingsymbol", inst.symbol),
+                        "exchange": resolved.get("exchange", inst.exchange),
+                        "exchange_type": resolved.get("exchange_type", 1),
+                        "canonical_id": inst.canonical_id,
+                        "asset_type": asset_type
+                    }
+
+        all_token_list = list(unique_tokens.keys())
+        total_unique = len(all_token_list)
+
+        # Batch tokens into groups of up to 1,000 per worker connection
+        batch_size = 1000
+        num_workers_needed = max(1, (total_unique + batch_size - 1) // batch_size)
+
+        with self._lock:
+            while len(self.workers) < num_workers_needed:
+                new_id = len(self.workers) + 1
+                worker = SmartStreamWorker(worker_id=new_id, provider=self)
+                self.workers.append(worker)
+
+        for i in range(num_workers_needed):
+            worker = self.workers[i]
+            batch = all_token_list[i * batch_size : (i + 1) * batch_size]
+            worker.add_tokens(batch)
+            for tok in batch:
+                meta = unique_tokens[tok]
+                with self._lock:
+                    self.subscribed_instruments.add(meta["symbol"])
+                    self.token_to_symbol[tok] = meta["trading_symbol"]
+                    self.symbol_to_token[meta["symbol"]] = tok
+                    self.token_metadata[tok] = meta
+
+            if not worker.is_connected and (not worker._thread or not worker._thread.is_alive()):
+                worker.connect()
+            elif worker.is_connected:
+                worker.subscribe_tokens(batch, exchange_type=1, mode=mode)
+
+        return {
+            "stocks_total": stock_count,
+            "etfs_total": etf_count,
+            "unique_tokens_total": total_unique,
+            "workers_allocated": len(self.workers),
+            "mode": mode,
+            "status": "SUBSCRIBED"
+        }
+
+    def get_websocket_coverage_report(self) -> Dict[str, Any]:
+        """
+        Computes granular, audit-grade live WebSocket coverage metrics across Indian Stocks & ETFs.
+        Strictly abides by zero fake ticks, exact token counting, and session-aware freshness.
+        """
+        from app.core.database import SessionLocal
+        from app.models.instrument import Instrument
+
+        with SessionLocal() as db:
+            stocks_total = db.query(Instrument).filter(
+                Instrument.country == 'IN',
+                Instrument.asset_type == 'STOCK',
+                Instrument.is_active == True
+            ).count()
+            etfs_total = db.query(Instrument).filter(
+                Instrument.country == 'IN',
+                Instrument.asset_type == 'ETF',
+                Instrument.is_active == True
+            ).count()
+
+        unique_tokens_total = stocks_total + etfs_total
+
+        mkt = get_indian_market_status()
+        is_open = mkt.get("isOpen", False)
+        market_session = mkt.get("status", "CLOSED")
+        now_ts = time.time()
+
+        subscribed_tokens: Set[str] = set()
+        for w in self.workers:
+            with w._lock:
+                subscribed_tokens.update(w.subscribed_tokens)
+        subscribed_total = len(subscribed_tokens)
+
+        live_tick_total = 0
+        stale_total = 0
+        no_tick_total = 0
+        subscription_failed_total = sum(w.subscription_failure_count for w in self.workers)
+
+        for tok in subscribed_tokens:
+            tick_count = self.websocket_ticks_for_symbol.get(tok, 0)
+            if tick_count == 0:
+                no_tick_total += 1
+            else:
+                last_tick = self._latest_ticks.get(tok)
+                if last_tick and is_open:
+                    prov_ts = last_tick.get("provider_timestamp") or 0
+                    ts_sec = prov_ts / 1000.0 if prov_ts > 1e11 else prov_ts
+                    if (now_ts - ts_sec) < TICK_FRESHNESS_THRESHOLD_SECONDS:
+                        live_tick_total += 1
+                    else:
+                        stale_total += 1
+                else:
+                    stale_total += 1
+
+        live_coverage_pct = round((live_tick_total / unique_tokens_total * 100.0), 2) if unique_tokens_total > 0 else 0.0
+
+        connections_data = [
+            {
+                "connection_id": w.worker_id,
+                "connected": w.is_connected,
+                "is_connected": w.is_connected,
+                "subscribed_tokens_count": len(w.subscribed_tokens),
+                "subscription_success_count": w.subscription_success_count,
+                "subscription_failure_count": w.subscription_failure_count,
+                "reconnect_count": w.reconnect_count,
+                "tick_count": w.tick_count,
+                "last_tick_timestamp": w.last_tick_timestamp,
+                "last_subscription_at": w.last_subscription_at
+            }
+            for w in self.workers
+        ]
+
+        # Sample verification for mandatory test stocks and ETFs
+        sample_symbols = [
+            ("RELIANCE.NS", "STOCK"),
+            ("TCS.NS", "STOCK"),
+            ("INFY.NS", "STOCK"),
+            ("HDFCBANK.NS", "STOCK"),
+            ("ICICIBANK.NS", "STOCK"),
+            ("SBIN.NS", "STOCK"),
+            ("ITC.NS", "STOCK"),
+            ("NIFTYBEES.NS", "ETF"),
+            ("GOLDBEES.NS", "ETF"),
+            ("BANKBEES.NS", "ETF"),
+            ("JUNIORBEES.NS", "ETF"),
+            ("MON100.NS", "ETF")
+        ]
+
+        sample_verification = []
+        for sym, asset_type in sample_symbols:
+            meta = angel_scrip_master.resolve(sym) or {}
+            tok = str(meta.get("token", ""))
+            worker_id = None
+            for w in self.workers:
+                if tok in w.subscribed_tokens:
+                    worker_id = w.worker_id
+                    break
+
+            tick_count = self.websocket_ticks_for_symbol.get(tok, 0)
+            quote = self._latest_ticks.get(tok)
+            is_live = bool(quote and quote.get("isLive") and is_open)
+
+            sample_verification.append({
+                "symbol": sym,
+                "token": tok,
+                "connection_id": worker_id or 1,
+                "tick_count": tick_count,
+                "last_tick_timestamp": quote.get("receivedAt") if quote else None,
+                "ltp": quote.get("price") if quote else None,
+                "exchange_timestamp": quote.get("exchangeTimestamp") if quote else None,
+                "data_origin": quote.get("dataOrigin") if quote else None,
+                "is_live": is_live,
+                "freshness": "REALTIME" if is_live else ("MARKET_CLOSED" if not is_open else ("STALE" if tick_count > 0 else "NO_TICK")),
+                "provider": "Angel One SmartAPI"
+            })
+
+        return {
+            "stocks_total": stocks_total,
+            "etfs_total": etfs_total,
+            "unique_tokens_total": unique_tokens_total,
+            "subscribed_total": subscribed_total,
+            "live_tick_total": live_tick_total,
+            "stale_total": stale_total,
+            "no_tick_total": no_tick_total,
+            "subscription_failed_total": subscription_failed_total,
+            "websocket_connections": connections_data,
+            "live_tick_coverage_percent": live_coverage_pct,
+            "market_session": market_session,
+            "is_market_open": is_open,
+            "live_websocket_proof": "NOT TESTABLE — MARKET CLOSED" if not is_open else ("PASS" if live_coverage_pct > 0 else "NO_TICKS_RECEIVED"),
+            "sample_verification": sample_verification,
+            "provider": "Angel One SmartAPI"
+        }
+
     def on_open(self, wsapp):
         self.is_connected = True
         self.connection_status = "CONNECTED"
         self.last_heartbeat_at = time.time()
         logger.info("[Angel One SmartAPI] SmartWebSocketV2 stream successfully established.")
 
-    def on_data(self, wsapp, data):
+    def on_data(self, wsapp, data, worker_id: int = 1):
         self.last_heartbeat_at = time.time()
         try:
             now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -491,6 +750,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                 if tick:
                     tick["callback_id"] = cb_id
                     tick["callback_received_at"] = now_iso
+                    tick["worker_id"] = worker_id
                     self.on_tick_received(tick)
             elif isinstance(data, dict):
                 ltp_raw = data.get("last_traded_price", 0)
@@ -514,7 +774,8 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                     "change": change,
                     "change_pct": change_pct,
                     "exchange_timestamp_ms": data.get("exchange_timestamp") or data.get("exchange_timestamp_ms"),
-                    "mode": data.get("subscription_mode", 2)
+                    "mode": data.get("subscription_mode", 2),
+                    "worker_id": worker_id
                 }
                 self.on_tick_received(tick)
         except Exception as e:
@@ -667,6 +928,9 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         quote["receivedAt"] = cb_received_at
         quote["callbackReceivedAt"] = cb_received_at
         quote["callbackId"] = cb_id
+        quote["workerId"] = tick.get("worker_id", 1)
+        quote["worker_id"] = tick.get("worker_id", 1)
+        quote["provider"] = "Angel One SmartAPI"
         quote["source"] = "Angel One SmartAPI WebSocket"
         quote["dataOrigin"] = "WEBSOCKET_TICK"
         quote["dataQuality"] = "CLEAN"
@@ -772,6 +1036,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         quote["displayTimestampIst"] = display_ts_ist
         quote["receivedAt"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         quote["asOf"] = display_ts_ist
+        quote["provider"] = "Angel One SmartAPI"
         quote["dataOrigin"] = "REST_QUOTE"
 
         # Validate price sanity
@@ -869,18 +1134,31 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         Zero hardcoded prices.
         Cross-validates WebSocket tick and REST quote.
         """
-        if not self.is_configured:
-            return None
-
         clean = symbol.upper().strip()
         if clean.startswith("AMFI:") or clean.startswith("MF:") or clean.startswith("AMFI_") or clean == "AMFI" or (clean.isdigit() and len(clean) in (5, 6)):
             return None
 
+        self.total_requests += 1
+
+        if not self.is_configured:
+            self.error_count += 1
+            logger.warning(
+                f"[Angel One SmartAPI] get_quote failed: CREDENTIALS_REQUIRED | provider='Angel One SmartAPI' "
+                f"operation='get_quote' symbol='{clean}' safeError='Missing credentials in environment'"
+            )
+            return None
+
         meta = self.resolve_token(clean)
         if not meta or meta.get("asset_type") == "MUTUAL_FUND":
+            self.error_count += 1
+            logger.warning(
+                f"[Angel One SmartAPI] get_quote failed: UNMAPPED_TOKEN | provider='Angel One SmartAPI' "
+                f"operation='get_quote' symbol='{clean}' safeError='No matching scrip in Angel master'"
+            )
             return None
 
         token = str(meta["token"])
+        exch = meta.get("exchange", "NSE")
 
         # Auto-subscribe to streaming ticks
         if clean not in self.subscribed_instruments:
@@ -905,14 +1183,24 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                     rest_quote["conflictReason"] = f"REST LTP ({rest_price}) and WS tick ({ws_price}) disagree by {round(diff_pct, 2)}%"
                 else:
                     rest_quote["dataQuality"] = "CLEAN"
+            self.success_count += 1
             return rest_quote
 
         if rest_quote:
+            self.success_count += 1
             return rest_quote
 
         if ws_tick:
+            self.success_count += 1
             return ws_tick
 
+        self.error_count += 1
+        self.fallback_count += 1
+        logger.warning(
+            f"[Angel One SmartAPI] get_quote failed: NO_DATA | provider='Angel One SmartAPI' "
+            f"operation='get_quote' exchange='{exch}' symbol='{clean}' token='{token}' "
+            f"safeError='Empty REST quote response and no WebSocket tick received'"
+        )
         return None
 
     def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo") -> Dict[str, Any]:

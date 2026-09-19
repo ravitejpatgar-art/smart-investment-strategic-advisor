@@ -1,7 +1,11 @@
 import os
 import json
 from typing import List
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+
+# Automatically load environment variables from .env if present
+load_dotenv()
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "SmartVest AI API"
@@ -40,11 +44,44 @@ class Settings(BaseSettings):
     TRUEDATA_API_SECRET: str = os.getenv("TRUEDATA_API_SECRET", "")
     
     # Angel One SmartAPI Real-Time WebSocket Provider Configuration
-    ANGEL_API_KEY: str = os.getenv("ANGEL_API_KEY", "")
-    ANGEL_CLIENT_CODE: str = os.getenv("ANGEL_CLIENT_CODE", "")
-    ANGEL_PIN: str = os.getenv("ANGEL_PIN", "")
-    ANGEL_TOTP: str = os.getenv("ANGEL_TOTP", "")
-    ANGEL_FEED_TOKEN: str = os.getenv("ANGEL_FEED_TOKEN", "")
+    # Supports primary names and standard cloud/Render alias variations
+    ANGEL_API_KEY: str = (
+        os.getenv("ANGEL_API_KEY")
+        or os.getenv("ANGEL_ONE_API_KEY")
+        or os.getenv("SMARTAPI_API_KEY")
+        or os.getenv("ANGEL_KEY")
+        or ""
+    )
+    ANGEL_CLIENT_CODE: str = (
+        os.getenv("ANGEL_CLIENT_CODE")
+        or os.getenv("ANGEL_ONE_CLIENT_CODE")
+        or os.getenv("SMARTAPI_CLIENT_CODE")
+        or os.getenv("CLIENT_CODE")
+        or ""
+    )
+    ANGEL_PIN: str = (
+        os.getenv("ANGEL_PIN")
+        or os.getenv("ANGEL_ONE_PIN")
+        or os.getenv("ANGEL_PASSWORD")
+        or os.getenv("ANGEL_ONE_PASSWORD")
+        or os.getenv("SMARTAPI_PIN")
+        or ""
+    )
+    ANGEL_TOTP: str = (
+        os.getenv("ANGEL_TOTP")
+        or os.getenv("ANGEL_ONE_TOTP")
+        or os.getenv("ANGEL_TOTP_SECRET")
+        or os.getenv("ANGEL_ONE_TOTP_SECRET")
+        or os.getenv("SMARTAPI_TOTP_SECRET")
+        or os.getenv("TOTP_SECRET")
+        or ""
+    )
+    ANGEL_FEED_TOKEN: str = (
+        os.getenv("ANGEL_FEED_TOKEN")
+        or os.getenv("ANGEL_ONE_FEED_TOKEN")
+        or os.getenv("SMARTAPI_FEED_TOKEN")
+        or ""
+    )
     
     US_MARKET_DATA_PROVIDER: str = os.getenv("US_MARKET_DATA_PROVIDER", "yfinance")
     US_MARKET_DATA_API_KEY: str = os.getenv("US_MARKET_DATA_API_KEY", "")

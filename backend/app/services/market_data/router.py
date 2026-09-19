@@ -35,8 +35,9 @@ def scrub_sensitive_tokens(text: str) -> str:
 
 
 class ProviderHealthTracker:
-    def __init__(self, name: str):
+    def __init__(self, name: str, provider: Optional[Any] = None):
         self.name = name
+        self.provider = provider
         self.total_requests = 0
         self.success_count = 0
         self.error_count = 0
@@ -44,7 +45,13 @@ class ProviderHealthTracker:
         self.consecutive_errors = 0
         self.cooldown_until = 0.0
         self.last_latency_ms = 0.0
-        self.last_status = "READY"
+        # Determine initial status truthfully based on provider configuration
+        if provider and hasattr(provider, "capabilities") and not provider.capabilities.is_configured:
+            self.last_status = "CREDENTIALS_REQUIRED"
+        elif provider and hasattr(provider, "is_configured") and not provider.is_configured:
+            self.last_status = "CREDENTIALS_REQUIRED"
+        else:
+            self.last_status = "READY"
         self.last_success_at: Optional[str] = None
         self.last_failure_at: Optional[str] = None
         self.last_error: Optional[str] = None
@@ -76,13 +83,21 @@ class ProviderHealthTracker:
         self.cooldown_until = time.time() + cooldown_sec
 
     def is_available(self) -> bool:
+        if self.provider and hasattr(self.provider, "capabilities") and not self.provider.capabilities.is_configured:
+            return False
         return time.time() >= self.cooldown_until
 
     def to_dict(self) -> Dict[str, Any]:
         cooldown_rem = max(0.0, self.cooldown_until - time.time())
+        curr_status = self.last_status
+        if self.provider and hasattr(self.provider, "capabilities") and not self.provider.capabilities.is_configured:
+            curr_status = "CREDENTIALS_REQUIRED"
+        elif cooldown_rem > 0:
+            curr_status = "IN_COOLDOWN"
+
         return {
             "name": self.name,
-            "status": "IN_COOLDOWN" if cooldown_rem > 0 else self.last_status,
+            "status": curr_status,
             "isAvailable": self.is_available(),
             "cooldownSecondsRemaining": round(cooldown_rem, 1),
             "totalRequests": self.total_requests,
@@ -121,17 +136,17 @@ class ProviderRouter:
         self.etf_provider = ETFProvider()
 
         self.health_trackers = {
-            "Angel One SmartAPI": ProviderHealthTracker("Angel One SmartAPI"),
-            "TrueData": ProviderHealthTracker("TrueData"),
-            "Finnhub": ProviderHealthTracker("Finnhub"),
-            "TwelveData": ProviderHealthTracker("TwelveData"),
-            "Polygon.io": ProviderHealthTracker("Polygon.io"),
-            "YahooFinance": ProviderHealthTracker("YahooFinance"),
-            "AlphaVantage": ProviderHealthTracker("AlphaVantage"),
-            "IndianEquities": ProviderHealthTracker("IndianEquities"),
-            "MutualFunds": ProviderHealthTracker("MutualFunds"),
-            "Gold": ProviderHealthTracker("Gold"),
-            "ETF": ProviderHealthTracker("ETF")
+            "Angel One SmartAPI": ProviderHealthTracker("Angel One SmartAPI", self.angel),
+            "TrueData": ProviderHealthTracker("TrueData", self.truedata),
+            "Finnhub": ProviderHealthTracker("Finnhub", self.finnhub),
+            "TwelveData": ProviderHealthTracker("TwelveData", self.twelvedata),
+            "Polygon.io": ProviderHealthTracker("Polygon.io", self.polygon),
+            "YahooFinance": ProviderHealthTracker("YahooFinance", self.yahoo),
+            "AlphaVantage": ProviderHealthTracker("AlphaVantage", self.alphavantage),
+            "IndianEquities": ProviderHealthTracker("IndianEquities", self.indian_equities),
+            "MutualFunds": ProviderHealthTracker("MutualFunds", self.mutual_funds),
+            "Gold": ProviderHealthTracker("Gold", self.gold_provider),
+            "ETF": ProviderHealthTracker("ETF", self.etf_provider)
         }
 
     def _get_provider_chain(self, symbol: str) -> List[BaseMarketDataProvider]:
@@ -149,17 +164,18 @@ class ProviderRouter:
         ):
             return [self.mutual_funds]
 
-        # 2. Check Angel One Master for Indian Stock or ETF
+        # 2. Check Angel One Master for Indian Stock, ETF, REIT, or INVIT
         angel_scrip = angel_scrip_master.resolve(s)
-        if angel_scrip and angel_scrip.get("asset_type") in ("STOCK", "ETF"):
+        if angel_scrip and angel_scrip.get("asset_type") in ("STOCK", "ETF", "REIT", "INVIT"):
             chain = []
             if self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
                 chain.append(self.angel)
             if self.truedata.capabilities.is_configured and self.health_trackers["TrueData"].is_available():
                 chain.append(self.truedata)
-            # If Angel is configured and token is verified, don't guess with Yahoo
-            if not chain:
-                chain = [self.indian_equities if angel_scrip["asset_type"] == "STOCK" else self.etf_provider]
+            # Add appropriate secondary fallback only when Angel is unavailable or fails
+            fallback_provider = self.etf_provider if angel_scrip.get("asset_type") == "ETF" else self.indian_equities
+            if fallback_provider not in chain:
+                chain.append(fallback_provider)
             return chain
 
         # 3. Gold & Precious Metals -> NSE GoldBeES -> MCX Spot -> Yahoo
@@ -211,7 +227,13 @@ class ProviderRouter:
         cache_key = build_quote_cache_key(canonical_id=s_clean, exchange=exch, token=token, provider=prov)
         cached = market_cache.get(cache_key, allow_stale=False)
         if cached and not cached.get("isStale", False):
-            return cached
+            # If cached quote is from Yahoo fallback but Angel One is configured and mapped, bypass fallback cache
+            if prov == "Angel_One_SmartAPI" and self.angel.capabilities.is_configured:
+                cached_src = str(cached.get("source", ""))
+                if "Yahoo" in cached_src or "Fallback" in cached_src:
+                    cached = None
+            if cached:
+                return cached
 
         chain = self._get_provider_chain(s_clean)
         last_error_msg = ""
@@ -265,7 +287,10 @@ class ProviderRouter:
             if tracker:
                 tracker.record_fallback()
             if i < len(chain) - 1:
-                logger.info(f"[FALLBACK] Switching from {provider.name} to {chain[i+1].name} for quote: {s_clean}")
+                logger.warning(
+                    f"[FALLBACK] primaryProvider='{provider.name}' fallbackProvider='{chain[i+1].name}' "
+                    f"symbol='{s_clean}' fallbackReason='{last_error_msg or 'Quote empty or unavailable'}'"
+                )
 
         # Check stale cache before declaring unavailable
         stale_cached = market_cache.get(cache_key, allow_stale=True)
@@ -277,93 +302,6 @@ class ProviderRouter:
             stale_cached["message"] = "Latest available market data shown"
             return stale_cached
 
-        return create_unavailable_quote(
-            symbol=s_clean,
-            message=f"Latest available market data shown ({last_error_msg or 'Providers cycling'})",
-            market_status="CLOSED" if not is_market_open else "UNKNOWN"
-        )
-
-        chain = self._get_provider_chain(s_clean)
-
-        last_error_msg = ""
-        quote_result = None
-
-        # Check market session status for appropriate freshness attribution
-        is_india = norm.get("market") == "INDIA" or s_clean.endswith(".NS") or s_clean.endswith(".BO") or s_clean.startswith("^NSE") or s_clean.startswith("AMFI:")
-        mkt_status = get_indian_market_status() if is_india else get_us_market_status()
-        is_market_open = mkt_status.get("isOpen", False)
-
-        for i, provider in enumerate(chain):
-            tracker = self.health_trackers.get(provider.name)
-            t_start = time.time()
-
-            # Retry policy: 1 attempt + max 1 quick retry for transient network errors
-            max_attempts = 2
-            quote = None
-
-            for attempt in range(max_attempts):
-                try:
-                    quote = provider.get_quote(s_clean)
-                    latency = (time.time() - t_start) * 1000
-
-                    if quote and quote.get("price") is not None and quote.get("freshness") != "UNAVAILABLE" and not quote.get("isStale", False):
-                        if tracker:
-                            tracker.record_success(latency)
-
-                        # Apply market closed detection without converting to UNAVAILABLE
-                        if not is_market_open and norm.get("asset_type") != "MUTUAL_FUND":
-                            quote["marketStatus"] = mkt_status.get("status", "CLOSED")
-                            quote["isLive"] = False
-                            # Downgrade LIVE to LATEST_AVAILABLE when market is closed
-                            if quote.get("freshness") in ["LIVE", "REALTIME"]:
-                                quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
-
-                        # Cache successful quote for configured TTL (default 30s)
-                        ttl = getattr(settings, "MARKET_DATA_CACHE_TTL_SECONDS", 30)
-                        market_cache.set(cache_key, quote, ttl_seconds=ttl)
-                        return quote
-                    else:
-                        if quote and quote.get("isStale", False):
-                            clean_base = s_clean.replace(".NS", "").replace(".BO", "")
-                            with market_cache._store_lock:
-                                market_cache._store.pop(f"quote:india:{clean_base}.NS", None)
-                                market_cache._store.pop(f"quote:india:{clean_base}", None)
-                        # Non-exception empty or stale response
-                        break
-                except Exception as e:
-                    err_str = str(e)
-                    last_error_msg = scrub_sensitive_tokens(err_str)
-                    is_rate_limit = "429" in err_str or "rate limit" in err_str.lower()
-                    is_auth = "401" in err_str or "403" in err_str or "unauthorized" in err_str.lower()
-                    is_network = "network" in err_str.lower() or "connection" in err_str.lower() or "timeout" in err_str.lower()
-
-                    if tracker:
-                        tracker.record_error(error_msg=last_error_msg, is_rate_limit=is_rate_limit, is_network=is_network)
-
-                    # Do not retry on 429 rate limit or 401/403 auth errors; failover immediately
-                    if is_rate_limit or is_auth or attempt >= max_attempts - 1:
-                        break
-
-                    # Restrained backoff before retry (0.25s)
-                    time.sleep(0.25)
-
-            # If this provider didn't return a valid quote, mark fallback and continue to next
-            if tracker:
-                tracker.record_fallback()
-            if i < len(chain) - 1:
-                logger.info(f"[FALLBACK] Switching from {provider.name} to {chain[i+1].name} for quote: {s_clean}")
-
-        # Check stale cache before declaring unavailable
-        stale_cached = market_cache.get(cache_key, allow_stale=True)
-        if stale_cached and stale_cached.get("price") is not None:
-            stale_cached["freshness"] = DataFreshness.LATEST_AVAILABLE.value
-            stale_cached["isLive"] = False
-            stale_cached["isStale"] = True
-            stale_cached["marketStatus"] = mkt_status.get("status", "CLOSED") if not is_market_open else stale_cached.get("marketStatus", "CLOSED")
-            stale_cached["message"] = "Latest available market data shown"
-            return stale_cached
-
-        # Truthful unavailable response
         return create_unavailable_quote(
             symbol=s_clean,
             message=f"Latest available market data shown ({last_error_msg or 'Providers cycling'})",

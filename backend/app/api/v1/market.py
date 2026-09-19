@@ -520,6 +520,50 @@ def get_provider_capabilities():
     """Returns provider capability and entitlement matrix."""
     return market_registry.get_capability_matrix()
 
+@router.get("/angel/status")
+def get_angel_provider_status():
+    """
+    Returns authentic, safe observability metrics for Angel One SmartAPI in production:
+    - Variable presence (SET / NOT_SET, never secrets)
+    - Authentication status
+    - Session active status
+    - Scrip master loaded status
+    - Provider readiness
+    - Telemetry counts (totalRequests, successCount, errorCount, fallbackCount)
+    """
+    from app.services.market_data.providers.angel_provider import angel_provider
+    from app.services.market_data.providers.angel_scrip_master import angel_scrip_master
+    from app.services.market_data.router import provider_router
+
+    tracker = provider_router.health_trackers.get("Angel One SmartAPI")
+
+    return {
+        "provider": "Angel One SmartAPI",
+        "configured": angel_provider.is_configured,
+        "variables": angel_provider.get_credentials_status(),
+        "authentication": {
+            "status": angel_provider.connection_status,
+            "sessionActive": bool(angel_provider.jwt_token and angel_provider.feed_token),
+            "websocketConnected": angel_provider.is_connected,
+            "reconnectCount": angel_provider.reconnect_count
+        },
+        "scripMaster": {
+            "totalLoaded": angel_scrip_master.total_loaded,
+            "lastLoadedAt": angel_scrip_master.last_loaded_at,
+            "status": "READY" if angel_scrip_master.total_loaded > 0 else "EMPTY"
+        },
+        "providerReady": bool(angel_provider.is_configured and angel_provider.jwt_token and angel_scrip_master.total_loaded > 0),
+        "telemetry": {
+            "routerTracker": tracker.to_dict() if tracker else {},
+            "providerInternal": {
+                "totalRequests": angel_provider.total_requests,
+                "successCount": angel_provider.success_count,
+                "errorCount": angel_provider.error_count,
+                "fallbackCount": angel_provider.fallback_count
+            }
+        }
+    }
+
 @router.get("/data-integrity/india")
 def get_india_data_integrity(
     sample_size: int = Query(25, ge=5, le=100, description="Number of Indian instruments to sample for live quote testing"),
@@ -775,3 +819,24 @@ def get_market_telemetry(db: Session = Depends(get_db)):
         "market_hours": health_data.get("market_hours", {}),
         "cache": health_data.get("cache", {})
     }
+
+
+@router.get("/websocket/coverage")
+@router.get("/angel/websocket/coverage")
+def get_websocket_coverage():
+    """
+    Returns granular, audit-grade live WebSocket coverage metrics for Indian Stocks & ETFs.
+    Strictly verifies genuine SmartWebSocketV2 ticks, connection pools, and session-aware freshness.
+    """
+    from app.services.market_data.providers.angel_provider import angel_provider
+    return angel_provider.get_websocket_coverage_report()
+
+
+@router.post("/websocket/subscribe-universe")
+def subscribe_websocket_universe(mode: int = Query(1, description="Subscription mode (1=LTP, 2=Quote)")):
+    """
+    Subscribes the full Indian stock + ETF universe across Angel One SmartWebSocketV2 connections in LTP mode.
+    """
+    from app.services.market_data.providers.angel_provider import angel_provider
+    return angel_provider.subscribe_universe(mode=mode)
+
