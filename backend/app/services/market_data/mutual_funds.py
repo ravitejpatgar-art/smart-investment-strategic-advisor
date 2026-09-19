@@ -56,7 +56,13 @@ MF_SCHEME_MAP = {
     "NIPPON INDIA SMALL CAP FUND DIRECT": {"code": "125354", "name": "Nippon India Small Cap Fund Direct-Growth", "category": "Small Cap Fund"},
     "ICICI_REGULAR_SAVINGS": {"code": "120616", "name": "ICICI Prudential Conservative Hybrid Fund Direct-Growth", "category": "Conservative Hybrid"},
     "ICICI PRUDENTIAL REGULAR SAVINGS FUND DIRECT": {"code": "120616", "name": "ICICI Prudential Conservative Hybrid Fund Direct-Growth", "category": "Conservative Hybrid"},
-    "ICICI PRUDENTIAL CONSERVATIVE HYBRID FUND DIRECT": {"code": "120616", "name": "ICICI Prudential Conservative Hybrid Fund Direct-Growth", "category": "Conservative Hybrid"}
+    "ICICI PRUDENTIAL CONSERVATIVE HYBRID FUND DIRECT": {"code": "120616", "name": "ICICI Prudential Conservative Hybrid Fund Direct-Growth", "category": "Conservative Hybrid"},
+    "HDFC_FLEXICAP": {"code": "118955", "name": "HDFC Flexi Cap Fund Direct-Growth", "category": "Flexi Cap Fund"},
+    "HDFC FLEXI CAP FUND DIRECT": {"code": "118955", "name": "HDFC Flexi Cap Fund Direct-Growth", "category": "Flexi Cap Fund"},
+    "HDFC FLEXI CAP FUND": {"code": "118955", "name": "HDFC Flexi Cap Fund Direct-Growth", "category": "Flexi Cap Fund"},
+    "HDFC FLEXI CAP": {"code": "118955", "name": "HDFC Flexi Cap Fund Direct-Growth", "category": "Flexi Cap Fund"},
+    "118955": {"code": "118955", "name": "HDFC Flexi Cap Fund Direct-Growth", "category": "Flexi Cap Fund"},
+    "119598": {"code": "119598", "name": "HDFC Flexi Cap Fund Direct-Growth", "category": "Flexi Cap Fund"}
 }
 
 
@@ -109,7 +115,9 @@ class MutualFundsProvider(BaseMarketDataProvider):
                 
         if "UTI" in s_clean or ("NIFTY" in s_clean and "BEES" not in s_clean and "^" not in s_clean):
             return MF_SCHEME_MAP["UTI_NIFTY_50"]
-        if "PARAG" in s_clean or "FLEXI" in s_clean or "PPFCF" in s_clean:
+        if "HDFC" in s_clean and "FLEXI" in s_clean:
+            return MF_SCHEME_MAP["HDFC_FLEXICAP"]
+        if "PARAG" in s_clean or "PPFCF" in s_clean or "PPFAS" in s_clean or "FLEXI" in s_clean:
             return MF_SCHEME_MAP["PARAG_PARIKH_FLEXICAP"]
         if "LIQUID" in s_clean or "ICICILIQ" in s_clean:
             return MF_SCHEME_MAP["ICICI_LIQUID"]
@@ -313,6 +321,7 @@ class MutualFundsProvider(BaseMarketDataProvider):
             elif r_clean == "1y": total_days = 365
             elif r_clean == "3y": total_days = 1095
             elif r_clean == "5y": total_days = 1825
+            elif r_clean in ["10y", "max", "all"]: total_days = 36500
 
             parsed_items = []
             for item in nav_data:

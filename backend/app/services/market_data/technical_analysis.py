@@ -77,9 +77,9 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
                 "trend": "BULLISH" if hist_val > 0 else "BEARISH"
             }
 
-    # 4. RSI (14 Period) - Minimum 30 observations required
+    # 4. RSI (14 Period Wilder's Smoothing) - Minimum 15 observations required
     rsi_val = None
-    if len(closes) >= 30:
+    if len(closes) >= 15:
         gains, losses = [], []
         for i in range(1, len(closes)):
             diff = closes[i] - closes[i - 1]
@@ -182,7 +182,7 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
         if len(tr_list) >= 14:
             atr_14 = round(sum(tr_list[-14:]) / 14.0, 2)
 
-    # 11. Pivot Points (Standard Support / Resistance)
+    # 11. Pivot Points & 20-Day Swing Support / Resistance
     last_candle = candles[-1]
     last_h = float(last_candle.get("high") or current_price)
     last_l = float(last_candle.get("low") or current_price)
@@ -191,8 +191,20 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
     s1 = round((2 * pivot_p) - last_h, 2)
     r2 = round(pivot_p + (last_h - last_l), 2)
     s2 = round(pivot_p - (last_h - last_l), 2)
+    r3 = round(last_h + 2.0 * (pivot_p - last_l), 2)
+    s3 = round(last_l - 2.0 * (last_h - pivot_p), 2)
 
-    # 12. Trend Direction
+    highs_all = [float(c.get("high") or c.get("close") or 0.0) for c in candles if float(c.get("high") or c.get("close") or 0.0) > 0]
+    lows_all = [float(c.get("low") or c.get("close") or 0.0) for c in candles if float(c.get("low") or c.get("close") or 0.0) > 0]
+    swing_high_20 = round(max(highs_all[-20:]), 2) if len(highs_all) >= 20 else None
+    swing_low_20 = round(min(lows_all[-20:]), 2) if len(lows_all) >= 20 else None
+
+    # 12. Momentum & Horizon Returns (1M, 3M, 6M)
+    return_1m = round(((closes[-1] - closes[-22]) / closes[-22] * 100), 2) if len(closes) >= 22 and closes[-22] > 0 else None
+    return_3m = round(((closes[-1] - closes[-64]) / closes[-64] * 100), 2) if len(closes) >= 64 and closes[-64] > 0 else None
+    return_6m = round(((closes[-1] - closes[-127]) / closes[-127] * 100), 2) if len(closes) >= 127 and closes[-127] > 0 else None
+
+    # 13. Trend Direction
     trend_score = 0
     if sma20 and current_price > sma20: trend_score += 1
     elif sma20: trend_score -= 1
@@ -205,32 +217,53 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
 
     trend_direction = "BULLISH" if trend_score >= 2 else "BEARISH" if trend_score <= -2 else "NEUTRAL"
 
-    # Coverage tracking
+    # Coverage tracking & explicit requirements check
     computed_indicators = []
     missing_indicators = []
+
     if rsi_val is not None: computed_indicators.append("RSI(14)")
-    else: missing_indicators.append("RSI(14) (needs >=30 observations)")
+    else: missing_indicators.append("RSI(14) (needs >=15 observations)")
+
     if macd_data is not None: computed_indicators.append("MACD(12,26,9)")
     else: missing_indicators.append("MACD(12,26,9) (needs >=35 observations)")
+
     if ema20 is not None: computed_indicators.append("EMA20")
+    else: missing_indicators.append("EMA20 (needs >=20 observations)")
+
     if ema50 is not None: computed_indicators.append("EMA50")
     else: missing_indicators.append("EMA50 (needs >=50 observations)")
+
     if ema200 is not None: computed_indicators.append("EMA200")
     else: missing_indicators.append("EMA200 (needs >=200 observations)")
+
     if sma50 is not None: computed_indicators.append("SMA50")
     else: missing_indicators.append("SMA50 (needs >=50 observations)")
+
     if sma200 is not None: computed_indicators.append("SMA200")
     else: missing_indicators.append("SMA200 (needs >=200 observations)")
+
     if bollinger is not None: computed_indicators.append("BollingerBands(20,2)")
     else: missing_indicators.append("BollingerBands(20,2) (needs >=20 observations)")
+
     if atr_14 is not None: computed_indicators.append("ATR(14)")
     else: missing_indicators.append("ATR(14) (needs >=15 observations)")
+
     if volume_metrics is not None: computed_indicators.append("VolumeTrend(20)")
     else: missing_indicators.append("VolumeTrend(20) (needs >=20 volume observations)")
+
+    if swing_high_20 is not None and swing_low_20 is not None: computed_indicators.append("SwingLevels(20)")
+    else: missing_indicators.append("SwingLevels(20) (needs >=20 observations)")
+
+    if return_1m is not None: computed_indicators.append("Return1M")
+    else: missing_indicators.append("Return1M (needs >=22 observations)")
+
+    total_trackable = 12.0
+    coverage_pct = round((len(computed_indicators) / total_trackable) * 100, 1)
 
     return {
         "available": True,
         "observationCount": len(closes),
+        "historical_observation_count": len(closes),
         "currentPrice": current_price,
         "rsi": rsi_val,
         "rsiCondition": "OVERBOUGHT" if (rsi_val and rsi_val >= 70) else "OVERSOLD" if (rsi_val and rsi_val <= 30) else "NEUTRAL",
@@ -253,7 +286,16 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
             "r1": r1,
             "s1": s1,
             "r2": r2,
-            "s2": s2
+            "s2": s2,
+            "r3": r3,
+            "s3": s3,
+            "swingHigh20": swing_high_20,
+            "swingLow20": swing_low_20
+        },
+        "returns": {
+            "return1M": return_1m,
+            "return3M": return_3m,
+            "return6M": return_6m
         },
         "trendDirection": trend_direction,
         "fiftyTwoWeek": {
@@ -264,10 +306,13 @@ def calculate_technical_indicators(candles: List[Dict[str, Any]]) -> Dict[str, A
         "volatilityAnnualizedPct": volatility_annualized,
         "maxDrawdownPct": round(max_dd, 2),
         "currentDrawdownPct": current_dd,
+        "computed_indicators": computed_indicators,
+        "missing_indicators": missing_indicators,
+        "coverage_pct": coverage_pct,
         "indicatorCoverage": {
             "computed": computed_indicators,
             "missing": missing_indicators,
-            "coveragePct": round((len(computed_indicators) / 10.0) * 100, 1)
+            "coveragePct": coverage_pct
         }
     }
 

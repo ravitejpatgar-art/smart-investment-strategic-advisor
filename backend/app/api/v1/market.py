@@ -205,10 +205,19 @@ def get_instrument_research(
     etf_data     = research_data.get("etfData")
     mf_data      = research_data.get("mfData")
 
-    # ── 4. Get technical indicators from 1Y candles ──
+    # ── 4. Get technical indicators from deepest verified candles for long-term engine ──
     technicals = None
+    is_mf_quote = (
+        (asset_type or "").upper() in ["MUTUAL_FUND", "MF"]
+        or actual_symbol.upper().startswith("AMFI:")
+        or actual_symbol.upper().startswith("MF:")
+        or (actual_symbol.isdigit() and len(actual_symbol) in (5, 6))
+    )
+    target_range = "max" if is_mf_quote else "5y"
     try:
-        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y")
+        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period=target_range, asset_type=asset_type)
+        if not candles_res or not candles_res.get("observations"):
+            candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y", asset_type=asset_type)
         if candles_res and candles_res.get("observations"):
             technicals = calculate_technical_indicators(candles_res["observations"])
     except Exception:
@@ -329,6 +338,13 @@ def get_instrument_signals(
     actual_symbol = instrument_data["symbol"] if instrument_data else clean_symbol
     asset_type = instrument_data.get("assetType", "STOCK") if instrument_data else "STOCK"
 
+    if not instrument_data:
+        from app.services.market_data.mutual_funds import MutualFundsProvider
+        mf_info = MutualFundsProvider().resolve_scheme(clean_symbol)
+        if mf_info:
+            actual_symbol = mf_info["code"]
+            asset_type = "MUTUAL_FUND"
+
     quote = None
     try:
         q = market_registry.get_quote(actual_symbol, asset_type=asset_type)
@@ -346,8 +362,17 @@ def get_instrument_signals(
 
     technicals = None
     candles_obs = None
+    is_mf_signal = (
+        (asset_type or "").upper() in ["MUTUAL_FUND", "MF"]
+        or actual_symbol.upper().startswith("AMFI:")
+        or actual_symbol.upper().startswith("MF:")
+        or (actual_symbol.isdigit() and len(actual_symbol) in (5, 6))
+    )
+    target_range = "max" if is_mf_signal else "5y"
     try:
-        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y", asset_type=asset_type)
+        candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period=target_range, asset_type=asset_type)
+        if not candles_res or not candles_res.get("observations"):
+            candles_res = market_registry.get_candles(actual_symbol, interval="1d", range_period="1y", asset_type=asset_type)
         if candles_res and candles_res.get("observations"):
             candles_obs = candles_res["observations"]
             technicals = calculate_technical_indicators(candles_obs)
