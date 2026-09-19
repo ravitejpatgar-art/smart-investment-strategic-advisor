@@ -357,10 +357,11 @@ export interface MarketInstrument {
   riskScore?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
 }
 
-export type InstitutionalSignalType = 'STRONG BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG SELL';
+export type InstitutionalSignalType = 'STRONG BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG SELL' | 'INSUFFICIENT DATA';
 
 export interface SignalBadge {
   signal: InstitutionalSignalType;
+  long_term_signal?: InstitutionalSignalType;
   confidence: number;
   riskScore: 'LOW' | 'MEDIUM' | 'HIGH';
 }
@@ -391,6 +392,33 @@ export interface InstitutionalPriceTargets {
   disclaimer?: string;
 }
 
+export interface TechnicalReferenceLevels {
+  reference_price?: number;
+  target_1?: number;
+  target_2?: number;
+  invalidation?: number;
+  risk?: number;
+  reward?: number;
+  risk_reward_ratio?: number;
+  note?: string;
+}
+
+export interface SignalConsequences {
+  potential_upside_case?: string;
+  potential_downside_case?: string;
+  holding_implication?: string;
+}
+
+export interface SignalAiExplanation {
+  why?: string;
+  supporting_factors?: string[];
+  negative_factors?: string[];
+  risks?: string[];
+  consequences?: SignalConsequences;
+  explanation?: string;
+  [key: string]: any;
+}
+
 export interface VestIQInstitutionalResearch {
   bullCase: string[];
   bearCase: string[];
@@ -410,6 +438,27 @@ export interface InstitutionalSignal {
   symbol: string;
   overallSignal?: InstitutionalSignalType;
   signal?: InstitutionalSignalType;
+  long_term_signal?: InstitutionalSignalType | string;
+  why?: string;
+  signal_reason?: string;
+  supporting_factors?: string[];
+  negative_factors?: string[];
+  consequences?: SignalConsequences;
+  potential_consequences?: SignalConsequences;
+  major_risks?: string[];
+  risks?: string[];
+  why_signal_could_be_wrong?: string[];
+  signal_upgrade_conditions?: string[];
+  signal_downgrade_conditions?: string[];
+  historical_depth_bars?: number;
+  historical_years?: number;
+  long_term_history_sufficiency?: string;
+  historical_depth_disclosure?: string;
+  technical_reference_levels?: TechnicalReferenceLevels;
+  provenance?: Record<string, any> | string;
+  ai_explanation?: SignalAiExplanation;
+  confidence_breakdown?: Record<string, any>;
+  data_quality?: Record<string, any>;
   confidence: number;
   riskScore: 'LOW' | 'MEDIUM' | 'HIGH';
   currentPrice: number;

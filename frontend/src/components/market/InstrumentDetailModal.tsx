@@ -20,9 +20,13 @@ import {
   XCircle,
   Target,
   ArrowUpRight,
+  ArrowDownRight,
   ShieldAlert,
   History,
-  Compass
+  Compass,
+  HelpCircle,
+  FileText,
+  RotateCcw
 } from "lucide-react";
 import type {
   MarketInstrument,
@@ -30,6 +34,7 @@ import type {
   MarketResearchSignal,
   InstitutionalSignal,
   InstitutionalPriceTargets,
+  TechnicalReferenceLevels,
   MarketQuote
 } from "../../services/marketApi";
 import { marketApi, formatIstTimestamp } from "../../services/marketApi";
@@ -199,21 +204,61 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   // Institutional Signal & Price Targets
   const institutionalSignal: InstitutionalSignal | undefined = (signalData || bundle?.institutionalSignal) ?? undefined;
   const priceTargets: InstitutionalPriceTargets | undefined = (institutionalSignal?.priceTargets || bundle?.priceTargets) ?? undefined;
-  const currentSignal = institutionalSignal?.overallSignal || institutionalSignal?.signal || instrument.signalBadge?.signal || instrument.signal || "HOLD";
-  const currentConfidence = institutionalSignal?.confidence ?? instrument.signalBadge?.confidence ?? instrument.confidence ?? 75;
-  const currentRiskScore = institutionalSignal?.riskScore || instrument.signalBadge?.riskScore || instrument.riskScore || "MEDIUM";
+  
+  // Primary Long-Term AI Research Signal
+  const currentSignal = (
+    institutionalSignal?.long_term_signal ||
+    institutionalSignal?.horizons?.longTerm?.signal ||
+    institutionalSignal?.overallSignal ||
+    institutionalSignal?.signal ||
+    (instrument.signalBadge as any)?.long_term_signal ||
+    instrument.signalBadge?.signal ||
+    instrument.signal ||
+    "HOLD"
+  );
+  const isInsufficientData = currentSignal === 'INSUFFICIENT DATA' || institutionalSignal?.long_term_signal === 'INSUFFICIENT DATA';
+  const currentConfidence = isInsufficientData ? 0 : (institutionalSignal?.confidence ?? instrument.signalBadge?.confidence ?? instrument.confidence ?? 75);
+  const currentRiskScore = isInsufficientData ? "UNKNOWN" : (institutionalSignal?.riskScore || instrument.signalBadge?.riskScore || instrument.riskScore || "MEDIUM");
 
-  const instResearch = institutionalSignal?.institutionalResearch || institutionalSignal?.research;
-  const signalHistoryList = institutionalSignal?.signalHistory || institutionalSignal?.history || [];
-  const bullishFactors = institutionalSignal?.reasons?.bullish || institutionalSignal?.factors?.bullish || [
+  // Core Thesis & Why Explanation
+  const signalReason = institutionalSignal?.signal_reason || institutionalSignal?.why || institutionalSignal?.ai_explanation?.why;
+
+  // Factors (Supporting & Negative)
+  const supportingFactors = institutionalSignal?.supporting_factors || institutionalSignal?.ai_explanation?.supporting_factors || institutionalSignal?.reasons?.bullish || institutionalSignal?.factors?.bullish || [
     "Constructive momentum alignment across key moving averages",
     "Healthy return on equity and profitability profile",
     "Positive sector and market volume confirmation"
   ];
-  const bearishFactors = institutionalSignal?.reasons?.bearish || institutionalSignal?.factors?.bearish || [
+  const negativeFactors = institutionalSignal?.negative_factors || institutionalSignal?.ai_explanation?.negative_factors || institutionalSignal?.reasons?.bearish || institutionalSignal?.factors?.bearish || [
     "Overhead technical resistance zones",
     "Valuation multiple sensitive to macro rate shifts"
   ];
+
+  // Consequences
+  const consequences = institutionalSignal?.consequences || institutionalSignal?.potential_consequences || institutionalSignal?.ai_explanation?.consequences;
+
+  // Risks & Why Signal Could Be Wrong
+  const majorRisks = institutionalSignal?.major_risks || institutionalSignal?.risks || institutionalSignal?.ai_explanation?.risks || [];
+  const whySignalCouldBeWrong = institutionalSignal?.why_signal_could_be_wrong || (institutionalSignal?.ai_explanation as any)?.why_signal_could_be_wrong || [];
+
+  // What Would Change The Signal
+  const signalUpgradeConditions = institutionalSignal?.signal_upgrade_conditions || [];
+  const signalDowngradeConditions = institutionalSignal?.signal_downgrade_conditions || [];
+
+  // Historical Depth
+  const historicalDepthBars = institutionalSignal?.historical_depth_bars;
+  const historicalYears = institutionalSignal?.historical_years;
+  const longTermSufficiency = institutionalSignal?.long_term_history_sufficiency;
+  const historicalDepthDisclosure = institutionalSignal?.historical_depth_disclosure;
+
+  // Technical Reference Levels
+  const techLevels: TechnicalReferenceLevels | undefined = institutionalSignal?.technical_reference_levels;
+
+  // AI Narrative Explanation
+  const aiExplanationText = institutionalSignal?.ai_explanation?.explanation;
+
+  const instResearch = institutionalSignal?.institutionalResearch || institutionalSignal?.research;
+  const signalHistoryList = institutionalSignal?.signalHistory || institutionalSignal?.history || [];
 
   // Portfolio Suggested Action
   const isOwned = Boolean(userOwnedInfo);
@@ -223,6 +268,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   else if (currentSignal === 'HOLD') suggestedAction = 'HOLD';
   else if (currentSignal === 'SELL') suggestedAction = 'REDUCE';
   else if (currentSignal === 'STRONG SELL') suggestedAction = 'EXIT';
+  else if (currentSignal === 'INSUFFICIENT DATA') suggestedAction = 'MONITOR';
 
   const getSignalColor = (sig: string) => {
     switch (sig) {
@@ -236,6 +282,8 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
         return 'bg-amber-600 text-white border-amber-500';
       case 'STRONG SELL':
         return 'bg-red-600 text-white border-red-500';
+      case 'INSUFFICIENT DATA':
+        return 'bg-slate-200 text-slate-700 border-slate-300';
       default:
         return 'bg-slate-700 text-white border-slate-600';
     }
@@ -253,6 +301,8 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
         return 'bg-amber-700 text-amber-100 border-amber-600';
       case 'EXIT':
         return 'bg-red-700 text-red-100 border-red-600';
+      case 'MONITOR':
+        return 'bg-slate-700 text-slate-200 border-slate-600';
       default:
         return 'bg-slate-700 text-slate-200 border-slate-600';
     }
@@ -493,61 +543,118 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                 <StatCell label="Prev Close" value={quote?.prevClose ? `${curSym}${Number(quote.prevClose).toFixed(2)}` : "N/A"} />
                 <StatCell label="52W High" value={risk?.fiftyTwoWeekHigh ? `${curSym}${Number(risk.fiftyTwoWeekHigh).toFixed(2)}` : "N/A"} />
                 <StatCell label="52W Low" value={risk?.fiftyTwoWeekLow ? `${curSym}${Number(risk.fiftyTwoWeekLow).toFixed(2)}` : "N/A"} />
-                <StatCell label="Volume" value={quote?.volume ? Number(quote.volume).toLocaleString() : "N/A"} />
+                {!isMF ? (
+                  <StatCell label="Volume" value={quote?.volume ? Number(quote.volume).toLocaleString() : "N/A"} />
+                ) : (
+                  <StatCell label="Provenance" value={typeof institutionalSignal?.provenance === 'string' ? institutionalSignal.provenance : "AMFI Official NAV"} />
+                )}
                 <StatCell label="Market Cap" value={valuation?.marketCap ? formatCurrencyAmount(valuation.marketCap, instrument.currency) : "N/A"} />
               </div>
 
-              {/* Institutional Price Targets Preview */}
-              {priceTargets && (
+              {/* Institutional Price Targets / Reference Levels Preview */}
+              {isInsufficientData ? (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Long-Term Model: Insufficient Data</h4>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    {signalReason || "Historical observation depth is limited. Quantitative technical reference levels are omitted until multi-year depth is verified."}
+                  </p>
+                </div>
+              ) : (techLevels || priceTargets) ? (
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-teal-700" />
-                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Institutional AI Price Targets</h4>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Technical Reference Levels</h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveTab("signal")}
                       className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Full Target Analysis</span>
+                      <span>Full Signal & Thesis</span>
                       <ArrowUpRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Conservative (1-3m)</span>
-                      <div className="text-base font-extrabold font-mono text-slate-900">
-                        {curSym}{priceTargets.conservative.price ?? priceTargets.conservative.targetPrice}
+                  {techLevels ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-3 bg-teal-50/50 rounded-xl border border-teal-200 space-y-1">
+                        <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block">Target 1 (Primary)</span>
+                        <div className="text-base font-extrabold font-mono text-teal-950">
+                          {curSym}{techLevels.target_1 !== undefined ? Number(techLevels.target_1).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                        </div>
+                        {techLevels.target_1 !== undefined && techLevels.reference_price && (
+                          <span className={`text-xs font-bold font-mono ${techLevels.target_1 >= techLevels.reference_price ? "text-emerald-600" : "text-red-600"}`}>
+                            {techLevels.target_1 >= techLevels.reference_price ? "+" : ""}
+                            {(((techLevels.target_1 - techLevels.reference_price) / techLevels.reference_price) * 100).toFixed(1)}%
+                          </span>
+                        )}
                       </div>
-                      <span className={`text-xs font-bold font-mono ${(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0}% Upside
-                      </span>
-                    </div>
 
-                    <div className="p-3 bg-teal-50/50 rounded-xl border border-teal-200 space-y-1">
-                      <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block">Base Case (6-12m)</span>
-                      <div className="text-base font-extrabold font-mono text-teal-950">
-                        {curSym}{priceTargets.base.price ?? priceTargets.base.targetPrice}
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Target 2 (Extended)</span>
+                        <div className="text-base font-extrabold font-mono text-slate-900">
+                          {curSym}{techLevels.target_2 !== undefined ? Number(techLevels.target_2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                        </div>
+                        {techLevels.target_2 !== undefined && techLevels.reference_price && (
+                          <span className={`text-xs font-bold font-mono ${techLevels.target_2 >= techLevels.reference_price ? "text-emerald-600" : "text-red-600"}`}>
+                            {techLevels.target_2 >= techLevels.reference_price ? "+" : ""}
+                            {(((techLevels.target_2 - techLevels.reference_price) / techLevels.reference_price) * 100).toFixed(1)}%
+                          </span>
+                        )}
                       </div>
-                      <span className={`text-xs font-bold font-mono ${(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0}% Upside
-                      </span>
-                    </div>
 
-                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Aggressive (12-24m)</span>
-                      <div className="text-base font-extrabold font-mono text-slate-900">
-                        {curSym}{priceTargets.aggressive.price ?? priceTargets.aggressive.targetPrice}
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Invalidation Level</span>
+                        <div className="text-base font-extrabold font-mono text-slate-900">
+                          {curSym}{techLevels.invalidation !== undefined ? Number(techLevels.invalidation).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                        </div>
+                        {techLevels.invalidation !== undefined && techLevels.reference_price && (
+                          <span className={`text-xs font-bold font-mono ${techLevels.invalidation >= techLevels.reference_price ? "text-emerald-600" : "text-red-600"}`}>
+                            {techLevels.invalidation >= techLevels.reference_price ? "+" : ""}
+                            {(((techLevels.invalidation - techLevels.reference_price) / techLevels.reference_price) * 100).toFixed(1)}%
+                          </span>
+                        )}
                       </div>
-                      <span className={`text-xs font-bold font-mono ${(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0}% Upside
-                      </span>
                     </div>
-                  </div>
+                  ) : priceTargets ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Conservative (1-3m)</span>
+                        <div className="text-base font-extrabold font-mono text-slate-900">
+                          {curSym}{priceTargets.conservative.price ?? priceTargets.conservative.targetPrice}
+                        </div>
+                        <span className={`text-xs font-bold font-mono ${(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0}% Upside
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-teal-50/50 rounded-xl border border-teal-200 space-y-1">
+                        <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block">Base Case (6-12m)</span>
+                        <div className="text-base font-extrabold font-mono text-teal-950">
+                          {curSym}{priceTargets.base.price ?? priceTargets.base.targetPrice}
+                        </div>
+                        <span className={`text-xs font-bold font-mono ${(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0}% Upside
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Aggressive (12-24m)</span>
+                        <div className="text-base font-extrabold font-mono text-slate-900">
+                          {curSym}{priceTargets.aggressive.price ?? priceTargets.aggressive.targetPrice}
+                        </div>
+                        <span className={`text-xs font-bold font-mono ${(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0}% Upside
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              )}
+              ) : null}
 
               {/* Research Signal Summary Card */}
               {researchSignal && (
@@ -594,7 +701,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">Primary Institutional Signal</span>
+                    <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">Primary Long-Term AI Research Signal</span>
                     <div className="mt-1 flex items-center gap-3">
                       <span className={`px-3.5 py-1.5 rounded-xl text-base sm:text-lg font-bold font-mono uppercase tracking-wider border shadow-sm ${getSignalColor(currentSignal)}`}>
                         {currentSignal}
@@ -602,10 +709,16 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border font-mono ${
                         currentRiskScore === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
                         currentRiskScore === 'LOW' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        currentRiskScore === 'UNKNOWN' ? 'bg-slate-100 text-slate-600 border-slate-200' :
                         'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
                         {currentRiskScore} RISK
                       </span>
+                      {isMF && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+                          AMFI PROVENANCE
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -616,7 +729,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                         {currentConfidence}%
                       </div>
                     </div>
-                    {institutionalSignal?.compositeScore !== undefined && (
+                    {institutionalSignal?.compositeScore !== undefined && !isInsufficientData && (
                       <div className="text-right border-l border-slate-200 pl-4">
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Composite Score</span>
                         <div className={`text-2xl font-extrabold font-mono ${institutionalSignal.compositeScore >= 0 ? "text-emerald-600" : "text-red-600"}`}>
@@ -635,6 +748,36 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                   />
                 </div>
 
+                {/* Historical Depth & Observation Evidence */}
+                {(historicalYears !== undefined || historicalDepthBars !== undefined || longTermSufficiency) && (
+                  <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <History className="w-3.5 h-3.5 text-teal-700" />
+                      <span className="font-semibold text-slate-700">Long-term evidence:</span>
+                      <span className="font-mono text-slate-900">
+                        {historicalYears !== undefined ? `${historicalYears} years` : ''}
+                        {historicalYears !== undefined && historicalDepthBars !== undefined ? ' / ' : ''}
+                        {historicalDepthBars !== undefined ? `${historicalDepthBars.toLocaleString()} daily observations` : ''}
+                      </span>
+                    </div>
+                    {longTermSufficiency && (
+                      <span className={`px-2 py-0.5 rounded text-[10.5px] font-bold font-mono uppercase tracking-wider border ${
+                        longTermSufficiency === 'SUFFICIENT' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        longTermSufficiency === 'DEEP' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        longTermSufficiency === 'LIMITED' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-slate-100 text-slate-600 border-slate-200'
+                      }`}>
+                        Data Depth: {longTermSufficiency}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {historicalDepthDisclosure && (
+                  <p className="text-[11px] text-slate-500 italic">
+                    {historicalDepthDisclosure}
+                  </p>
+                )}
+
                 {/* Portfolio Context if owned */}
                 {isOwned && (
                   <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs">
@@ -651,15 +794,44 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                 )}
               </div>
 
-              {/* Multi-Horizon Signals (Short Term, Swing, Long Term) */}
+              {/* Insufficient Data Notice (if applicable) */}
+              {isInsufficientData && (
+                <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span>Insufficient Historical Data for Long-Term Model</span>
+                  </div>
+                  <p className="text-xs text-amber-950 leading-relaxed font-medium">
+                    {signalReason || "Historical observation depth is limited. Missing multi-year price data prevents reliable long-term factor scoring and target projection."}
+                  </p>
+                  <div className="text-[11px] text-slate-500 pt-1">
+                    Confidence is marked at 0%. Quant model requires a multi-year observation dataset before projecting price targets.
+                  </div>
+                </div>
+              )}
+
+              {/* 2. WHY Section (Actual API Explanation) */}
+              {signalReason && (
+                <div className="p-4 rounded-xl bg-teal-50/50 border border-teal-200/80 space-y-2">
+                  <span className="text-xs font-bold text-teal-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-teal-700" />
+                    <span>Why This Signal: Long-Term Thesis</span>
+                  </span>
+                  <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                    {signalReason}
+                  </p>
+                </div>
+              )}
+
+              {/* Execution Horizons (Long-Term is Primary Anchor) */}
               <div className="space-y-3">
-                <SectionHeader icon={<Compass className="w-4 h-4" />} title="Multi-Horizon Signal Breakdown" />
+                <SectionHeader icon={<Compass className="w-4 h-4" />} title="Execution Horizons (Long-Term is Primary Anchor)" />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   
                   {/* Short Term */}
                   <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Short Term</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tactical Horizon</span>
                       <span className="text-[10px] text-slate-400 font-mono">1 – 30 Days</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -676,16 +848,16 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                   </div>
 
                   {/* Swing */}
-                  <div className="p-4 rounded-xl bg-teal-50/40 border border-teal-200/80 shadow-2xs space-y-2">
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Swing Horizon</span>
-                      <span className="text-[10px] text-teal-600 font-mono">1 – 6 Months</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Intermediate Swing</span>
+                      <span className="text-[10px] text-slate-400 font-mono">1 – 6 Months</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold font-mono uppercase border ${getSignalColor(institutionalSignal?.horizons?.swing?.signal || currentSignal)}`}>
                         {institutionalSignal?.horizons?.swing?.signal || currentSignal}
                       </span>
-                      <span className="text-xs font-mono font-bold text-teal-900">
+                      <span className="text-xs font-mono font-bold text-slate-700">
                         Score: {institutionalSignal?.horizons?.swing?.score ?? 65}
                       </span>
                     </div>
@@ -695,126 +867,209 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                   </div>
 
                   {/* Long Term */}
-                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="p-4 rounded-xl bg-teal-50/60 border-2 border-teal-400 shadow-xs space-y-2 relative">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Long Term</span>
-                      <span className="text-[10px] text-slate-400 font-mono">1 – 10 Years</span>
+                      <span className="text-[10px] font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>Long-Term Core</span>
+                        <span className="px-1.5 py-0.2 rounded bg-teal-200 text-teal-900 text-[9px] font-bold">PRIMARY</span>
+                      </span>
+                      <span className="text-[10px] text-teal-700 font-mono">1 – 10 Years</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold font-mono uppercase border ${getSignalColor(institutionalSignal?.horizons?.longTerm?.signal || currentSignal)}`}>
-                        {institutionalSignal?.horizons?.longTerm?.signal || currentSignal}
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold font-mono uppercase border shadow-2xs ${getSignalColor(currentSignal)}`}>
+                        {currentSignal}
                       </span>
-                      <span className="text-xs font-mono font-bold text-slate-700">
+                      <span className="text-xs font-mono font-bold text-teal-950">
                         Score: {institutionalSignal?.horizons?.longTerm?.score ?? 70}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                      {institutionalSignal?.horizons?.longTerm?.rationale || "Secular fundamentals, profitability ratios, and balance sheet resilience support multi-year compound thesis."}
+                    <p className="text-xs text-slate-700 leading-relaxed pt-1">
+                      {institutionalSignal?.horizons?.longTerm?.rationale || signalReason || "Secular fundamentals, profitability ratios, and balance sheet resilience support multi-year compound thesis."}
                     </p>
                   </div>
 
                 </div>
               </div>
 
-              {/* AI Price Targets Panel */}
-              {priceTargets && (
+              {/* 11. Technical Reference Levels (Omitted on Insufficient Data) */}
+              {!isInsufficientData && (techLevels || priceTargets) && (
                 <div className="space-y-3">
-                  <SectionHeader icon={<Target className="w-4 h-4" />} title="AI Price Targets & Valuation Horizons" />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    
-                    {/* Conservative */}
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Conservative</span>
-                        <span className="text-[10px] font-mono text-slate-500">{priceTargets.conservative.horizon}</span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xl font-extrabold font-mono text-slate-900">
-                          {curSym}{priceTargets.conservative.price ?? priceTargets.conservative.targetPrice}
-                        </span>
-                        <span className={`text-xs font-bold font-mono ${(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                          {(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                        {priceTargets.conservative.reasoning || priceTargets.reasoning || "Conservative target anchored by lower band support."}
-                      </p>
-                    </div>
+                  <SectionHeader icon={<Target className="w-4 h-4" />} title="Technical Reference Levels" />
+                  {techLevels ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {/* Target 1 */}
+                        <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-300 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Target 1 (Primary Objective)</span>
+                            <span className="text-[10px] font-mono text-teal-700">6 – 12 Months</span>
+                          </div>
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-xl font-extrabold font-mono text-teal-950">
+                              {curSym}{techLevels.target_1 !== undefined ? Number(techLevels.target_1).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                            </span>
+                            {techLevels.target_1 !== undefined && techLevels.reference_price && (
+                              <span className={`text-xs font-bold font-mono ${techLevels.target_1 >= techLevels.reference_price ? "text-emerald-600" : "text-red-600"}`}>
+                                {techLevels.target_1 >= techLevels.reference_price ? "+" : ""}
+                                {(((techLevels.target_1 - techLevels.reference_price) / techLevels.reference_price) * 100).toFixed(1)}%
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-700 leading-relaxed pt-1">
+                            Primary technical target anchored by multi-period structure and ATR expansion band.
+                          </p>
+                        </div>
 
-                    {/* Base Case */}
-                    <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-300 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Base Target</span>
-                        <span className="text-[10px] font-mono text-teal-700">{priceTargets.base.horizon}</span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xl font-extrabold font-mono text-teal-950">
-                          {curSym}{priceTargets.base.price ?? priceTargets.base.targetPrice}
-                        </span>
-                        <span className={`text-xs font-bold font-mono ${(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                          {(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-700 leading-relaxed pt-1">
-                        {priceTargets.base.reasoning || priceTargets.reasoning || "Base target aligned with historical multiples and operating trajectory."}
-                      </p>
-                    </div>
+                        {/* Target 2 */}
+                        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Target 2 (Extended Objective)</span>
+                            <span className="text-[10px] font-mono text-slate-400">12 – 24 Months</span>
+                          </div>
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-xl font-extrabold font-mono text-slate-900">
+                              {curSym}{techLevels.target_2 !== undefined ? Number(techLevels.target_2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                            </span>
+                            {techLevels.target_2 !== undefined && techLevels.reference_price && (
+                              <span className={`text-xs font-bold font-mono ${techLevels.target_2 >= techLevels.reference_price ? "text-emerald-600" : "text-red-600"}`}>
+                                {techLevels.target_2 >= techLevels.reference_price ? "+" : ""}
+                                {(((techLevels.target_2 - techLevels.reference_price) / techLevels.reference_price) * 100).toFixed(1)}%
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                            Secondary extended objective based on secular momentum and multi-year valuation multiple.
+                          </p>
+                        </div>
 
-                    {/* Aggressive */}
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Aggressive</span>
-                        <span className="text-[10px] font-mono text-slate-500">{priceTargets.aggressive.horizon}</span>
+                        {/* Invalidation */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Invalidation Level</span>
+                            <span className="text-[10px] font-mono text-slate-400">Structural Floor</span>
+                          </div>
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-xl font-extrabold font-mono text-slate-900">
+                              {curSym}{techLevels.invalidation !== undefined ? Number(techLevels.invalidation).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                            </span>
+                            {techLevels.invalidation !== undefined && techLevels.reference_price && (
+                              <span className={`text-xs font-bold font-mono ${techLevels.invalidation >= techLevels.reference_price ? "text-emerald-600" : "text-red-600"}`}>
+                                {techLevels.invalidation >= techLevels.reference_price ? "+" : ""}
+                                {(((techLevels.invalidation - techLevels.reference_price) / techLevels.reference_price) * 100).toFixed(1)}%
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                            Structural invalidation support below which the current long-term thesis is reconsidered.
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xl font-extrabold font-mono text-slate-900">
-                          {curSym}{priceTargets.aggressive.price ?? priceTargets.aggressive.targetPrice}
-                        </span>
-                        <span className={`text-xs font-bold font-mono ${(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                          {(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                        {priceTargets.aggressive.reasoning || priceTargets.reasoning || "Aggressive valuation factoring multiple expansion and volume acceleration."}
-                      </p>
-                    </div>
 
-                  </div>
+                      {/* Reference Pricing & Note */}
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs">
+                        <div className="flex items-center gap-3 font-mono text-slate-700">
+                          <span>Reference Price: <strong>{curSym}{techLevels.reference_price}</strong></span>
+                          {techLevels.risk_reward_ratio !== undefined && (
+                            <span>• Risk/Reward Ratio: <strong>{techLevels.risk_reward_ratio}:1</strong></span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-500">
+                          {techLevels.note || "Technical reference levels are quantitative price markers, not guaranteed long-term forecasts."}
+                        </span>
+                      </div>
+                    </div>
+                  ) : priceTargets ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Conservative</span>
+                          <span className="text-[10px] font-mono text-slate-500">{priceTargets.conservative.horizon}</span>
+                        </div>
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-xl font-extrabold font-mono text-slate-900">
+                            {curSym}{priceTargets.conservative.price ?? priceTargets.conservative.targetPrice}
+                          </span>
+                          <span className={`text-xs font-bold font-mono ${(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            {(priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.conservative.upsidePct ?? priceTargets.conservative.upsidePercent ?? 0}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                          {priceTargets.conservative.reasoning || priceTargets.reasoning || "Conservative target anchored by lower band support."}
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-300 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Base Target</span>
+                          <span className="text-[10px] font-mono text-teal-700">{priceTargets.base.horizon}</span>
+                        </div>
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-xl font-extrabold font-mono text-teal-950">
+                            {curSym}{priceTargets.base.price ?? priceTargets.base.targetPrice}
+                          </span>
+                          <span className={`text-xs font-bold font-mono ${(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            {(priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.base.upsidePct ?? priceTargets.base.upsidePercent ?? 0}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed pt-1">
+                          {priceTargets.base.reasoning || priceTargets.reasoning || "Base target aligned with historical multiples and operating trajectory."}
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Aggressive</span>
+                          <span className="text-[10px] font-mono text-slate-500">{priceTargets.aggressive.horizon}</span>
+                        </div>
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-xl font-extrabold font-mono text-slate-900">
+                            {curSym}{priceTargets.aggressive.price ?? priceTargets.aggressive.targetPrice}
+                          </span>
+                          <span className={`text-xs font-bold font-mono ${(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            {(priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0) >= 0 ? "+" : ""}{priceTargets.aggressive.upsidePct ?? priceTargets.aggressive.upsidePercent ?? 0}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                          {priceTargets.aggressive.reasoning || priceTargets.reasoning || "Aggressive valuation factoring multiple expansion and volume acceleration."}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
 
-              {/* Factors Checklist: Bullish vs Bearish */}
+              {/* 3 & 4. Factors Checklist: Supporting vs Negative Factors */}
               <div className="space-y-3">
                 <SectionHeader icon={<Scale className="w-4 h-4" />} title="Factor Breakdown & Checklist" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   
-                  {/* Bullish Factors */}
+                  {/* Supporting Factors */}
                   <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-2.5">
                     <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Bullish Factors ({bullishFactors.length})</span>
+                      <span>Supporting Factors ({supportingFactors.length})</span>
                     </span>
                     <div className="space-y-1.5">
-                      {bullishFactors.map((f: string, i: number) => (
+                      {supportingFactors.map((f: string, i: number) => (
                         <div key={i} className="flex items-start gap-2 text-xs text-emerald-950">
                           <span className="text-emerald-600 font-bold mt-0.5">✓</span>
-                          <span>{f}</span>
+                          <span className="leading-relaxed">{f}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Bearish Factors */}
+                  {/* Negative Factors */}
                   <div className="p-4 rounded-xl bg-red-50/50 border border-red-200 space-y-2.5">
                     <span className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
                       <XCircle className="w-4 h-4 text-red-600" />
-                      <span>Bearish / Caution Factors ({bearishFactors.length})</span>
+                      <span>Negative / Caution Factors ({negativeFactors.length})</span>
                     </span>
                     <div className="space-y-1.5">
-                      {bearishFactors.map((f: string, i: number) => (
+                      {negativeFactors.map((f: string, i: number) => (
                         <div key={i} className="flex items-start gap-2 text-xs text-red-950">
                           <span className="text-red-600 font-bold mt-0.5">✗</span>
-                          <span>{f}</span>
+                          <span className="leading-relaxed">{f}</span>
                         </div>
                       ))}
                     </div>
@@ -822,6 +1077,132 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
 
                 </div>
               </div>
+
+              {/* 5. Potential Consequences & Holding Implications */}
+              {consequences && (consequences.potential_upside_case || consequences.potential_downside_case || consequences.holding_implication) && (
+                <div className="space-y-3">
+                  <SectionHeader icon={<Compass className="w-4 h-4" />} title="Potential Consequences & Holding Implications" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {consequences.potential_upside_case && (
+                      <div className="p-4 rounded-xl bg-emerald-50/40 border border-emerald-200/70 space-y-1.5">
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Potential Upside Case</span>
+                        </span>
+                        <p className="text-xs text-emerald-950 leading-relaxed">
+                          {consequences.potential_upside_case}
+                        </p>
+                      </div>
+                    )}
+                    {consequences.potential_downside_case && (
+                      <div className="p-4 rounded-xl bg-red-50/40 border border-red-200/70 space-y-1.5">
+                        <span className="text-[10px] font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                          <span>Potential Downside Case</span>
+                        </span>
+                        <p className="text-xs text-red-950 leading-relaxed">
+                          {consequences.potential_downside_case}
+                        </p>
+                      </div>
+                    )}
+                    {consequences.holding_implication && (
+                      <div className="p-4 rounded-xl bg-teal-50/40 border border-teal-200/70 space-y-1.5">
+                        <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+                          <span>Holding Implication</span>
+                        </span>
+                        <p className="text-xs text-slate-800 leading-relaxed">
+                          {consequences.holding_implication}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 6 & 7. Major Risks & Why Signal Could Be Wrong */}
+              {((majorRisks && majorRisks.length > 0) || (whySignalCouldBeWrong && whySignalCouldBeWrong.length > 0)) && (
+                <div className="space-y-3">
+                  <SectionHeader icon={<ShieldAlert className="w-4 h-4" />} title="Risk Audit & Model Sensitivity" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {majorRisks && majorRisks.length > 0 && (
+                      <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-2">
+                        <span className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4 text-amber-600" />
+                          <span>Major Investment Risks ({majorRisks.length})</span>
+                        </span>
+                        <div className="space-y-1.5">
+                          {majorRisks.map((riskItem: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-amber-950">
+                              <span className="text-amber-600 font-bold mt-0.5">•</span>
+                              <span className="leading-relaxed">{riskItem}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {whySignalCouldBeWrong && whySignalCouldBeWrong.length > 0 && (
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <HelpCircle className="w-4 h-4 text-slate-600" />
+                          <span>Why This Signal Could Be Wrong ({whySignalCouldBeWrong.length})</span>
+                        </span>
+                        <div className="space-y-1.5">
+                          {whySignalCouldBeWrong.map((item: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                              <span className="text-teal-600 font-bold mt-0.5">?</span>
+                              <span className="leading-relaxed">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 8. What Would Change The Signal (Upgrade / Downgrade Conditions) */}
+              {((signalUpgradeConditions && signalUpgradeConditions.length > 0) || (signalDowngradeConditions && signalDowngradeConditions.length > 0)) && (
+                <div className="space-y-3">
+                  <SectionHeader icon={<RotateCcw className="w-4 h-4" />} title="What Would Change This Signal" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {signalUpgradeConditions && signalUpgradeConditions.length > 0 && (
+                      <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                        <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+                          <span>Conditions For Signal Upgrade</span>
+                        </span>
+                        <div className="space-y-1.5">
+                          {signalUpgradeConditions.map((cond: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                              <span className="text-emerald-600 font-bold mt-0.5">↑</span>
+                              <span className="leading-relaxed">{cond}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {signalDowngradeConditions && signalDowngradeConditions.length > 0 && (
+                      <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                        <span className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <ArrowDownRight className="w-4 h-4 text-red-600" />
+                          <span>Conditions For Signal Downgrade</span>
+                        </span>
+                        <div className="space-y-1.5">
+                          {signalDowngradeConditions.map((cond: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                              <span className="text-red-600 font-bold mt-0.5">↓</span>
+                              <span className="leading-relaxed">{cond}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Historical Signals Timeline */}
               {signalHistoryList.length > 0 && (
@@ -851,6 +1232,18 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                           </span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 12. Full AI Explanation Narrative */}
+              {aiExplanationText && (
+                <div className="space-y-3">
+                  <SectionHeader icon={<FileText className="w-4 h-4" />} title="AI Research Synthesis & Model Narrative" />
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                      {aiExplanationText}
                     </div>
                   </div>
                 </div>
@@ -887,6 +1280,19 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                   <span>Deep Chat with VestIQ</span>
                 </button>
               </div>
+
+              {/* AI Comprehensive Research Dossier */}
+              {aiExplanationText && (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-teal-700" />
+                    <span>AI Research Dossier & Quantitative Synthesis</span>
+                  </span>
+                  <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                    {aiExplanationText}
+                  </div>
+                </div>
+              )}
 
               {/* Valuation Summary */}
               {instResearch?.valuationSummary && (

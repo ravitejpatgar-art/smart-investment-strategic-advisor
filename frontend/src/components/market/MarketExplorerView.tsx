@@ -769,10 +769,11 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
               const hasPrice = displayPrice !== null && displayPrice !== undefined;
               const hasNav = displayNav !== null && displayNav !== undefined;
 
-              // AI Signal Badge & Risk Attributes
-              const signal = item.signalBadge?.signal || item.signal || 'HOLD';
-              const confidence = item.signalBadge?.confidence ?? item.confidence ?? 75;
-              const riskScore = item.signalBadge?.riskScore || item.riskScore || 'MEDIUM';
+              // AI Signal Badge & Risk Attributes (Long-term signal primary)
+              const signal = item.signalBadge?.long_term_signal || item.signalBadge?.signal || item.signal || 'HOLD';
+              const isInsufficient = signal === 'INSUFFICIENT DATA';
+              const confidence = isInsufficient ? 0 : (item.signalBadge?.confidence ?? item.confidence ?? 75);
+              const riskScore = isInsufficient ? 'UNKNOWN' : (item.signalBadge?.riskScore || item.riskScore || 'MEDIUM');
 
               // User Portfolio Integration
               const symUpper = (item.symbol || '').toUpperCase();
@@ -788,6 +789,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
               else if (signal === 'HOLD') suggestedAction = 'HOLD';
               else if (signal === 'SELL') suggestedAction = 'REDUCE';
               else if (signal === 'STRONG SELL') suggestedAction = 'EXIT';
+              else if (signal === 'INSUFFICIENT DATA') suggestedAction = 'MONITOR';
 
               // Exact institutional color mapping
               const getSignalColor = (sig: string) => {
@@ -802,6 +804,8 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                     return 'bg-amber-600 text-white border-amber-500';
                   case 'STRONG SELL':
                     return 'bg-red-600 text-white border-red-500';
+                  case 'INSUFFICIENT DATA':
+                    return 'bg-slate-200 text-slate-700 border-slate-300';
                   default:
                     return 'bg-slate-700 text-white border-slate-600';
                 }
@@ -950,9 +954,11 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                           {quote?.freshness || 'HISTORICAL'}
                         </span>
                       )}
-                      <div className="text-[10.5px] font-mono text-slate-500">
-                        Vol: <strong className="text-slate-700">{formattedVol}</strong>
-                      </div>
+                      {!isMf && (
+                        <div className="text-[10.5px] font-mono text-slate-500">
+                          Vol: <strong className="text-slate-700">{formattedVol}</strong>
+                        </div>
+                      )}
                     </div>
                   </div>
 
