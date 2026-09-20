@@ -16,33 +16,33 @@ export const LessonProgress: React.FC<LessonProgressProps> = ({
   const isAllCompleted = completedCount === totalCount && totalCount > 0;
 
   return (
-    <div className={`bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 shadow-xs ${className}`}>
-      <div className="flex items-center justify-between gap-4 mb-2.5">
+    <div className={`space-y-2 py-1 ${className}`}>
+      <div className="flex items-center justify-between gap-4 mb-2">
         <div className="flex items-center gap-2">
           {isAllCompleted ? (
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
               <Award className="w-4 h-4" />
             </div>
           ) : (
-            <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           )}
           <div>
-            <h4 className="text-xs font-medium text-[#64748B] uppercase tracking-wider">Your Progress</h4>
-            <div className="text-sm sm:text-base font-semibold text-[#0F172A]">
+            <h4 className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">Your Progress</h4>
+            <div className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)]">
               {completedCount} / {totalCount} lessons completed
             </div>
           </div>
         </div>
         <div className="text-right">
-          <span className="text-lg sm:text-xl font-bold text-[#0F172A]">{percentage}%</span>
+          <span className="text-lg sm:text-xl font-bold font-mono text-[var(--color-text-primary)]">{percentage}%</span>
         </div>
       </div>
 
       {/* Progress Track */}
       <div
-        className="w-full bg-[#F1F5F9] rounded-full h-2.5 overflow-hidden"
+        className="w-full bg-[var(--color-surface-soft)] rounded-full h-2 overflow-hidden"
         role="progressbar"
         aria-valuenow={percentage}
         aria-valuemin={0}
@@ -53,14 +53,14 @@ export const LessonProgress: React.FC<LessonProgressProps> = ({
           className={`h-full rounded-full transition-all duration-500 ease-out ${
             isAllCompleted
               ? 'bg-emerald-500'
-              : 'bg-gradient-to-r from-sky-500 to-teal-500'
+              : 'bg-[var(--color-accent)]'
           }`}
           style={{ width: `${percentage}%` }}
         />
       </div>
 
       {isAllCompleted && (
-        <div className="mt-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-md p-2 text-center font-medium">
+        <div className="mt-3 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded p-2 text-center font-medium">
           🎉 Congratulations! You have completed the entire Beginner Course!
         </div>
       )}

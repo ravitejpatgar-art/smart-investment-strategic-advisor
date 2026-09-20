@@ -5,7 +5,7 @@ import {
   Plus, 
   Trash2, 
   Edit3, 
-  Sparkles, 
+  TrendingUp, 
   X, 
   Receipt
 } from 'lucide-react';
@@ -49,13 +49,6 @@ export const ExpenseTrackerView: React.FC = () => {
     Utilities: { color: '#F59E0B', label: 'Bills & Utilities', group: 'Fixed' },
     EMI: { color: '#FF5252', label: 'Debt Service & EMIs', group: 'Fixed' },
     Other: { color: '#8A94A6', label: 'Miscellaneous', group: 'Wants' },
-  };
-
-  const cardStyle: React.CSSProperties = {
-    background: '#FFFFFF',
-    border: '1px solid #E2E8F0',
-    borderRadius: 16,
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)',
   };
 
   // Group totals
@@ -119,126 +112,138 @@ export const ExpenseTrackerView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-8 pb-12 font-sans">
       
-      {/* Top Banner */}
-      <div style={{ ...cardStyle, padding: '20px 24px' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-[#00A884]" />
-            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">Expense Tracker</h1>
+      {/* 1. CASH FLOW & SURPLUS TELEMETRY */}
+      <section className="financial-section-card p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-[var(--color-border-subtle)]">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-[var(--color-accent-strong)]" />
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">Expense Tracker</h1>
+            </div>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Audit fixed baseline expenditure, track discretionary leaks, and optimize investable capital capacity.
+            </p>
           </div>
-          <p className="text-xs text-[#64748B]">
-            Audit fixed baseline expenditure, track discretionary leaks, and optimize investable capital capacity.
+
+          <button
+            onClick={handleOpenAddModal}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[var(--color-accent)] hover:brightness-105 text-[var(--color-accent-text)] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Add Expense</span>
+          </button>
+        </div>
+
+        {/* 4 Financial Metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">Monthly Inflow</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[var(--color-text-primary)] font-mono leading-tight">
+              {formatCurrency(totalIncome)}
+            </div>
+            <span className="text-xs text-[var(--color-text-secondary)] block">Gross Cash Inflow</span>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">Monthly Outflow</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[var(--color-text-primary)] font-mono leading-tight">
+              {formatCurrency(totalExpenses)}
+            </div>
+            <span className="text-xs text-red-500 font-mono block">Burn Ratio: {burnRate}%</span>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">Investable Surplus</span>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--color-accent-strong)] font-mono leading-tight">
+              {formatCurrency(netSavings)}
+            </div>
+            <span className="text-xs text-emerald-600 block font-medium">Deployable / month</span>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">Savings Rate</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[var(--color-text-primary)] font-mono leading-tight">
+              {savingsRate}%
+            </div>
+            <span className="text-xs text-[var(--color-text-secondary)] block">Target ≥30%</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. ESSENTIALITY ALLOCATION (50 / 30 / 20 RULE) & COMPOUNDING */}
+      <section className="financial-section-card p-6 sm:p-8 space-y-6">
+        <div className="space-y-1 pb-3 border-b border-[var(--color-border-subtle)]">
+          <h2 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+            Essentiality Allocation (50 / 30 / 20 Rule)
+          </h2>
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            Benchmark distribution vs. standard institutional financial guardrails
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAddModal}
-          className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#00D4AA] hover:bg-[#00BFA0] text-[#050816] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Add Expense</span>
-        </button>
-      </div>
-
-      {/* Analytics Overview: Total Expense + Needs / Wants / Fixed Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-        
-        {/* Left: Total Expense & Burn Metric */}
-        <div style={{ ...cardStyle, padding: '20px 22px' }} className="md:col-span-5 space-y-4 flex flex-col justify-between">
-          <div className="space-y-1.5">
-            <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">Total Monthly Outflow</span>
-            <div className="text-3xl font-black text-[#0F172A] font-mono leading-tight">
-              {formatCurrency(totalExpenses)}
-            </div>
-            <div className="flex items-center gap-3 text-xs text-[#64748B] pt-1">
-              <span>Burn Ratio: <strong className="text-[#FF5252] font-mono">{burnRate}%</strong></span>
-              <span>•</span>
-              <span>Savings Rate: <strong className="text-[#00A884] font-mono">{savingsRate}%</strong></span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] font-bold block uppercase">Needs (Core)</span>
+            <div className="text-lg sm:text-xl font-bold text-[var(--color-text-primary)] font-mono">{formatCurrency(needsTotal)}</div>
+            <div className="text-xs text-[var(--color-text-secondary)]">
+              {totalIncome > 0 ? Math.round((needsTotal / totalIncome) * 100) : 0}% (target ≤50%)
             </div>
           </div>
 
-          {/* Progress Split Bar */}
-          <div className="space-y-1.5 pt-2 border-t border-[#E2E8F0]">
-            <div className="flex justify-between text-xs text-[#64748B]">
-              <span>Inflow: <strong className="text-[#0F172A] font-mono">{formatCurrency(totalIncome)}</strong></span>
-              <span>Surplus: <strong className="text-[#00A884] font-mono">{formatCurrency(netSavings)}</strong></span>
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] font-bold block uppercase">Wants (Discretionary)</span>
+            <div className="text-lg sm:text-xl font-bold text-[var(--color-text-primary)] font-mono">{formatCurrency(wantsTotal)}</div>
+            <div className="text-xs text-[var(--color-text-secondary)]">
+              {totalIncome > 0 ? Math.round((wantsTotal / totalIncome) * 100) : 0}% (target ≤30%)
             </div>
-            <div className="w-full bg-[#F1F5F9] h-2 rounded-full overflow-hidden flex">
-              <div className="h-full bg-[#FF5252]" style={{ width: `${Math.min(100, burnRate)}%` }} />
-              <div className="h-full bg-[#00D4AA]" style={{ width: `${Math.min(100 - burnRate, savingsRate)}%` }} />
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] font-bold block uppercase">Fixed Commitments</span>
+            <div className="text-lg sm:text-xl font-bold text-[var(--color-text-primary)] font-mono">{formatCurrency(fixedTotal)}</div>
+            <div className="text-xs text-[var(--color-text-secondary)]">
+              {totalIncome > 0 ? Math.round((fixedTotal / totalIncome) * 100) : 0}% (target ≤20%)
             </div>
           </div>
         </div>
 
-        {/* Right: Essentiality Distribution (50/30/20 Rule) */}
-        <div style={{ ...cardStyle, padding: '20px 22px' }} className="md:col-span-7 space-y-3.5">
-          <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">
-            Essentiality Allocation (50 / 30 / 20 Rule)
-          </span>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-              <span className="text-[10.5px] text-[#00A884] font-bold block uppercase">NEEDS (CORE)</span>
-              <div className="text-base font-black text-[#0F172A] font-mono">{formatCurrency(needsTotal)}</div>
-              <div className="text-[11px] text-[#64748B]">
-                {totalIncome > 0 ? Math.round((needsTotal / totalIncome) * 100) : 0}% (≤50%)
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-              <span className="text-[10.5px] text-amber-600 font-bold block uppercase">WANTS (DISCRETIONARY)</span>
-              <div className="text-base font-black text-[#0F172A] font-mono">{formatCurrency(wantsTotal)}</div>
-              <div className="text-[11px] text-[#64748B]">
-                {totalIncome > 0 ? Math.round((wantsTotal / totalIncome) * 100) : 0}% (≤30%)
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-              <span className="text-[10.5px] text-[#8B5CF6] font-bold block uppercase">FIXED & EMIS</span>
-              <div className="text-base font-black text-[#0F172A] font-mono">{formatCurrency(fixedTotal)}</div>
-              <div className="text-[11px] text-[#64748B]">
-                {totalIncome > 0 ? Math.round((fixedTotal / totalIncome) * 100) : 0}% (≤20%)
-              </div>
+        {/* Compounding Opportunity Analysis */}
+        {wantsTotal > 0 && (
+          <div className="pt-4 border-t border-[var(--color-border-subtle)] flex items-start gap-2.5 text-xs text-[var(--color-text-secondary)] leading-relaxed">
+            <TrendingUp className="w-4 h-4 text-[var(--color-accent-strong)] shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-[var(--color-text-primary)]">Compounding Opportunity:</strong> Trimming discretionary spend by 25% ({formatCurrency(potentialMonthlySaved)}/mo) and redirecting into a 13.5% CAGR allocation could yield <strong className="text-emerald-600 font-mono">{formatCurrency(futureCorpus20Yr)}</strong> in 20 years.
             </div>
           </div>
+        )}
+      </section>
 
-          {/* 20-Year Compounding Leak Analysis */}
-          {wantsTotal > 0 && (
-            <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-[#00A884] shrink-0 mt-0.5" />
-              <div className="text-xs text-[#64748B] leading-relaxed">
-                <strong className="text-[#0F172A]">Compounding Opportunity:</strong> Trimming discretionary spend by 25% ({formatCurrency(potentialMonthlySaved)}/mo) and redirecting into a 13.5% CAGR allocation could yield <strong className="text-[#00A884] font-mono">{formatCurrency(futureCorpus20Yr)}</strong> in 20 years.
-              </div>
-            </div>
-          )}
+      {/* 3. CATEGORY BREAKDOWN */}
+      <section className="financial-section-card p-6 sm:p-8 space-y-6">
+        <div className="pb-3 border-b border-[var(--color-border-subtle)]">
+          <h2 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight">
+            Outflow by Expenditure Category
+          </h2>
         </div>
 
-      </div>
-
-      {/* Category Breakdown */}
-      <div style={{ ...cardStyle, padding: '20px 22px' }} className="space-y-3.5">
-        <span className="text-[10.5px] text-[#64748B] font-bold uppercase tracking-wider block">
-          Outflow by Expenditure Category
-        </span>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {(Object.keys(categoryMeta) as ExpenseItem['category'][]).map((cat) => {
             const meta = categoryMeta[cat];
             const catAmt = categoryTotals[cat] || 0;
             const pct = totalExpenses > 0 ? Math.round((catAmt / totalExpenses) * 100) : 0;
 
             return (
-              <div key={cat} className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1.5">
+              <div key={cat} className="space-y-1.5 py-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#0F172A] font-semibold">{meta.label}</span>
-                  <span className="font-mono font-bold text-[#0F172A]">{formatCurrency(catAmt)}</span>
+                  <span className="text-[var(--color-text-primary)] font-semibold">{meta.label}</span>
+                  <span className="font-mono font-bold text-[var(--color-text-primary)]">{formatCurrency(catAmt)}</span>
                 </div>
-                <div className="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[var(--color-surface-3)] h-1.5 rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
                 </div>
-                <div className="flex justify-between text-[10.5px] text-[#64748B]">
+                <div className="flex justify-between text-[11px] text-[var(--color-text-secondary)]">
                   <span>{meta.group}</span>
                   <span className="font-mono font-bold">{pct}%</span>
                 </div>
@@ -246,18 +251,18 @@ export const ExpenseTrackerView: React.FC = () => {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Recent Transactions List */}
-      <div style={{ ...cardStyle, padding: '20px 22px' }} className="space-y-4">
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#E2E8F0]">
+      {/* 4. AUDITED EXPENSE REGISTER & LEDGER */}
+      <section className="financial-section-card p-6 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-[#00A884]" />
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Logged Outflows ({expenses.length})</h3>
+            <Receipt className="w-4 h-4 text-[var(--color-accent-strong)]" />
+            <h3 className="text-base font-bold text-[var(--color-text-primary)] tracking-tight">Logged Outflows ({expenses.length})</h3>
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="text-xs text-[#00A884] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
+            className="text-xs text-[var(--color-accent-strong)] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Transaction</span>
@@ -265,39 +270,39 @@ export const ExpenseTrackerView: React.FC = () => {
         </div>
 
         {expenses.length === 0 ? (
-          <div className="p-8 text-center space-y-2 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <Receipt className="w-8 h-8 text-[#94A3B8] mx-auto" />
-            <p className="text-xs text-[#64748B]">No expenditure logged yet. Add your living costs to compute cashflow surplus.</p>
+          <div className="py-12 text-center space-y-2 border border-dashed border-[var(--color-border)] rounded-2xl">
+            <Receipt className="w-8 h-8 text-[var(--color-text-muted)] mx-auto" />
+            <p className="text-xs text-[var(--color-text-secondary)]">No expenditure logged yet. Add your living costs to compute cashflow surplus.</p>
           </div>
         ) : (
-          <div className="divide-y divide-[#E2E8F0]">
+          <div className="divide-y divide-[var(--color-border-subtle)]">
             {expenses.map((item) => {
               const meta = categoryMeta[item.category] || categoryMeta.Other;
               return (
-                <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-[#F8FAFC] px-2 rounded-lg transition-colors text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] bg-[#F8FAFC] border border-[#E2E8F0]" style={{ color: meta.color }}>
+                <div key={item.id} className="py-3 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs bg-[var(--color-surface-2)] border border-[var(--color-border)]" style={{ color: meta.color }}>
                       {item.category.charAt(0)}
                     </div>
                     <div>
-                      <div className="font-semibold text-[#0F172A]">{item.description}</div>
-                      <div className="text-[11px] text-[#64748B]">{item.date} • {meta.label}</div>
+                      <div className="font-semibold text-[var(--color-text-primary)] text-sm">{item.description}</div>
+                      <div className="text-xs text-[var(--color-text-secondary)]">{item.date} · {meta.label}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-[#0F172A]">{formatCurrency(item.amount)}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono font-bold text-sm text-[var(--color-text-primary)]">{formatCurrency(item.amount)}</span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleOpenEditModal(item)}
-                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] transition-colors cursor-pointer"
                         title="Edit Expense"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => deleteExpense(item.id)}
-                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#FF5252] hover:bg-rose-50 transition-colors cursor-pointer"
+                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-50/10 transition-colors cursor-pointer"
                         title="Delete Expense"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -309,37 +314,37 @@ export const ExpenseTrackerView: React.FC = () => {
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <h3 className="text-sm sm:text-base font-bold text-[#0F172A] uppercase tracking-wider">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border-subtle)]">
+              <h3 className="text-sm sm:text-base font-bold text-[var(--color-text-primary)] uppercase tracking-wider">
                 {editingId ? 'Edit Expenditure Record' : 'Add Expenditure Record'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer active:scale-95" aria-label="Close">
+              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] cursor-pointer active:scale-95" aria-label="Close">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitExpense} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Category</label>
+                <label className="text-xs text-[var(--color-text-secondary)] font-bold uppercase tracking-wider">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ExpenseItem['category'])}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs focus:border-[var(--color-accent)] focus:outline-none"
                 >
                   {(Object.keys(categoryMeta) as ExpenseItem['category'][]).map((cat) => (
-                    <option key={cat} value={cat} className="bg-white text-[#0F172A]">{categoryMeta[cat].label} ({categoryMeta[cat].group})</option>
+                    <option key={cat} value={cat} className="bg-[var(--color-card)] text-[var(--color-text-primary)]">{categoryMeta[cat].label} ({categoryMeta[cat].group})</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Monthly Amount (₹)</label>
+                <label className="text-xs text-[var(--color-text-secondary)] font-bold uppercase tracking-wider">Monthly Amount (₹)</label>
                 <input
                   type="number"
                   required
@@ -347,44 +352,44 @@ export const ExpenseTrackerView: React.FC = () => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 5000"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none font-mono placeholder:text-[#94A3B8]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs focus:border-[var(--color-accent)] focus:bg-[var(--color-card)] focus:outline-none font-mono placeholder:text-[var(--color-text-muted)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Description</label>
+                <label className="text-xs text-[var(--color-text-secondary)] font-bold uppercase tracking-wider">Description</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Groceries and weekly dining"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none placeholder:text-[#94A3B8]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs focus:border-[var(--color-accent)] focus:bg-[var(--color-card)] focus:outline-none placeholder:text-[var(--color-text-muted)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-[#64748B] font-bold uppercase tracking-wider">Date</label>
+                <label className="text-xs text-[var(--color-text-secondary)] font-bold uppercase tracking-wider">Date</label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs focus:border-[#00D4AA] focus:bg-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs focus:border-[var(--color-accent)] focus:bg-[var(--color-card)] focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--color-border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3.5 py-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] text-xs cursor-pointer font-medium"
+                  className="px-3.5 py-2 rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] text-xs cursor-pointer font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#00D4AA] hover:bg-[#00BFA0] text-[#050816] font-bold text-xs cursor-pointer shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-[var(--color-accent)] hover:brightness-105 text-[var(--color-accent-text)] font-bold text-xs cursor-pointer shadow-xs"
                 >
-                  {editingId ? 'Update Record' : 'Save Record'}
+                  {editingId ? 'Update Record' : 'Save Expense'}
                 </button>
               </div>
             </form>

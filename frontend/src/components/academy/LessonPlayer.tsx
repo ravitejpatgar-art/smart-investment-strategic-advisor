@@ -12,12 +12,11 @@ import {
   Volume2,
   VolumeX,
   CheckCircle2,
-  Sparkles,
-  Bot,
   ArrowRight,
   BookOpen,
   Globe
 } from 'lucide-react';
+import { VestiqMark } from '../common/VestiqLogo';
 
 interface LanguageOption {
   code: SupportedAcademyLanguage;
@@ -252,7 +251,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-semibold mb-2">
-                <Sparkles className="w-3 h-3 text-amber-400" />
+                <Globe className="w-3 h-3 text-amber-400" />
                 {currentLangObj.native} ({currentLangObj.label}) Translation in Production
               </div>
 
@@ -260,7 +259,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
                 {lesson.title}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-2 mb-4">
-                Narration and video for {currentLangObj.native} are coming soon. You can switch to English to watch the master AI video or explore the concept outline below.
+                Narration and video for {currentLangObj.native} are coming soon. You can switch to English to watch the master video or explore the concept outline below.
               </p>
 
               <button
@@ -377,7 +376,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
           {/* Key Takeaway */}
           <div className="bg-gradient-to-r from-teal-50/70 to-sky-50/70 rounded-xl border border-teal-200/80 p-5">
             <div className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
               Key Takeaway
             </div>
             <p className="text-sm sm:text-base font-semibold text-[#0F172A] leading-snug">
@@ -410,8 +409,8 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
           {/* Ask VestIQ Action Card */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-xs p-5 space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0EA5E9] uppercase tracking-wider">
-              <Bot className="w-4 h-4" />
-              VestIQ AI Tutor
+              <VestiqMark size={14} />
+              <span>Ask VestIQ</span>
             </div>
             <h4 className="text-sm font-bold text-[#0F172A]">
               Have questions about this lesson?
@@ -423,9 +422,8 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
             <button
               type="button"
               onClick={handleAskVestIQ}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors shadow-xs"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-sky-400" />
               <span>Ask VestIQ About This</span>
             </button>
             <div className="text-[10px] text-slate-400 italic text-center">

@@ -6,8 +6,7 @@ import {
   TrendingDown, 
   Layers, 
   AlertTriangle, 
-  CheckCircle2, 
-  Sparkles 
+  CheckCircle2 
 } from 'lucide-react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { formatInvestorRiskLabel } from '../dashboard/DashboardLayout';
@@ -50,27 +49,27 @@ export interface CalculationData {
 export const VestiqAnalysisCard: React.FC<{ calc: CalculationData }> = ({ calc }) => {
   const { formatCurrency } = useFintechStore();
 
-  // 1. Stock / Asset Snapshot Card
+  // 1. Stock / Asset Snapshot Section
   if (calc.symbol || calc.type === 'stock_snapshot') {
     const isPos = (calc.changePct ?? 0) >= 0;
     return (
-      <div className="mt-3 p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-3 shadow-2xs">
+      <div className="mt-3 py-3.5 border-t border-b border-[var(--color-border-subtle)] space-y-3">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#0F172A] text-[16px]">{calc.title || calc.symbol}</span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="font-bold text-[var(--color-text-primary)] text-[16px]">{calc.title || calc.symbol}</span>
+              <span className="text-[11px] font-mono font-bold text-[var(--color-accent)]">
                 {calc.symbol}
               </span>
             </div>
             {calc.price !== undefined && (
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-[20px] font-black text-[#0F172A] font-mono">
+                <span className="text-[22px] font-black text-[var(--color-text-primary)] font-mono">
                   ${calc.price.toFixed(2)}
                 </span>
                 {calc.changePct !== undefined && (
-                  <span className={`text-[12px] font-bold font-mono px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
-                    isPos ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
+                  <span className={`text-[12px] font-bold font-mono flex items-center gap-0.5 ${
+                    isPos ? 'text-emerald-500' : 'text-rose-500'
                   }`}>
                     {isPos ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                     {isPos ? '+' : ''}{calc.changePct.toFixed(2)}%
@@ -82,8 +81,8 @@ export const VestiqAnalysisCard: React.FC<{ calc: CalculationData }> = ({ calc }
 
           {calc.suitabilityScore !== undefined && (
             <div className="text-right">
-              <span className="text-[10.5px] text-[#64748B] uppercase font-semibold block">Suitability</span>
-              <span className="text-[13px] font-bold text-teal-800 font-mono px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 inline-block">
+              <span className="text-[10.5px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider block">Suitability</span>
+              <span className="text-[15px] font-bold text-[var(--color-accent)] font-mono">
                 {calc.suitabilityScore}/100
               </span>
             </div>
@@ -91,9 +90,9 @@ export const VestiqAnalysisCard: React.FC<{ calc: CalculationData }> = ({ calc }
         </div>
 
         {calc.rationale && (
-          <div className="p-3 rounded-lg bg-slate-50 border border-[#E2E8F0] text-[13px] text-slate-700 leading-relaxed">
-            <span className="font-semibold text-[#0F172A] block mb-0.5 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+          <div className="pt-2 border-t border-[var(--color-border-subtle)] text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+            <span className="font-semibold text-[var(--color-text-primary)] block mb-0.5 flex items-center gap-1.5 text-xs">
+              <Compass className="w-3.5 h-3.5 text-[var(--color-accent)]" />
               Strategic Rationale:
             </span>
             {calc.rationale}
@@ -101,9 +100,9 @@ export const VestiqAnalysisCard: React.FC<{ calc: CalculationData }> = ({ calc }
         )}
 
         {calc.keyRisks && (
-          <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200 text-[12.5px] text-amber-900 leading-relaxed">
-            <span className="font-semibold text-amber-800 block mb-0.5 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+          <div className="pt-2 border-t border-[var(--color-border-subtle)] text-[12.5px] text-amber-500 leading-relaxed">
+            <span className="font-semibold text-amber-400 block mb-0.5 flex items-center gap-1.5 text-xs">
+              <AlertTriangle className="w-3.5 h-3.5" />
               Key Risks:
             </span>
             {calc.keyRisks}
@@ -113,90 +112,90 @@ export const VestiqAnalysisCard: React.FC<{ calc: CalculationData }> = ({ calc }
     );
   }
 
-  // 2. SIP Compounding Projection Card
+  // 2. SIP Compounding Projection Section
   if (calc.type === 'sip' && calc.monthlyInvestment) {
     return (
-      <div className="mt-3 p-4 rounded-xl bg-white border border-teal-200 space-y-3 shadow-2xs">
-        <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
-          <span className="font-bold text-teal-900 text-[14.5px] flex items-center gap-1.5">
-            <Calculator className="w-4 h-4 text-teal-600" />
+      <div className="mt-3 py-3.5 border-t border-b border-[var(--color-border-subtle)] space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-[var(--color-border-subtle)]">
+          <span className="font-bold text-[var(--color-text-primary)] text-[14px] flex items-center gap-1.5">
+            <Calculator className="w-4 h-4 text-[var(--color-accent)]" />
             <span>{calc.title || 'Wealth Compounding Simulation'}</span>
           </span>
-          <span className="text-[12px] font-semibold text-[#64748B] px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200">
+          <span className="text-[11px] font-mono font-semibold text-[var(--color-accent)]">
             ~{calc.cagr || 13.5}% Target CAGR
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          <div className="p-2.5 rounded-lg bg-slate-50 border border-[#E2E8F0]">
-            <span className="text-[11px] text-[#64748B] block mb-0.5">Monthly SIP</span>
-            <span className="text-[15px] font-bold text-[#0F172A] font-mono">{formatCurrency(calc.monthlyInvestment)}</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-1">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] uppercase block">Monthly SIP</span>
+            <span className="text-[16px] font-bold text-[var(--color-text-primary)] font-mono">{formatCurrency(calc.monthlyInvestment)}</span>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-slate-50 border border-[#E2E8F0]">
-            <span className="text-[11px] text-[#64748B] block mb-0.5">Invested Capital</span>
-            <span className="text-[15px] font-bold text-slate-700 font-mono">{formatCurrency(calc.investedAmount || (calc.monthlyInvestment * (calc.years || 15) * 12))}</span>
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] uppercase block">Invested Capital</span>
+            <span className="text-[16px] font-bold text-[var(--color-text-secondary)] font-mono">{formatCurrency(calc.investedAmount || (calc.monthlyInvestment * (calc.years || 15) * 12))}</span>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-teal-50/70 border border-teal-200 col-span-2 sm:col-span-1">
-            <span className="text-[11px] text-teal-800 font-semibold block mb-0.5">Projected Corpus</span>
-            <span className="text-[15px] font-black text-teal-800 font-mono">{formatCurrency(calc.totalValue || 0)}</span>
+          <div className="space-y-0.5 col-span-2 sm:col-span-1">
+            <span className="text-[11px] font-mono text-[var(--color-accent)] uppercase block">Projected Corpus</span>
+            <span className="text-[18px] font-black text-[var(--color-accent)] font-mono">{formatCurrency(calc.totalValue || 0)}</span>
           </div>
         </div>
       </div>
     );
   }
 
-  // 3. Affordability Analysis Card
+  // 3. Affordability Analysis Section
   if (calc.type === 'affordability') {
     const isComfortable = calc.verdict === 'Comfortable' || calc.verdict === 'Affordable';
     return (
-      <div className="mt-3 p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-3 shadow-2xs">
-        <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
-          <span className="font-bold text-[#0F172A] text-[14.5px] flex items-center gap-1.5">
-            <Compass className="w-4 h-4 text-teal-600" />
+      <div className="mt-3 py-3.5 border-t border-b border-[var(--color-border-subtle)] space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-[var(--color-border-subtle)]">
+          <span className="font-bold text-[var(--color-text-primary)] text-[14px] flex items-center gap-1.5">
+            <Compass className="w-4 h-4 text-[var(--color-accent)]" />
             <span>Affordability & Cashflow Impact</span>
           </span>
-          <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
-            isComfortable ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+          <span className={`text-[12px] font-bold flex items-center gap-1 ${
+            isComfortable ? 'text-emerald-500' : 'text-amber-500'
           }`}>
             {isComfortable ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
             {calc.verdict || (isComfortable ? 'Comfortable' : 'Stretched')}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="p-2.5 rounded-lg bg-slate-50 border border-[#E2E8F0]">
-            <span className="text-[11px] text-[#64748B] block mb-0.5">Estimated Monthly EMI</span>
-            <span className="text-[15px] font-bold text-teal-700 font-mono">{formatCurrency(calc.monthlyEmi || 0)}/mo</span>
+        <div className="grid grid-cols-2 gap-4 pt-1">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] uppercase block">Estimated Monthly EMI</span>
+            <span className="text-[16px] font-bold text-[var(--color-accent)] font-mono">{formatCurrency(calc.monthlyEmi || 0)}/mo</span>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-slate-50 border border-[#E2E8F0]">
-            <span className="text-[11px] text-[#64748B] block mb-0.5">Surplus Impact</span>
-            <span className="text-[13px] font-semibold text-[#0F172A] mt-0.5 block">{calc.surplusImpact || 'Feasible from surplus'}</span>
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] uppercase block">Surplus Impact</span>
+            <span className="text-[13px] font-semibold text-[var(--color-text-primary)] block pt-0.5">{calc.surplusImpact || 'Feasible from surplus'}</span>
           </div>
         </div>
       </div>
     );
   }
 
-  // 4. Portfolio / Concentration Review Card
+  // 4. Portfolio / Concentration Review Section
   if (calc.type === 'portfolio_review' || calc.concentrationPct !== undefined) {
     return (
-      <div className="mt-3 p-4 rounded-xl bg-white border border-[#E2E8F0] space-y-2.5 shadow-2xs">
-        <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
-          <span className="font-bold text-[#0F172A] text-[14px] flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-teal-600" />
+      <div className="mt-3 py-3 border-t border-b border-[var(--color-border-subtle)] space-y-2">
+        <div className="flex items-center justify-between pb-2 border-b border-[var(--color-border-subtle)]">
+          <span className="font-bold text-[var(--color-text-primary)] text-[14px] flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-[var(--color-accent)]" />
             <span>Portfolio Allocation Diagnostics</span>
           </span>
-          <span className="text-[12px] font-bold text-slate-700">
+          <span className="text-[12px] font-bold text-[var(--color-text-secondary)]">
             {formatInvestorRiskLabel(calc.riskLevel)}
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-[13px]">
-          <span className="text-[#64748B]">Concentration Score:</span>
-          <span className="font-mono font-bold text-[#0F172A]">{calc.concentrationPct || 35}% In Core Equities</span>
+        <div className="flex items-center justify-between text-[13px] pt-1">
+          <span className="text-[var(--color-text-secondary)]">Concentration Assessment:</span>
+          <span className="font-mono font-bold text-[var(--color-text-primary)]">{calc.concentrationPct || 35}% In Core Equities</span>
         </div>
       </div>
     );

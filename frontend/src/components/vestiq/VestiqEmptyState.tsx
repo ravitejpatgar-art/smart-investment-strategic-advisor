@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Sparkles, 
   Layers, 
   Search, 
   ChevronRight,
@@ -41,7 +40,7 @@ const INTELLIGENCE_CATEGORIES = [
     id: 'market',
     title: 'Market Intelligence',
     icon: Globe,
-    color: '#00D4AA',
+    color: 'var(--color-accent)',
     description: 'Ask about NIFTY 50, SENSEX, NASDAQ, Gold hedges, and macroeconomic trends.',
     samplePrompts: ['What is Nifty doing today?', 'Why is gold rising as a hedge?', 'US market tech outlook']
   },
@@ -57,7 +56,7 @@ const INTELLIGENCE_CATEGORIES = [
     id: 'research',
     title: 'Investment Research',
     icon: Search,
-    color: '#00D4AA',
+    color: 'var(--color-accent)',
     description: 'Deep-dive into individual direct index funds, ETFs, bluechip stocks, and bonds.',
     samplePrompts: ['Suggest some US stocks', 'Is MON100 a good ETF?', 'Explain direct index fund benefits']
   },
@@ -75,53 +74,52 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
   return (
     <div className="w-full max-w-[860px] mx-auto space-y-7 py-4 sm:py-8 font-sans animate-fade-in">
       
-      {/* 1. StockGro-inspired Centered Hero */}
+      {/* 1. Centered Hero */}
       <div className="text-center space-y-3 pt-2 sm:pt-4">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs font-bold text-[#00A884]">
-          <Sparkles className="w-3.5 h-3.5 text-[#00D4AA]" />
-          <span>AI Powered Wealth Intelligence · Built for India 🇮🇳</span>
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-xs font-bold text-[var(--color-accent)]">
+          <span>Institutional Wealth Advisory</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-black text-[#0F172A] tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-5xl font-black text-[var(--color-text-primary)] tracking-tight leading-tight">
           Ask anything about <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-teal-600 via-[#00D4AA] to-blue-600 bg-clip-text text-transparent">
-            Markets, Stocks & Money
+          <span className="text-[var(--color-text-accent)]">
+            Markets, Stocks & Asset Allocation
           </span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-[#475569] max-w-[620px] mx-auto leading-relaxed">
+        <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] max-w-[620px] mx-auto leading-relaxed">
           Analyze real-time market data, explore quantitative research, optimize portfolio allocation, and simulate your wealth milestones.
         </p>
       </div>
 
-      {/* 2. Prominent StockGro-Style Center Ask Bar */}
+      {/* 2. Prominent Center Ask Bar */}
       <div className="w-full">
         <VestiqInput onSend={onSend} loading={loading} autoFocus />
       </div>
 
-      {/* 3. "What are smart investors asking..." 2x2 Grid (Direct StockGro Inspiration) */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-[#475569] uppercase tracking-wider">
-          <TrendingUp className="w-4 h-4 text-teal-600" />
-          <span>What are smart investors asking...</span>
+      {/* 3. Suggested Inquiries - Open Ledger */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--color-text-secondary)] uppercase tracking-wider pb-1">
+          <TrendingUp className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+          <span>Suggested Research Queries</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="divide-y divide-[var(--color-border-subtle)] border-y border-[var(--color-border-subtle)]">
           {SMART_INVESTOR_QUESTIONS.map((q, idx) => (
             <button
               key={idx}
               onClick={() => onSend(q.title)}
-              className="p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E2E8F0] hover:border-teal-400 text-left transition-all shadow-xs flex items-center justify-between gap-3 group cursor-pointer"
+              className="py-3 px-2 w-full text-left transition-colors hover:bg-[var(--color-surface-soft)]/50 flex items-center justify-between gap-4 group cursor-pointer focus:outline-none"
             >
-              <div className="space-y-0.5 min-w-0">
-                <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider block">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <span className="text-[10px] font-mono font-bold text-[var(--color-accent)] uppercase tracking-wider block">
                   {q.category}
                 </span>
-                <p className="text-[13px] font-medium text-[#0F172A] group-hover:text-teal-800 transition-colors leading-snug">
+                <p className="text-[13.5px] font-medium text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors leading-snug">
                   {q.title}
                 </p>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#94A3B8] group-hover:text-teal-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent)] shrink-0 transition-transform group-hover:translate-x-0.5" />
             </button>
           ))}
         </div>
@@ -132,44 +130,42 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
         <VestiqMarketStrip onSelectSymbol={(sym) => onSend(`What is ${sym} doing today and what is the market outlook?`)} />
       </div>
 
-      {/* 5. 4 Quick Intelligence Capabilities in Modern Light Cards */}
+      {/* 5. Advisory Capabilities - Open Grid */}
       <div className="space-y-3 pt-2">
-        <div className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
-          <span>Financial Intelligence Capabilities</span>
+        <div className="text-xs font-mono font-bold text-[var(--color-text-primary)] uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-[var(--color-border-subtle)]">
+          <span>Advisory Capabilities</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
           {INTELLIGENCE_CATEGORIES.map((cat) => {
             const Icon = cat.icon;
             return (
               <div
                 key={cat.id}
-                className="p-4 rounded-xl bg-white border border-[#E2E8F0] hover:border-teal-300 shadow-xs flex flex-col justify-between space-y-3 transition-all"
+                className="space-y-2.5 pb-4 border-b border-[var(--color-border-subtle)]"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-teal-50 text-teal-700 border border-teal-100">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <h3 className="font-bold text-[#0F172A] text-sm">{cat.title}</h3>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
+                    <h3 className="font-bold text-[var(--color-text-primary)] text-sm">{cat.title}</h3>
                   </div>
 
-                  <p className="text-xs text-[#475569] leading-relaxed">
+                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
                     {cat.description}
                   </p>
                 </div>
 
-                <div className="space-y-1.5 pt-2.5 border-t border-[#F1F5F9]">
-                  <span className="text-[10.5px] font-semibold text-[#94A3B8] uppercase">Try Asking:</span>
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] font-mono font-semibold text-[var(--color-text-muted)] uppercase">Example Inquiries:</span>
                   <div className="flex flex-col gap-1">
                     {cat.samplePrompts.map((p, pIdx) => (
                       <button
                         key={pIdx}
                         onClick={() => onSend(p)}
-                        className="text-left text-xs text-teal-700 hover:text-teal-800 hover:underline flex items-center justify-between font-medium cursor-pointer py-0.5 group"
+                        className="text-left text-xs text-[var(--color-accent)] hover:underline flex items-center justify-between font-medium cursor-pointer py-0.5 group"
                       >
                         <span className="truncate">"{p}"</span>
-                        <ArrowRight className="w-3 h-3 text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <ArrowRight className="w-3 h-3 text-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </button>
                     ))}
                   </div>

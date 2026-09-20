@@ -6,9 +6,8 @@ import {
   Wallet, 
   BarChart3, 
   ShieldCheck, 
-  Bot, 
-  ArrowUpRight, 
-  CheckCircle2 
+  MessageSquareText, 
+  ArrowUpRight 
 } from 'lucide-react';
 import type { ActiveNavTab } from '../../store/useFintechStore';
 
@@ -64,72 +63,75 @@ export const FeaturesSection: React.FC = () => {
       view: 'expenses'
     },
     {
-      icon: Bot,
-      title: 'AI Advisory Workspace',
-      tag: 'VestIQ Intelligence',
-      description: 'Interactive Bloomberg + ChatGPT hybrid workspace providing contextual portfolio reasoning, affordability math, and fund comparisons.',
-      highlights: ['Context-Aware Reasoning', 'Affordability Simulation', 'Instant Citations & Metrics'],
+      icon: MessageSquareText,
+      title: 'VestIQ Advisory Workspace',
+      tag: 'Portfolio Advisory',
+      description: 'Contextual advisory workspace for portfolio inquiries, scenario evaluation, and asset comparisons.',
+      highlights: ['Context-Aware Analysis', 'Affordability Simulation', 'Instant Citations & Metrics'],
       view: 'ai'
     }
   ];
 
   return (
-    <section id="features" className="py-24 relative bg-[#050816] border-t border-b border-white/[0.06]">
+    <section id="features" className="py-24 relative bg-[var(--color-bg)] border-t border-b border-[var(--color-border)]">
       <div className="max-w-7xl mx-auto px-4 lg:px-12">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#0A1022] border border-white/[0.08] text-[#A0AEC0] text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs font-semibold uppercase tracking-wider">
             <span>Institutional Wealth Capabilities</span>
           </div>
           <h2 
-            className="text-3xl sm:text-4xl font-extrabold text-white tracking-[-0.02em]"
-            style={{ fontFamily: "'Inter Tight', 'Inter', sans-serif" }}
+            className="text-3xl sm:text-4xl font-extrabold text-[var(--color-text-primary)] tracking-[-0.02em]"
           >
             Engineered For Disciplined Capital Growth
           </h2>
-          <p className="text-[#A0AEC0] text-base sm:text-lg">
+          <p className="text-[var(--color-text-secondary)] text-base sm:text-lg">
             SmartVest combines modern portfolio theory, institutional quantitative risk models, and direct zero-commission architecture.
           </p>
         </div>
 
-        {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Editorial Feature Grid with Subtle Dividers */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--color-border-subtle)] border-t border-b border-[var(--color-border-subtle)]">
           {features.map((feature, idx) => {
             const Icon = feature.icon;
+            const numStr = (idx + 1) < 10 ? `0${idx + 1}` : `${idx + 1}`;
             return (
               <div
                 key={idx}
                 onClick={() => setActiveView(feature.view)}
-                className="bg-[#101827] rounded-2xl p-7 border border-white/[0.08] hover:border-white/[0.14] transition-all flex flex-col justify-between group cursor-pointer"
+                className="py-8 px-6 lg:px-8 flex flex-col justify-between group cursor-pointer hover:bg-[var(--color-surface-soft)]/50 transition-colors"
               >
                 <div>
-                  {/* Card Header: Icon & Category Tag */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-[#0A1022] border border-white/[0.08] flex items-center justify-center text-[#00D4AA] group-hover:border-[#00D4AA]/40 transition-colors">
-                      <Icon className="w-6 h-6 stroke-[1.75]" />
-                    </div>
-                    <span className="text-[11px] font-bold text-[#A0AEC0] uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#0A1022] border border-white/[0.06]">
+                  {/* Top Metadata: Monospace Index Number & Tag */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-mono font-bold text-[var(--color-accent)]">
+                      {numStr}
+                    </span>
+                    <span className="text-[11px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider">
                       {feature.tag}
                     </span>
                   </div>
 
-                  {/* Title & Description */}
-                  <h3 className="text-lg font-bold text-white mb-2.5 group-hover:text-[#00D4AA] transition-colors flex items-center justify-between">
-                    <span>{feature.title}</span>
-                    <ArrowUpRight className="w-4 h-4 text-[#A0AEC0] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                  </h3>
+                  {/* Title & Icon Indicator */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className="w-4 h-4 text-[var(--color-accent)] stroke-[2] shrink-0" />
+                    <h3 className="text-base font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors flex items-center justify-between w-full">
+                      <span>{feature.title}</span>
+                      <ArrowUpRight className="w-4 h-4 text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                    </h3>
+                  </div>
                   
-                  <p className="text-sm text-[#A0AEC0] leading-relaxed mb-6 font-normal">
+                  <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-6 font-normal">
                     {feature.description}
                   </p>
                 </div>
 
                 {/* Quantitative Highlights */}
-                <div className="pt-4 border-t border-white/[0.06] space-y-2">
+                <div className="pt-3 border-t border-[var(--color-border-subtle)] space-y-1.5">
                   {feature.highlights.map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-white">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00D4AA] shrink-0" />
+                    <div key={i} className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                      <span className="w-1 h-1 rounded-full bg-[var(--color-accent)] shrink-0" />
                       <span>{item}</span>
                     </div>
                   ))}

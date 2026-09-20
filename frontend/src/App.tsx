@@ -13,6 +13,8 @@ import { MarketExplorerView } from './components/market/MarketExplorerView';
 import { InvestingAcademyView } from './components/academy/InvestingAcademyView';
 import { ProfileView } from './components/profile/ProfileView';
 import { VestiqShell } from './components/vestiq/VestiqShell';
+import { AnimatePresence } from 'framer-motion';
+import { AnimatedView } from './components/common/AnimatedView';
 
 export const App: React.FC = () => {
   const {
@@ -35,6 +37,8 @@ export const App: React.FC = () => {
 
       if (path === '/login' || hash === '#login') {
         setActiveView('dashboard');
+      } else if (path === '/landing' || hash === '#landing') {
+        setActiveView('landing');
       } else if (path === '/market' || hash === '#market') {
         setActiveView('market');
       } else if (path === '/academy' || hash === '#academy') {
@@ -81,7 +85,7 @@ export const App: React.FC = () => {
         profile: '/profile',
         ai: '/vestiq',
         vestiq: '/vestiq',
-        landing: '/',
+        landing: '/landing',
         onboarding: '/onboarding',
       };
       const targetPath = viewToPath[activeView];
@@ -112,6 +116,8 @@ export const App: React.FC = () => {
           setActiveView('expenses');
         } else if (path === '/profile') {
           setActiveView('profile');
+        } else if (path === '/landing') {
+          setActiveView('landing');
         } else if (path === '/dashboard') {
           setActiveView('dashboard');
         } else if (path === '/onboarding') {
@@ -142,7 +148,9 @@ export const App: React.FC = () => {
   if (activeView === 'analysis') {
     return (
       <ProtectedRoute>
-        <AIAnalysisEngineView />
+        <AnimatedView viewKey="analysis">
+          <AIAnalysisEngineView />
+        </AnimatedView>
       </ProtectedRoute>
     );
   }
@@ -151,7 +159,9 @@ export const App: React.FC = () => {
   if (activeView === 'ai' || activeView === 'vestiq') {
     return (
       <ProtectedRoute>
-        <VestiqShell />
+        <AnimatedView viewKey="vestiq">
+          <VestiqShell />
+        </AnimatedView>
       </ProtectedRoute>
     );
   }
@@ -160,23 +170,27 @@ export const App: React.FC = () => {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        {activeView === 'dashboard' && <OverviewDashboard />}
-        {activeView === 'market' && <MarketExplorerView onOpenVestIQWithQuery={() => setActiveView('ai')} />}
-        {activeView === 'academy' && <InvestingAcademyView onOpenVestIQWithQuery={() => setActiveView('ai')} />}
-        {activeView === 'expenses' && <ExpenseTrackerView />}
-        {activeView === 'goals' && <GoalPlannerView />}
-        {activeView === 'recommendations' && <InvestmentRecommendationsView />}
-        {activeView === 'profile' && <ProfileView />}
+        <AnimatePresence mode="wait">
+          <AnimatedView key={activeView} viewKey={activeView}>
+            {activeView === 'dashboard' && <OverviewDashboard />}
+            {activeView === 'market' && <MarketExplorerView onOpenVestIQWithQuery={() => setActiveView('ai')} />}
+            {activeView === 'academy' && <InvestingAcademyView onOpenVestIQWithQuery={() => setActiveView('ai')} />}
+            {activeView === 'expenses' && <ExpenseTrackerView />}
+            {activeView === 'goals' && <GoalPlannerView />}
+            {activeView === 'recommendations' && <InvestmentRecommendationsView />}
+            {activeView === 'profile' && <ProfileView />}
 
-        {/* Fallback */}
-        {activeView !== 'dashboard' &&
-         activeView !== 'market' &&
-         activeView !== 'academy' &&
-         activeView !== 'expenses' &&
-         activeView !== 'goals' &&
-         activeView !== 'recommendations' &&
-         activeView !== 'profile' &&
-         <OverviewDashboard />}
+            {/* Fallback */}
+            {activeView !== 'dashboard' &&
+             activeView !== 'market' &&
+             activeView !== 'academy' &&
+             activeView !== 'expenses' &&
+             activeView !== 'goals' &&
+             activeView !== 'recommendations' &&
+             activeView !== 'profile' &&
+             <OverviewDashboard />}
+          </AnimatedView>
+        </AnimatePresence>
       </DashboardLayout>
     </ProtectedRoute>
   );

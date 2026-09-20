@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   X,
-  Sparkles,
   Bookmark,
   BookmarkCheck,
   RefreshCw,
@@ -310,8 +309,8 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
 
   const tabs: { key: string; label: string; icon: React.ReactNode }[] = [
     { key: "overview", label: "Overview & Chart", icon: <Info className="w-3.5 h-3.5" /> },
-    { key: "signal", label: "AI Signals & Targets", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-    { key: "vestiq_research", label: "Institutional Research", icon: <Sparkles className="w-3.5 h-3.5" /> },
+    { key: "signal", label: "Signals & Targets", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+    { key: "vestiq_research", label: "Institutional Research", icon: <FileText className="w-3.5 h-3.5" /> },
     ...(isStock ? [{ key: "fundamentals", label: "Fundamentals", icon: <BarChart3 className="w-3.5 h-3.5" /> }] : []),
     ...(isETF || isMF ? [{ key: "fund_profile", label: isMF ? "Scheme Details" : "ETF Profile", icon: <PieChart className="w-3.5 h-3.5" /> }] : []),
     { key: "technicals", label: "Technicals", icon: <TrendingUp className="w-3.5 h-3.5" /> },
@@ -352,14 +351,14 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-fade-in overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto text-[var(--color-text-primary)] animate-scale-in">
         
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 flex items-start justify-between gap-4 flex-wrap">
+        <div className="p-4 sm:p-5 border-b border-[var(--color-border)] bg-[var(--color-surface)] flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-base sm:text-xl font-bold text-slate-900 tracking-tight">{instrument.name}</span>
+              <span className="text-base sm:text-xl font-bold text-[var(--color-text-primary)] tracking-tight">{instrument.name}</span>
               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
                 {instrument.symbol}
               </span>
@@ -409,7 +408,6 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               onClick={handleAskIQ}
               className="px-3 py-2 rounded-xl bg-[#00D4AA] text-[#0F172A] hover:bg-teal-400 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
             >
-              <Sparkles className="w-3.5 h-3.5" />
               <span>Ask VestIQ</span>
             </button>
 
@@ -814,7 +812,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               {signalReason && (
                 <div className="p-4 rounded-xl bg-teal-50/50 border border-teal-200/80 space-y-2">
                   <span className="text-xs font-bold text-teal-950 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-teal-700" />
+                    <Compass className="w-4 h-4 text-teal-700" />
                     <span>Why This Signal: Long-Term Thesis</span>
                   </span>
                   <p className="text-xs text-slate-800 leading-relaxed font-medium">
@@ -1251,7 +1249,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
 
               {/* Regulatory Disclaimer */}
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 leading-relaxed">
-                Signals are AI-generated analytical insights based on market data, technical indicators and fundamental metrics. They are not financial advice.
+                Signals are quantitative analytical indicators based on market data, technical indicators, and fundamental metrics. They do not constitute financial advice.
               </div>
 
             </div>
@@ -1263,11 +1261,11 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               
               <div className="p-4 rounded-2xl bg-teal-50/50 border border-teal-200 flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-5 h-5 text-teal-700" />
+                  <FileText className="w-5 h-5 text-teal-700" />
                   <div>
                     <h4 className="text-xs font-bold text-teal-950 uppercase tracking-wider">VestIQ Institutional Research Dossier</h4>
                     <p className="text-xs text-teal-800">
-                      Fundamental, quantitative, and competitive assessment compiled by VestIQ Market Intelligence.
+                      Fundamental, quantitative, and competitive assessment compiled by VestIQ Advisory Engine.
                     </p>
                   </div>
                 </div>
@@ -1276,17 +1274,16 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
                   onClick={handleAskIQ}
                   className="px-3 py-1.5 rounded-xl bg-[#00D4AA] text-[#0F172A] hover:bg-teal-400 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Deep Chat with VestIQ</span>
+                  <span>Ask VestIQ</span>
                 </button>
               </div>
 
-              {/* AI Comprehensive Research Dossier */}
+              {/* Comprehensive Research Dossier */}
               {aiExplanationText && (
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                   <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-teal-700" />
-                    <span>AI Research Dossier & Quantitative Synthesis</span>
+                    <span>Quantitative Synthesis & Research Dossier</span>
                   </span>
                   <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal">
                     {aiExplanationText}

@@ -1,15 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import {
-  Target,
-  ShieldCheck,
   ArrowRight,
   RefreshCw,
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Layers,
   Zap
 } from 'lucide-react';
 import {
@@ -24,24 +17,24 @@ import {
   Cell
 } from 'recharts';
 import { useMarketQuotes } from '../../hooks/useMarketQuotes';
-import { Skeleton, EmptyState, Button } from '../common';
+import { Skeleton, Button } from '../common';
 import { formatInvestorRiskLabel } from './DashboardLayout';
 
 type ProjectionHorizon = 5 | 10 | 15 | 20 | 25;
 type ProjectionScenario = 'Conservative' | 'Base' | 'Optimistic';
 
-// ---- Modern Light Chart Tooltips ----
+// ---- Semantic Theme Chart Tooltips ----
 const PremiumTooltip = ({ active, payload, label, formatCurrency }: any) => {
   if (!active || !payload || !payload.length) return null;
   const cVal = payload.find((p: any) => p.dataKey === 'corpus')?.value as number;
   const iVal = payload.find((p: any) => p.dataKey === 'invested')?.value as number;
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-xl p-3 shadow-xl font-sans text-xs">
-      <div className="text-[#0F172A] font-bold mb-1.5">{label}</div>
-      <div className="text-teal-700 font-mono font-bold">
+    <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-3 shadow-xl font-sans text-xs">
+      <div className="text-[var(--color-text-primary)] font-bold mb-1.5">{label}</div>
+      <div className="text-[#00D4AA] font-mono font-bold">
         Corpus: {formatCurrency(cVal || 0)}
       </div>
-      <div className="text-[#64748B] font-mono mt-0.5">
+      <div className="text-[var(--color-text-secondary)] font-mono mt-0.5">
         Invested: {formatCurrency(iVal || 0)}
       </div>
     </div>
@@ -52,9 +45,9 @@ const AllocationTooltip = ({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-xl p-2.5 shadow-xl text-xs">
-      <div className="text-[#0F172A] font-bold">{item.name}</div>
-      <div className="text-teal-700 font-extrabold font-mono">{item.value}%</div>
+    <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-2.5 shadow-xl text-xs">
+      <div className="text-[var(--color-text-primary)] font-bold">{item.name}</div>
+      <div className="text-[#00D4AA] font-extrabold font-mono">{item.value}%</div>
     </div>
   );
 };
@@ -165,381 +158,370 @@ export const OverviewDashboard: React.FC = () => {
     return strategy.allocations.map(a => ({ name: a.name, value: a.percentage, color: a.color || '#00D4AA', monthly: a.monthlyAmount, category: a.category }));
   }, [strategy, recommendedInvestment]);
 
-  // Risk styling
-  const riskBadgeStyle = effectiveRiskCategory === 'Aggressive'
-    ? 'bg-amber-50 text-amber-800 border-amber-200'
-    : (effectiveRiskCategory === 'Conservative'
-      ? 'bg-blue-50 text-blue-800 border-blue-200'
-      : 'bg-teal-50 text-teal-800 border-teal-200');
-
   return (
     <div className="space-y-4 sm:space-y-5 pb-10 font-sans">
 
       {/* ================================================================
-          1. COMPACT CLIENT CONTEXT BAR
+          1. PORTFOLIO MANDATE SUMMARY (Structured Outer Card - rounded-2xl)
       ================================================================ */}
-      <section className="bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs">
-        <div className="space-y-1.5 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${riskBadgeStyle}`}>
-              {formatInvestorRiskLabel(effectiveRiskCategory)}
-            </span>
-            <span className="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-[#475569] border border-slate-200">
-              {horizon}
-            </span>
-            <span className="text-[10.5px] font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-[#475569] border border-slate-200">
-              Capacity: <strong className="text-[#0F172A]">{riskCapacityScore}/100</strong>
-            </span>
-            <span className="text-[10.5px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
-              {formatCurrency(surplus)}/mo surplus
-            </span>
-            {primaryGoal && (
-              <span className="hidden md:inline-flex text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 truncate max-w-[200px]">
-                Goal: {primaryGoal.title}
+      <section className="financial-section-card p-5 sm:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm font-medium text-[var(--color-text-secondary)]">
+              <span className="font-bold text-[var(--color-text-primary)] text-base">
+                {formatInvestorRiskLabel(effectiveRiskCategory)}
               </span>
-            )}
+              <span className="text-[var(--color-text-muted)]">·</span>
+              <span>{horizon} Horizon</span>
+              <span className="text-[var(--color-text-muted)]">·</span>
+              <span>
+                Risk Capacity: <strong className="font-mono font-bold text-[var(--color-text-primary)]">{riskCapacityScore}/100</strong>
+              </span>
+              <span className="text-[var(--color-text-muted)]">·</span>
+              <span>
+                Surplus: <strong className="font-mono font-bold text-[var(--color-accent-strong)]">{formatCurrency(surplus)}/mo</strong>
+              </span>
+              {primaryGoal && (
+                <>
+                  <span className="text-[var(--color-text-muted)] hidden md:inline">·</span>
+                  <span className="hidden md:inline-flex text-[var(--color-text-secondary)] truncate max-w-[240px]">
+                    Priority Goal: <strong className="ml-1 text-[var(--color-text-primary)]">{primaryGoal.title}</strong>
+                  </span>
+                </>
+              )}
+            </div>
+            <p className="text-sm sm:text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+              Monthly deployment calibrated at{' '}
+              <strong className="text-[var(--color-text-primary)] font-mono font-bold text-base sm:text-lg">{formatCurrency(recommendedInvestment)}/mo</strong>{' '}
+              targeting <strong className="text-[var(--color-text-primary)] font-mono font-bold">{(scenarioCagr * 100).toFixed(1)}% CAGR</strong> multi-asset compounding blueprint.
+            </p>
           </div>
-          <p className="text-xs text-[#64748B] leading-relaxed">
-            Monthly deployment calibrated at{' '}
-            <strong className="text-[#0F172A] font-mono">{formatCurrency(recommendedInvestment)}/mo</strong>{' '}
-            targeting {(scenarioCagr * 100).toFixed(1)}% CAGR multi-asset compounding blueprint.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 pt-1 lg:pt-0">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setActiveView('recommendations')}
-            rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-            className="flex-1 lg:flex-initial"
-          >
-            View Allocation
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setActiveView('ai')}
-            leftIcon={<Sparkles className="w-3.5 h-3.5" />}
-            className="flex-1 lg:flex-initial"
-          >
-            Ask VestIQ
-          </Button>
+          <div className="flex items-center w-full lg:w-auto shrink-0 pt-1 lg:pt-0">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setActiveView('recommendations')}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
+              className="w-full sm:w-auto"
+            >
+              View Allocation
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* ================================================================
-          2. COMPACT MARKET RADAR STRIP
+          2. MARKET RADAR (Structured Standalone Outer Card - rounded-2xl)
       ================================================================ */}
-      <section className="bg-white border border-[#E2E8F0] rounded-xl py-2 px-3 sm:px-4 flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs min-w-0 shadow-2xs">
-        <div className="flex items-center gap-5 sm:gap-6 min-w-max">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-            <span className="text-[10.5px] font-bold text-[#0F172A] tracking-wider uppercase">Market Radar</span>
+      <section className="financial-section-card py-3 px-4 sm:px-6 flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-sm min-w-0">
+        <div className="flex items-center min-w-max">
+          <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-xs text-[var(--color-text-muted)] pr-6 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Market Radar</span>
           </div>
-          {dashboardSymbols.map((sym) => {
-            const q = quotes[sym];
-            if (!q && isMarketLoading) {
+          <div className="flex items-center divide-x divide-[var(--color-border-subtle)]">
+            {dashboardSymbols.map((sym) => {
+              const q = quotes[sym];
+              if (!q && isMarketLoading) {
+                return (
+                  <div key={sym} className="flex items-center gap-2.5 px-4 sm:px-6 first:pl-0">
+                    <span className="text-[var(--color-text-secondary)] text-xs font-semibold">{sym}</span>
+                    <Skeleton className="h-4 w-16 rounded" />
+                  </div>
+                );
+              }
+              const isPos = (q?.changePct ?? 0) >= 0;
+              const priceStr = q?.price
+                ? (q.currency === 'USD' ? `$${q.price.toLocaleString('en-IN')}` : `₹${q.price.toLocaleString('en-IN')}`)
+                : '—';
               return (
-                <div key={sym} className="flex items-center gap-2">
-                  <span className="text-[#64748B] text-xs font-semibold">{sym}</span>
-                  <Skeleton className="h-3.5 w-14 rounded" />
+                <div key={sym} className="flex items-center gap-2.5 px-4 sm:px-6 first:pl-0">
+                  <span className="text-[var(--color-text-muted)] text-xs font-semibold uppercase">{sym}</span>
+                  <span className="text-[var(--color-text-primary)] font-mono font-bold text-sm sm:text-[15px]">{priceStr}</span>
+                  {q?.changePct !== undefined && q?.changePct !== null && (
+                    <span className={`font-mono font-bold text-xs sm:text-sm ${isPos ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {isPos ? '+' : ''}{q.changePct.toFixed(2)}%
+                    </span>
+                  )}
                 </div>
               );
-            }
-            const isPos = (q?.changePct ?? 0) >= 0;
-            const priceStr = q?.price
-              ? (q.currency === 'USD' ? `$${q.price.toLocaleString('en-IN')}` : `₹${q.price.toLocaleString('en-IN')}`)
-              : '—';
-            return (
-              <div key={sym} className="flex items-center gap-2">
-                <span className="text-[#64748B] text-xs">{sym}</span>
-                <span className="text-[#0F172A] font-mono font-bold text-xs">{priceStr}</span>
-                {q?.changePct !== undefined && q?.changePct !== null && (
-                  <span className={`font-mono font-bold text-[11px] ${isPos ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {isPos ? '+' : ''}{q.changePct.toFixed(2)}%
-                  </span>
-                )}
-              </div>
-            );
-          })}
+            })}
+          </div>
         </div>
         <button
           onClick={() => refetchMarket()}
-          className="text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 p-1 rounded shrink-0 cursor-pointer active:scale-90 transition-all"
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] shrink-0 cursor-pointer active:scale-90 transition-all ml-2"
           title="Refresh Live Data"
           aria-label="Refresh Market Data"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isMarketLoading ? 'animate-spin text-teal-600' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isMarketLoading ? 'animate-spin text-[var(--color-accent)]' : ''}`} />
         </button>
       </section>
 
       {/* ================================================================
-          3. PRIMARY FINANCIAL + RISK SECTION (Asymmetric Grouping)
+          3. EXPENSE TRACKER & CAPITAL PROTECTION (Grid of 2 Distinct Major Cards - rounded-2xl)
       ================================================================ */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-w-0">
 
-        {/* LEFT COLUMN (7 COLS): Cashflow & Surplus Group */}
-        <div className="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
-          <div className="flex items-center justify-between pb-2.5 border-b border-[#F1F5F9]">
-            <div>
-              <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
-                <Activity className="w-3.5 h-3.5 text-teal-600" />
-                <span>EXPENSE TRACKER</span>
-              </h2>
-              <p className="text-[11px] text-[#64748B] mt-0.5">Net disposable liquidity calibrated for investment</p>
-            </div>
-            <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-slate-100 text-[#475569] border border-slate-200">
-              MONTHLY AUDIT
-            </span>
+        {/* LEFT COLUMN (7 COLS): Expense Tracker Major Card */}
+        <section className="lg:col-span-7 financial-section-card-interactive p-6 flex flex-col justify-between space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
+              Expense Tracker
+            </h2>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Net disposable liquidity calibrated for investment
+            </p>
           </div>
 
-          {/* Dual Inflow / Outflow Secondary Cards */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Monthly Inflow</span>
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-              </div>
-              <div className="text-base sm:text-lg font-bold font-mono text-[#0F172A]">
+          {/* Dual Inflow / Outflow Internal Grid (No nested cards) */}
+          <div className="grid grid-cols-2 gap-6 sm:gap-8 pt-1">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">
+                Monthly Inflow
+              </span>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-[var(--color-text-primary)]">
                 {formatCurrency(totalIncome)}
               </div>
-              <span className="text-[10.5px] text-[#94A3B8] truncate block">Gross Liquidity</span>
+              <span className="text-xs text-[var(--color-text-secondary)] block">Gross liquidity</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Monthly Outflow</span>
-                <TrendingDown className="w-3.5 h-3.5 text-red-600" />
-              </div>
-              <div className="text-base sm:text-lg font-bold font-mono text-[#0F172A]">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">
+                Monthly Outflow
+              </span>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-[var(--color-text-primary)]">
                 {formatCurrency(totalExpenses)}
               </div>
-              <span className="text-[10.5px] text-[#94A3B8] truncate block">{expenses.length} Logged Categories</span>
+              <span className="text-xs text-[var(--color-text-secondary)] block">{expenses.length} logged categories</span>
             </div>
           </div>
 
           {/* PRIMARY HERO NUMBER: Investable Surplus */}
-          <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-            <div className="space-y-1">
-              <span className="text-[10.5px] font-bold text-teal-900 uppercase tracking-wider block">
-                {isDeficit ? 'Operating Deficit' : 'Investable Monthly Surplus'}
-              </span>
-              <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${isDeficit ? 'text-red-600' : 'text-teal-800'}`}>
-                {isDeficit ? `-${formatCurrency(Math.abs(rawSurplus))}` : formatCurrency(surplus)}
-                <span className="text-xs text-[#64748B] font-normal font-sans ml-1.5">/month</span>
+          <div className="pt-4 border-t border-[var(--color-border-subtle)]">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+              <div>
+                <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
+                  {isDeficit ? 'Operating Deficit' : 'Investable Monthly Surplus'}
+                </span>
+                <div className={`text-3xl sm:text-4xl font-black font-mono tracking-tight ${isDeficit ? 'text-red-600' : 'text-[var(--color-accent-strong)]'}`}>
+                  {isDeficit ? `-${formatCurrency(Math.abs(rawSurplus))}` : formatCurrency(surplus)}
+                  <span className="text-sm text-[var(--color-text-muted)] font-normal font-sans ml-2">/month</span>
+                </div>
+              </div>
+
+              <div className="sm:text-right space-y-1">
+                <span className="text-sm font-bold text-emerald-600 block">
+                  {isDeficit ? 'Surplus Constrained' : `+${savingsRate}% Savings Rate`}
+                </span>
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  Target Deployment: <strong className="text-[var(--color-text-primary)] font-mono font-bold">{formatCurrency(recommendedInvestment)}</strong>
+                </span>
               </div>
             </div>
-
-            <div className="sm:text-right space-y-0.5">
-              <span className="text-xs font-bold text-emerald-700 block">
-                {isDeficit ? 'Surplus Constrained' : `+${savingsRate}% Savings Rate`}
-              </span>
-              <span className="text-[11px] text-[#64748B]">
-                Target Deployment: <strong className="text-[#0F172A] font-mono">{formatCurrency(recommendedInvestment)}</strong>
-              </span>
-            </div>
           </div>
-        </div>
+        </section>
 
-        {/* RIGHT COLUMN (5 COLS): Risk, Emergency Runway & Safety Group */}
-        <div className="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
-          <div className="flex items-center justify-between pb-2.5 border-b border-[#F1F5F9]">
-            <div>
-              <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Capital Protection & Mandate</span>
-              </h2>
-              <p className="text-[11px] text-[#64748B] mt-0.5">Downside cushion & volatility threshold</p>
-            </div>
-            <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
-              GRADE A
-            </span>
+        {/* RIGHT COLUMN (5 COLS): Capital Protection & Mandate Major Card */}
+        <section className="lg:col-span-5 financial-section-card-interactive p-6 flex flex-col justify-between space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
+              Capital Protection & Mandate
+            </h2>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Downside cushion & volatility threshold
+            </p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-5 pt-1">
             {/* Emergency Runway Buffer */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-1.5">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-[#64748B] font-semibold">Emergency Runway</span>
-                <span className="font-mono font-bold text-[#0F172A]">{formatCurrency(emergencyFund)}</span>
+            <div className="space-y-2">
+              <div className="flex justify-between items-baseline">
+                <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Emergency Runway</span>
+                <span className="font-mono font-bold text-lg sm:text-xl text-[var(--color-text-primary)]">{formatCurrency(emergencyFund)}</span>
               </div>
-              <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-[var(--color-surface-3)] h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out"
+                  className="bg-[var(--color-accent)] h-full rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${Math.max(5, emergencyFundedPct)}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[10.5px] text-[#64748B]">
+              <div className="flex justify-between text-xs text-[var(--color-text-secondary)]">
                 <span>{emergencyCoverageMonths} Months Cushion</span>
                 <span>{emergencyFundedPct}% of 6M Target</span>
               </div>
             </div>
 
             {/* Risk Governance & Capacity */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-[#E2E8F0] flex items-center justify-between gap-3 text-xs">
+            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[var(--color-border-subtle)]">
               <div>
-                <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">Risk Mandate</span>
-                <span className="font-bold text-[#0F172A] text-sm mt-0.5 block">{effectiveRiskCategory}</span>
+                <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">Risk Mandate</span>
+                <span className="font-bold text-[var(--color-text-primary)] text-base block">{effectiveRiskCategory}</span>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">Capacity Score</span>
-                <span className="font-bold font-mono text-teal-700 text-sm mt-0.5 block">{riskCapacityScore}/100</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-1 border-t border-[#F1F5F9] text-[11px] text-[#64748B]">
-            <span>Audit Score: <strong className="text-[#0F172A] font-mono">{healthFactors.overall}/100</strong></span>
-            <button
-              onClick={() => setShowHealthFactors(!showHealthFactors)}
-              className="text-teal-700 hover:text-teal-800 font-semibold transition-colors cursor-pointer"
-            >
-              {showHealthFactors ? 'Hide Details' : 'View Health Breakdown'}
-            </button>
-          </div>
-
-          {showHealthFactors && (
-            <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 text-[11px] border border-[#E2E8F0] animate-fade-in">
-              <div className="flex justify-between text-[#64748B]">
-                <span>Savings Discipline:</span>
-                <strong className="text-[#0F172A] font-mono">{healthFactors.savings}/100</strong>
-              </div>
-              <div className="flex justify-between text-[#64748B]">
-                <span>Emergency Cushion:</span>
-                <strong className="text-[#0F172A] font-mono">{healthFactors.emergency}/100</strong>
-              </div>
-              <div className="flex justify-between text-[#64748B]">
-                <span>Debt Capacity Buffer:</span>
-                <strong className="text-[#0F172A] font-mono">{healthFactors.debt}/100</strong>
+              <div>
+                <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">Capacity Score</span>
+                <span className="font-bold font-mono text-[var(--color-accent-strong)] text-base block">{riskCapacityScore}/100</span>
               </div>
             </div>
-          )}
-        </div>
-      </section>
+
+            <div className="pt-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
+              <span>Audit Score: <strong className="text-[var(--color-text-primary)] font-mono font-bold text-sm">{healthFactors.overall}/100</strong></span>
+              <button
+                onClick={() => setShowHealthFactors(!showHealthFactors)}
+                className="text-[var(--color-accent)] hover:underline font-semibold transition-colors cursor-pointer group inline-flex items-center gap-1"
+              >
+                <span>{showHealthFactors ? 'Hide Details' : 'View Health Breakdown'}</span>
+                <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
+              </button>
+            </div>
+
+            {showHealthFactors && (
+              <div className="space-y-2 pt-2 text-xs text-[var(--color-text-secondary)] animate-fade-in border-t border-[var(--color-border-subtle)]">
+                <div className="flex justify-between">
+                  <span>Savings Discipline:</span>
+                  <strong className="text-[var(--color-text-primary)] font-mono">{healthFactors.savings}/100</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Emergency Cushion:</span>
+                  <strong className="text-[var(--color-text-primary)] font-mono">{healthFactors.emergency}/100</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Debt Capacity Buffer:</span>
+                  <strong className="text-[var(--color-text-primary)] font-mono">{healthFactors.debt}/100</strong>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
 
       {/* ================================================================
-          4. ASSET ALLOCATION PANEL + ACTIVE MILESTONE GOALS
+          4. TARGET ASSET ALLOCATION & ACTIVE GOALS (Grid of 2 Distinct Major Cards - rounded-2xl)
       ================================================================ */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-w-0">
 
-        {/* LEFT (7 COLS): Asset Allocation Panel */}
-        <div className="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
-          <div className="flex items-center justify-between pb-2.5 border-b border-[#F1F5F9]">
-            <div>
-              <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-teal-600" />
-                <span>Target Asset Allocation Distribution</span>
+        {/* LEFT (7 COLS): Target Asset Allocation Major Card */}
+        <section className="lg:col-span-7 financial-section-card-interactive p-6 flex flex-col justify-between space-y-6">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
+                Target Asset Allocation
               </h2>
-              <p className="text-[11px] text-[#64748B] mt-0.5">Quantitative multi-asset diversification blueprint</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Quantitative multi-asset diversification blueprint
+              </p>
             </div>
-            <span className="text-xs font-bold text-teal-800 font-mono">
+            <span className="text-sm sm:text-base font-bold text-[var(--color-accent-strong)] font-mono">
               {formatCurrency(recommendedInvestment)}/mo
             </span>
           </div>
 
-          {/* Allocation Donut + Legend Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+          {/* Allocation Donut + Legend Layout (No nested cards) */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center pt-1">
 
             {/* Donut Chart (5 cols) */}
-            <div className="sm:col-span-5 h-44 relative flex items-center justify-center">
+            <div className="sm:col-span-5 h-48 relative flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={allocationPieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
+                    innerRadius={54}
+                    outerRadius={76}
                     paddingAngle={3}
                     dataKey="value"
                     animationDuration={350}
                     animationEasing="ease-out"
                   >
                     {allocationPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--color-bg)" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip content={<AllocationTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-lg font-black text-[#0F172A] font-mono">{allocationPieData.length}</span>
-                <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-wider">CLASSES</span>
+                <span className="text-xl font-black text-[var(--color-text-primary)] font-mono">{allocationPieData.length}</span>
+                <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">CLASSES</span>
               </div>
             </div>
 
-            {/* Legend List (7 cols) */}
-            <div className="sm:col-span-7 space-y-1.5">
+            {/* Legend List (7 cols) - Clean internal divider rows */}
+            <div className="sm:col-span-7 space-y-1">
               {allocationPieData.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-[#E2E8F0] hover:bg-slate-100 transition-all text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div key={idx} className="flex items-center justify-between py-2 border-b border-[var(--color-border-subtle)] last:border-b-0 text-sm">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="font-semibold text-[#0F172A] truncate max-w-[140px]">{item.name}</span>
+                    <span className="font-semibold text-[var(--color-text-primary)] truncate max-w-[180px]">{item.name}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 shrink-0 font-mono">
-                    <span className="text-[#64748B] text-[11px]">{formatCurrency(item.monthly)}/mo</span>
-                    <span className="font-bold text-teal-700 text-xs w-7 text-right">{item.value}%</span>
+                  <div className="flex items-center gap-3 shrink-0 font-mono">
+                    <span className="text-[var(--color-text-secondary)] text-xs">{formatCurrency(item.monthly)}/mo</span>
+                    <span className="font-bold text-[var(--color-accent-strong)] text-sm w-9 text-right">{item.value}%</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setActiveView('recommendations')}
-            rightIcon={<ArrowRight className="w-3.5 h-3.5 text-teal-600" />}
-            className="w-full justify-center"
-          >
-            Inspect Strategy Blueprint & Underlying Holdings
-          </Button>
-        </div>
+          <div className="pt-2 border-t border-[var(--color-border-subtle)]">
+            <button
+              onClick={() => setActiveView('recommendations')}
+              className="text-xs sm:text-sm font-semibold text-[var(--color-accent)] hover:underline inline-flex items-center gap-1.5 cursor-pointer group"
+            >
+              <span>Inspect Strategy Blueprint & Underlying Holdings</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-1" />
+            </button>
+          </div>
+        </section>
 
-        {/* RIGHT (5 COLS): Active Financial Milestone Goals */}
-        <div className="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
-          <div className="flex items-center justify-between pb-2.5 border-b border-[#F1F5F9]">
-            <div>
-              <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
-                <Target className="w-3.5 h-3.5 text-teal-600" />
-                <span>Active Goal Milestones</span>
+        {/* RIGHT (5 COLS): Active Financial Milestone Goals Major Card */}
+        <section className="lg:col-span-5 financial-section-card-interactive p-6 flex flex-col justify-between space-y-6">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
+                Active Goal Milestones
               </h2>
-              <p className="text-[11px] text-[#64748B] mt-0.5">Capital roadmaps and funding schedules</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Capital roadmaps & funding schedules
+              </p>
             </div>
             <button
               onClick={() => setActiveView('goals')}
-              className="text-xs font-semibold text-teal-700 hover:text-teal-800 transition-colors cursor-pointer"
+              className="text-xs sm:text-sm font-semibold text-[var(--color-accent)] hover:underline transition-colors cursor-pointer group inline-flex items-center gap-1"
             >
-              Manage Goals →
+              <span>Manage Goals</span>
+              <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </button>
           </div>
 
           {goals.length === 0 ? (
-            <EmptyState
-              icon={<Target className="w-6 h-6 text-teal-600" />}
-              title="No Active Milestone Portfolios"
-              description="Configure your milestone roadmap to track SIP timelines and completion probabilities."
-              actionLabel="Create First Milestone"
-              onAction={() => setActiveView('goals')}
-              className="py-6 bg-slate-50 rounded-xl"
-            />
+            <div className="py-8 text-center space-y-2">
+              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">No active milestone portfolios configured</p>
+              <button
+                onClick={() => setActiveView('goals')}
+                className="text-xs font-bold text-[var(--color-accent)] hover:underline cursor-pointer"
+              >
+                + Create First Milestone Roadmap
+              </button>
+            </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-3 pt-1">
               {goals.slice(0, 3).map((g) => {
                 const pct = Math.min(100, Math.round(((g.currentAmount || 0) / (g.targetAmount || 1)) * 100));
                 return (
-                  <div key={g.id} className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-[#0F172A] truncate max-w-[150px]">{g.title}</span>
-                      <span className="font-mono text-teal-700 font-semibold">{formatCurrency(g.targetAmount)} ({g.targetDate})</span>
+                  <div key={g.id} className="space-y-1.5 py-2.5 border-b border-[var(--color-border-subtle)] last:border-b-0">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-bold text-[var(--color-text-primary)] truncate max-w-[180px]">{g.title}</span>
+                      <span className="font-mono text-[var(--color-accent-strong)] font-semibold text-xs sm:text-sm">{formatCurrency(g.targetAmount)} ({g.targetDate})</span>
                     </div>
-                    <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                      <div className="bg-teal-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${Math.max(5, pct)}%` }} />
+                    <div className="w-full bg-[var(--color-surface-3)] h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-[var(--color-accent)] h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${Math.max(5, pct)}%` }} />
                     </div>
-                    <div className="flex justify-between text-[10.5px] text-[#64748B]">
-                      <span>Funded: <strong className="text-[#0F172A] font-mono">{formatCurrency(g.currentAmount || 0)}</strong></span>
-                      <span className="font-semibold text-[#0F172A]">{pct}% Completed</span>
+                    <div className="flex justify-between text-xs text-[var(--color-text-secondary)]">
+                      <span>Funded: <strong className="text-[var(--color-text-primary)] font-mono font-bold">{formatCurrency(g.currentAmount || 0)}</strong></span>
+                      <span className="font-semibold text-[var(--color-text-primary)]">{pct}% Completed</span>
                     </div>
                   </div>
                 );
@@ -547,39 +529,41 @@ export const OverviewDashboard: React.FC = () => {
             </div>
           )}
 
-          <div className="pt-2 border-t border-[#F1F5F9] flex items-center justify-between text-xs text-[#64748B]">
+          <div className="pt-2 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
             <span>{goals.length} Goals Registered</span>
-            <span className="text-teal-700 font-semibold">{goals.length > 0 ? 'On Track' : 'Not Configured'}</span>
+            <span className="text-emerald-600 font-semibold">{goals.length > 0 ? 'On Track' : 'Not Configured'}</span>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* ================================================================
-          5. PROJECTED WEALTH TRAJECTORY (Dominant Visual Hero)
+          5. PROJECTED WEALTH TRAJECTORY (Full Width Structured Card - rounded-2xl)
       ================================================================ */}
-      <section className="bg-white border border-[#E2E8F0] rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+      <section className="financial-section-card p-6 sm:p-8 space-y-6 min-w-0">
 
         {/* Trajectory Header & Toggles */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F1F5F9]">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-[#0F172A] tracking-tight flex items-center gap-2">
-              <Zap className="w-4 h-4 text-teal-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-2">
+              <Zap className="w-5 h-5 text-[var(--color-accent-strong)]" />
               <span>Projected Wealth Trajectory</span>
             </h2>
-            <p className="text-xs text-[#64748B] mt-0.5">
-              Simulated compounding at <strong className="text-[#0F172A]">{(scenarioCagr * 100).toFixed(1)}% CAGR</strong> over {selectedHorizon} years deployment
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Simulated compounding at <strong className="text-[var(--color-text-primary)] font-mono font-bold">{(scenarioCagr * 100).toFixed(1)}% CAGR</strong> over {selectedHorizon}-year deployment
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Scenario Toggles */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-[#E2E8F0] text-xs">
+            <div className="inline-flex items-center p-0.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs">
               {(['Conservative', 'Base', 'Optimistic'] as ProjectionScenario[]).map((sc) => (
                 <button
                   key={sc}
                   onClick={() => setSelectedScenario(sc)}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                    selectedScenario === sc ? 'bg-white text-teal-800 shadow-2xs font-bold' : 'text-[#64748B] hover:text-[#0F172A]'
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    selectedScenario === sc
+                      ? 'bg-[var(--color-card)] text-[var(--color-accent-strong)] shadow-xs font-bold'
+                      : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >
                   {sc}
@@ -588,13 +572,15 @@ export const OverviewDashboard: React.FC = () => {
             </div>
 
             {/* Horizon Selector */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-[#E2E8F0] text-xs">
+            <div className="inline-flex items-center p-0.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs">
               {([5, 10, 15, 20, 25] as ProjectionHorizon[]).map((hz) => (
                 <button
                   key={hz}
                   onClick={() => setSelectedHorizon(hz)}
-                  className={`px-2.5 py-0.5 rounded-lg text-[11px] font-mono font-bold cursor-pointer transition-all ${
-                    selectedHorizon === hz ? 'bg-[#00D4AA] text-[#0F172A] shadow-2xs' : 'text-[#64748B] hover:text-[#0F172A]'
+                  className={`px-2.5 py-1.5 rounded-md text-xs font-mono font-bold cursor-pointer transition-all ${
+                    selectedHorizon === hz
+                      ? 'bg-[var(--color-accent)] text-[var(--color-accent-text)] shadow-xs'
+                      : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >
                   {hz}Y
@@ -604,8 +590,8 @@ export const OverviewDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Recharts Area Chart */}
-        <div className="h-72 sm:h-80 w-full pt-2">
+        {/* Recharts Area Chart Container */}
+        <div className="h-72 sm:h-80 w-full pt-1">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={projectionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
@@ -618,8 +604,8 @@ export const OverviewDashboard: React.FC = () => {
                   <stop offset="95%" stopColor="#1E88E5" stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={{ stroke: '#E2E8F0' }} />
-              <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatCurrency(v).slice(0, 5)} />
+              <XAxis dataKey="label" stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={{ stroke: 'var(--color-border-subtle)' }} />
+              <YAxis stroke="var(--color-text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => formatCurrency(v).slice(0, 5)} />
               <Tooltip content={<PremiumTooltip formatCurrency={formatCurrency} />} />
               <Area type="monotone" dataKey="corpus" stroke="#00D4AA" strokeWidth={2.5} fillOpacity={1} fill="url(#corpusGrad)" name="Corpus" animationDuration={350} animationEasing="ease-out" />
               <Area type="monotone" dataKey="invested" stroke="#1E88E5" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#investedGrad)" name="Invested" animationDuration={350} animationEasing="ease-out" />
@@ -627,26 +613,35 @@ export const OverviewDashboard: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Final Projected Target Summary Strip */}
+        {/* Final Projected Target Summary - Internal 3-Column Strip (No nested cards) */}
         {finalProjection && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 border border-[#E2E8F0] text-xs">
-            <div className="space-y-0.5">
-              <span className="text-[10.5px] font-bold text-[#64748B] uppercase tracking-wider block">Estimated Year {selectedHorizon} Corpus</span>
-              <div className="text-xl sm:text-2xl font-black text-teal-800 font-mono leading-tight">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[var(--color-border-subtle)]">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">
+                Estimated Year {selectedHorizon} Corpus
+              </span>
+              <div className="text-2xl sm:text-3xl font-extrabold text-[var(--color-accent-strong)] font-mono leading-tight">
                 {formatCurrency(finalProjection.corpus)}
               </div>
+              <span className="text-xs text-[var(--color-text-secondary)] block">Compounded portfolio milestone</span>
             </div>
-            <div className="space-y-0.5">
-              <span className="text-[10.5px] font-bold text-[#64748B] uppercase tracking-wider block">Total Capital Deployed</span>
-              <div className="text-base sm:text-lg font-bold text-[#0F172A] font-mono leading-tight">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">
+                Total Capital Deployed
+              </span>
+              <div className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] font-mono leading-tight">
                 {formatCurrency(finalProjection.invested)}
               </div>
+              <span className="text-xs text-[var(--color-text-secondary)] block">Principal contributions</span>
             </div>
-            <div className="space-y-0.5">
-              <span className="text-[10.5px] font-bold text-[#64748B] uppercase tracking-wider block">Estimated Compound Gains</span>
-              <div className="text-base sm:text-lg font-bold text-emerald-600 font-mono leading-tight">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">
+                Estimated Compound Gains
+              </span>
+              <div className="text-xl sm:text-2xl font-bold text-emerald-600 font-mono leading-tight">
                 +{formatCurrency(finalProjection.returns)}
               </div>
+              <span className="text-xs text-[var(--color-text-secondary)] block">Growth above capital principal</span>
             </div>
           </div>
         )}
@@ -655,3 +650,6 @@ export const OverviewDashboard: React.FC = () => {
     </div>
   );
 };
+
+
+

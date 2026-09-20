@@ -6,7 +6,7 @@ import {
   Plus, 
   Trash2, 
   Search, 
-  Sparkles, 
+  Clock, 
   TrendingDown, 
   AlertTriangle,
   X
@@ -147,7 +147,7 @@ export const ExpenseAnalyzerView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel rounded-3xl p-6 border border-white/10 bg-radial-gradient">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[13px] font-semibold mb-2">
-            <PieChartIcon className="w-4 h-4" /> Cash Flow & Outflow Intelligence
+            <PieChartIcon className="w-4 h-4" /> Cash Flow & Outflow Analytics
           </div>
           <h2 className="text-2xl sm:text-[30px] font-black text-white tracking-tight">
             Expense & Budget Analyzer
@@ -301,11 +301,11 @@ export const ExpenseAnalyzerView: React.FC = () => {
 
       </div>
 
-      {/* 4. AI Leak Detection & Savings Opportunities */}
+      {/* 4. Cash Leak Detection & Savings Opportunities */}
       <div className="glass-panel-glow rounded-3xl p-6 border border-cyan-500/20">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-5 h-5 text-cyan-400" />
-          <h3 className="text-[18px] font-bold text-white">AI Cash Leak & Savings Opportunities</h3>
+          <TrendingDown className="w-5 h-5 text-cyan-400" />
+          <h3 className="text-[18px] font-bold text-white">Cash Leak & Surplus Opportunities</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -324,7 +324,7 @@ export const ExpenseAnalyzerView: React.FC = () => {
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-1.5 text-[14px] font-bold text-cyan-400 mb-1">
-                <Sparkles className="w-4 h-4" /> Impulse Purchase Cooling Rule
+                <Clock className="w-4 h-4" /> Impulse Purchase Cooling Rule
               </div>
               <p className="text-[13.5px] text-slate-300 leading-relaxed mt-1">
                 Applying a 48-hour waiting rule before shopping checkouts over {formatCurrency(2500)} systematically reduces discretionary spending by 15%.

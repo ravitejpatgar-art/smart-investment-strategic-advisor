@@ -13,7 +13,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({
   children,
   ...props
 }, ref) => {
-  const baseClasses = 'bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] transition-all duration-150 ease-out text-[#0F172A]';
+  const baseClasses = 'bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl shadow-[var(--shadow-card)] transition-all duration-200 ease-out text-[var(--color-text-primary)]';
   const paddingClasses = {
     none: 'p-0',
     sm: 'p-4',
@@ -21,10 +21,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({
     lg: 'p-8',
   }[padding];
   const variantClasses = {
-    default: '',
-    elevated: 'bg-white border-[#E2E8F0] shadow-[0_4px_20px_rgba(0,0,0,0.06)]',
-    interactive: 'hover:border-[#CBD5E1] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-px cursor-pointer active:scale-[0.99]',
-    accent: 'border-[#00D4AA]/40 shadow-[0_4px_20px_rgba(0,212,170,0.12)]',
+    default: 'hover:border-[var(--color-border-hover)] hover:shadow-[var(--shadow-card-hover)]',
+    elevated: 'bg-[var(--color-card-elevated)] border-[var(--color-border)] shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-card-hover)]',
+    interactive: 'hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5 cursor-pointer active:scale-[0.99]',
+    accent: 'border-[var(--color-accent)]/40 shadow-[0_4px_20px_var(--color-accent-soft)] hover:shadow-[var(--shadow-card-hover)]',
   }[variant];
 
   return (

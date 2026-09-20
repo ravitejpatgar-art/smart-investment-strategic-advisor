@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { 
-  Sparkles, 
+  Loader2, 
   RotateCcw, 
   AlertCircle
 } from 'lucide-react';
@@ -15,6 +15,8 @@ interface VestiqConversationProps {
   onClear: () => void;
   onRetry?: () => void;
   onNewAnalysis: () => void;
+  onEditMessage?: (messageId: string, newText: string) => void;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export const VestiqConversation: React.FC<VestiqConversationProps> = ({
@@ -25,6 +27,8 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
   onClear,
   onRetry,
   onNewAnalysis,
+  onEditMessage,
+  onDeleteMessage,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -36,17 +40,17 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
     <div className="flex flex-col h-full w-full max-w-[880px] mx-auto font-sans">
       
       {/* Conversation Subheader */}
-      <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-[#E2E8F0] shrink-0 text-xs">
+      <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-[var(--color-border-subtle)] shrink-0 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse motion-reduce:animate-none" />
-          <span className="font-bold text-[#475569] uppercase tracking-wider text-[11px]">
-            Active Financial Intelligence Thread
+          <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse motion-reduce:animate-none" />
+          <span className="font-bold text-[var(--color-text-secondary)] uppercase tracking-wider text-[11px]">
+            Active Advisory Thread
           </span>
         </div>
 
         <button
           onClick={onClear}
-          className="text-[#64748B] hover:text-[#0F172A] flex items-center gap-1.5 font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal-500 rounded px-1.5 py-0.5"
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-1.5 font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)] rounded px-1.5 py-0.5"
           title="Clear Conversation Thread"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -55,27 +59,30 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
       </div>
 
       {/* Message Stream */}
-      <div className="flex-1 overflow-y-auto space-y-4 py-2 pr-1 scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2 pr-1 scrollbar-thin">
         {messages.map((msg) => (
           <VestiqMessage
             key={msg.id}
             message={msg}
             onSelectFollowUp={(prompt) => onSend(prompt)}
+            onEdit={onEditMessage}
+            onDelete={onDeleteMessage}
+            loading={loading}
           />
         ))}
 
         {/* Loading Indicator */}
         {loading && (
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#E2E8F0] max-w-[340px] shadow-sm animate-fade-in">
-            <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 shrink-0">
-              <Sparkles className="w-4 h-4 animate-spin motion-reduce:animate-none" />
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[var(--color-card)] border border-[var(--color-border)] max-w-[340px] shadow-sm animate-fade-in">
+            <div className="w-8 h-8 rounded-xl bg-[var(--accent-teal-dim)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--color-accent-strong)] shrink-0">
+              <Loader2 className="w-4 h-4 animate-spin text-[var(--color-accent-strong)]" />
             </div>
             <div className="space-y-0.5">
-              <div className="text-[13px] font-bold text-[#0F172A]">
+              <div className="text-[13px] font-bold text-[var(--color-text-primary)]">
                 VestIQ is analyzing...
               </div>
-              <div className="text-[11.5px] text-[#64748B] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse motion-reduce:animate-none" />
+              <div className="text-[11.5px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse motion-reduce:animate-none" />
                 <span>Evaluating portfolio & market data</span>
               </div>
             </div>
@@ -84,12 +91,12 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
 
         {/* Error State with Retry */}
         {error && (
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-900 space-y-2.5 animate-fade-in shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-[13.5px] text-red-700">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-rose-500 space-y-2.5 animate-fade-in shadow-xs">
+            <div className="flex items-center gap-2 font-bold text-[13.5px] text-rose-500">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
               <span>VestIQ couldn't complete that request.</span>
             </div>
-            <p className="text-[12.5px] text-red-800 leading-relaxed">
+            <p className="text-[12.5px] text-[var(--color-text-secondary)] leading-relaxed">
               {error || 'An unexpected connection issue occurred while communicating with the advisory engine.'}
             </p>
             <div className="flex items-center gap-2 pt-1">
@@ -103,7 +110,7 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
               )}
               <button
                 onClick={onNewAnalysis}
-                className="px-3.5 py-1.5 rounded-lg bg-white border border-red-200 text-red-800 text-xs font-semibold hover:bg-red-100 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-semibold hover:bg-[var(--color-surface-hover)] cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
               >
                 Start New Analysis
               </button>

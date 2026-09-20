@@ -3,7 +3,6 @@ import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { 
   Send, 
-  Sparkles, 
   ShieldCheck, 
   Copy, 
   Check, 
@@ -81,7 +80,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
     {
       id: 'welcome_1',
       sender: 'assistant',
-      text: `Greetings, **${user?.name || 'Investor'}**. I am **VestIQ**, your institutional financial intelligence co-pilot.\n\nYour current profile indicates a **${risk} risk mandate** with a monthly surplus of **${formatCurrency(surplus)}**.\n\nHow may I assist your portfolio planning today?`,
+      text: `Greetings, **${user?.name || 'Investor'}**. I am **VestIQ**, your fiduciary financial advisor.\n\nYour current profile indicates a **${risk} risk mandate** with a monthly surplus of **${formatCurrency(surplus)}**.\n\nHow may I assist your portfolio planning today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       followUps: [
         'Review my portfolio allocation',
@@ -255,7 +254,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
             </div>
             <div>
               <h2 className="text-sm font-bold text-white tracking-tight">VestIQ Strategic Advisory</h2>
-              <p className="text-[11px] text-[#8A94A6]">Context-Aware Institutional Intelligence</p>
+              <p className="text-[11px] text-[#8A94A6]">Portfolio Analysis & Planning</p>
             </div>
           </div>
 
@@ -298,7 +297,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
               >
                 {!isUser && (
                   <div className="w-6 h-6 rounded-md bg-[#101827] text-[#00D4AA] border border-white/[0.08] flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="w-3 h-3" />
+                    <VestiqMark size={14} />
                   </div>
                 )}
 
