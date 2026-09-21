@@ -59,49 +59,49 @@ export const AIAnalysisEngineView: React.FC = () => {
   }, [setActiveView]);
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       
       {/* Background Subtle Ambient Gradients */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#00D4AA]/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-[#1E88E5]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[var(--color-accent)]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-[var(--color-accent)]/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-xl w-full text-center relative z-10 space-y-7">
         
         {/* Institutional Monogram Centerpiece */}
         <div className="flex flex-col items-center justify-center space-y-3">
-          <BrandLogo size="lg" subtitleText="QUANTITATIVE ADVISORY ENGINE" />
+          <BrandLogo size="xl" variant="stacked" showSubtitle subtitleText="QUANTITATIVE ADVISORY ENGINE" />
         </div>
 
         {/* Title & Investor Mandate Context */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#0A1022] border border-white/[0.08] text-[#00D4AA] text-xs font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00D4AA] animate-ping" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-accent)] text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
             <span>SmartVest Portfolio Strategy Engine</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-serif">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] font-sans">
             Synthesizing Strategic Investment Allocation
           </h2>
-          <p className="text-[#8A94A6] text-xs">
-            Evaluating financial DNA for <span className="text-white font-semibold">{user?.name || 'Investor'}</span> ({user?.age || 28}y, <span className="text-[#00D4AA] font-semibold">{formatInvestorRiskLabel(user?.riskTolerance)}</span>)
+          <p className="text-[var(--color-text-secondary)] text-xs">
+            Calibrating portfolio model for <span className="text-[var(--color-text-primary)] font-semibold">{user?.name || 'Investor'}</span> ({user?.age || 28}y, <span className="text-[var(--color-accent)] font-semibold">{formatInvestorRiskLabel(user?.riskTolerance)}</span>)
           </p>
         </div>
 
         {/* Dynamic Progress Indicator */}
         <div className="space-y-2">
-          <div className="flex justify-between text-xs font-medium text-[#8A94A6]">
+          <div className="flex justify-between text-xs font-medium text-[var(--color-text-secondary)]">
             <span>Portfolio Optimization Progress</span>
-            <span className="text-[#00D4AA] font-mono font-bold">{progress}%</span>
+            <span className="text-[var(--color-accent)] font-mono font-bold">{progress}%</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[#0A1022] border border-white/[0.06] overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden">
             <div 
-              className="h-full bg-[#00D4AA] rounded-full transition-all duration-150"
+              className="h-full bg-[var(--color-accent)] rounded-full transition-all duration-150"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Step-by-Step Execution Sequence */}
-        <div className="bg-[#101827] border border-white/[0.08] rounded-xl p-5 text-left space-y-2.5 shadow-2xl">
+        <div className="financial-section-card p-6 text-left space-y-2.5">
           {ANALYSIS_STEPS.map((stepItem, idx) => {
             const isCompleted = idx < currentStepIndex;
             const isCurrent = idx === currentStepIndex;
@@ -112,22 +112,22 @@ export const AIAnalysisEngineView: React.FC = () => {
                 key={stepItem.id}
                 className={`flex items-center justify-between p-2.5 rounded-lg text-xs transition-all duration-300 ${
                   isCurrent 
-                    ? 'bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-white font-semibold' 
+                    ? 'bg-[var(--color-accent-soft)] border border-[var(--color-accent)] text-[var(--color-text-primary)] font-semibold' 
                     : isCompleted 
-                    ? 'text-[#8A94A6] opacity-90' 
-                    : 'text-[#5A667A]'
+                    ? 'text-[var(--color-text-secondary)] opacity-90' 
+                    : 'text-[var(--color-text-muted)]'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isCurrent ? 'text-[#00D4AA]' : isCompleted ? 'text-[#00D4AA]' : 'text-[#5A667A]'}`} />
+                  <Icon className={`w-4 h-4 ${isCurrent ? 'text-[var(--color-accent)]' : isCompleted ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} />
                   <span>{stepItem.title}</span>
                 </div>
                 {isCompleted ? (
-                  <CheckCircle2 className="w-4 h-4 text-[#00D4AA] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
                 ) : isCurrent ? (
-                  <span className="text-[10px] text-[#00D4AA] font-mono animate-pulse">Running...</span>
+                  <span className="text-[10px] text-[var(--color-accent)] font-mono animate-pulse">Running...</span>
                 ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/[0.1] shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)] shrink-0" />
                 )}
               </div>
             );
@@ -135,7 +135,7 @@ export const AIAnalysisEngineView: React.FC = () => {
         </div>
 
         {/* Institutional Fiduciary Note */}
-        <div className="text-[11px] text-[#8A94A6]">
+        <div className="text-[11px] text-[var(--color-text-secondary)]">
           Stochastic simulations apply Modern Portfolio Theory (MPT) to optimize risk-adjusted alpha for your investment horizon.
         </div>
 

@@ -11,6 +11,10 @@ import { VestiqEmptyState } from './VestiqEmptyState';
 import { VestiqConversation } from './VestiqConversation';
 import type { VestiqChatMessage } from './VestiqMessage';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { 
+  formatConversationAsPlainText, 
+  generateVestiqPdf 
+} from '../../services/vestiqPdfGenerator';
 
 export const VestiqShell: React.FC = () => {
   const { user, expenses, goals, strategy, setActiveView } = useFintechStore();
@@ -24,6 +28,8 @@ export const VestiqShell: React.FC = () => {
   const [conversationsLoadError, setConversationsLoadError] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [copiedChat, setCopiedChat] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
 
   // Responsive drawer states
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -218,7 +224,11 @@ export const VestiqShell: React.FC = () => {
   };
 
   // 8. Send message with backend persistence and advisory AI execution
-  const handleSendMessage = async (userText: string, isRetry: boolean = false) => {
+  const handleSendMessage = async (
+    userText: string, 
+    isRetry: boolean = false, 
+    baseMessages?: VestiqChatMessage[]
+  ) => {
     const trimmedText = userText.trim();
     if (!trimmedText || loading || isCreatingRef.current) return;
 
@@ -237,12 +247,14 @@ export const VestiqShell: React.FC = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
+    const sourceMessages = baseMessages !== undefined ? baseMessages : messages;
+
     // If retrying, check if user message is already the last message to avoid duplicates
     let updatedMessages: VestiqChatMessage[];
-    if (isRetry && messages.length > 0 && messages[messages.length - 1].sender === 'user') {
-      updatedMessages = [...messages];
+    if (isRetry && sourceMessages.length > 0 && sourceMessages[sourceMessages.length - 1].sender === 'user') {
+      updatedMessages = [...sourceMessages];
     } else {
-      updatedMessages = [...messages, userMsg];
+      updatedMessages = [...sourceMessages, userMsg];
       setMessages(updatedMessages);
     }
     setLoading(true);
@@ -366,6 +378,60 @@ export const VestiqShell: React.FC = () => {
     }
   };
 
+  // 9. Edit user message with conversational truncation (ChatGPT behavior)
+  const handleEditMessage = async (messageId: string, newText: string) => {
+    const trimmed = newText.trim();
+    if (!trimmed || loading) return;
+
+    const targetIdx = messages.findIndex((m) => m.id === messageId);
+    if (targetIdx === -1) return;
+
+    // Truncate everything from targetIdx onwards
+    const preservedBefore = messages.slice(0, targetIdx);
+    
+    // Set state immediately to branch from target position
+    setMessages(preservedBefore);
+    
+    // Submit updated turn using preserved history
+    await handleSendMessage(trimmed, false, preservedBefore);
+  };
+
+  // 10. Delete user message with conversational truncation
+  const handleDeleteMessage = (messageId: string) => {
+    if (loading) return;
+
+    const targetIdx = messages.findIndex((m) => m.id === messageId);
+    if (targetIdx === -1) return;
+
+    // Remove that message AND everything after it
+    const truncated = messages.slice(0, targetIdx);
+    setMessages(truncated);
+  };
+
+  // 11. Copy entire conversation as readable plain text
+  const handleCopyChat = async () => {
+    if (messages.length === 0) return;
+    const plainText = formatConversationAsPlainText(messages);
+    try {
+      await navigator.clipboard.writeText(plainText);
+      setCopiedChat(true);
+      setTimeout(() => setCopiedChat(false), 2000);
+    } catch {
+      setCopiedChat(false);
+    }
+  };
+
+  // 12. Download conversation as styled PDF report
+  const handleDownloadPdf = () => {
+    if (messages.length === 0 || isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
+    try {
+      generateVestiqPdf({ messages, user });
+    } finally {
+      setTimeout(() => setIsDownloadingPdf(false), 800);
+    }
+  };
+
   const handleRetry = () => {
     if (lastQuery) {
       handleSendMessage(lastQuery, true);
@@ -373,7 +439,7 @@ export const VestiqShell: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-[#F6F7FB] text-[#172033] flex flex-col overflow-hidden font-sans selection:bg-teal-500/20 selection:text-teal-900">
+    <div className="h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col overflow-hidden font-sans selection:bg-teal-500/20 selection:text-teal-900">
       
       {/* Top Header */}
       <VestiqHeader
@@ -381,6 +447,11 @@ export const VestiqShell: React.FC = () => {
         onBackToSmartVest={() => setActiveView('dashboard')}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onToggleContext={() => setContextOpen(!contextOpen)}
+        onCopyChat={handleCopyChat}
+        onDownloadPdf={handleDownloadPdf}
+        hasMessages={messages.length > 0}
+        copiedChat={copiedChat}
+        isDownloadingPdf={isDownloadingPdf}
       />
 
       {/* Main 3-Column Workspace */}
@@ -431,7 +502,7 @@ export const VestiqShell: React.FC = () => {
         )}
 
         {/* Center: AI Workspace */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col justify-between">
+        <main className={`flex-1 min-h-0 p-3 sm:p-6 flex flex-col justify-between ${messages.length === 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}>
           {/* Non-blocking banner when conversation history fails to load */}
           {conversationsLoadError && (
             <div className="mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
@@ -460,12 +531,14 @@ export const VestiqShell: React.FC = () => {
               onClear={handleNewAnalysis}
               onRetry={handleRetry}
               onNewAnalysis={handleNewAnalysis}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
             />
           )}
         </main>
 
         {/* Right: Personal SmartVest Context Panel (Desktop >= 1280px) */}
-        <div className="hidden xl:flex p-4 border-l border-[#E2E8F0] bg-white h-full overflow-y-auto">
+        <div className="hidden xl:flex p-4 border-l border-[var(--color-border)] bg-[var(--color-surface)] h-full overflow-y-auto">
           <VestiqContextPanel onNavigateToProfile={() => setActiveView('profile')} />
         </div>
 
@@ -476,10 +549,10 @@ export const VestiqShell: React.FC = () => {
               onClick={() => setContextOpen(false)}
               className="fixed inset-0 bg-black/40"
             />
-            <div className="relative z-10 w-[300px] bg-white h-full p-4 shadow-2xl overflow-y-auto animate-slide-left">
-              <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#E2E8F0]">
-                <span className="font-bold text-[#172033] text-[13px] uppercase tracking-wider">SmartVest Context</span>
-                <button onClick={() => setContextOpen(false)} className="text-[#667085] hover:text-[#172033]">
+            <div className="relative z-10 w-[300px] bg-[var(--color-surface)] border-l border-[var(--color-border)] h-full p-4 shadow-2xl overflow-y-auto animate-slide-left">
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-[var(--color-border-subtle)]">
+                <span className="font-bold text-[var(--color-text-primary)] text-[13px] uppercase tracking-wider">SmartVest Context</span>
+                <button onClick={() => setContextOpen(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
                   ✕
                 </button>
               </div>

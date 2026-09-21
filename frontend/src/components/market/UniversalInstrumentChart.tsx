@@ -408,7 +408,7 @@ export const UniversalInstrumentChart: React.FC<UniversalInstrumentChartProps> =
               onClick={() => setPeriod(p)}
               className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors ${
                 period === p
-                  ? "bg-[#00D4AA] text-[#0F172A] shadow-xs"
+                  ? "bg-[var(--color-accent)] text-[var(--color-accent-text)] shadow-xs"
                   : "text-slate-600 bg-slate-100 border border-slate-200 hover:text-slate-900 hover:bg-slate-200"
               }`}
             >

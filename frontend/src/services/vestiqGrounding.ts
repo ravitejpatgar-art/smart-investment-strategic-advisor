@@ -360,7 +360,7 @@ export function generateGroundedOfflineResponse(
   // Default Grounded Welcome / Assistant Overview
   const nameGreeting = prof.name && prof.name !== 'Guest' ? `Hello ${prof.name}` : 'Hello';
   return {
-    text: `${nameGreeting}, I am **VestIQ**, your fiduciary intelligence copilot. I am calibrated with your **${risk.effectiveRiskCategory || 'Moderate'}** risk mandate and **${formatMoney(cf.investableSurplus)}/month** investable surplus.\n\nAsk me about cash flow optimization, emergency runway targets, goal SIP requirements, or asset class suitability.`,
+    text: `${nameGreeting}, I am **VestIQ**, your fiduciary portfolio advisor. I am calibrated with your **${risk.effectiveRiskCategory || 'Moderate'}** risk mandate and **${formatMoney(cf.investableSurplus)}/month** investable surplus.\n\nAsk me about cash flow optimization, emergency runway targets, goal SIP requirements, or asset class suitability.`,
     followUps: [
       'How much can I invest each month?',
       'How much emergency runway do I have?',

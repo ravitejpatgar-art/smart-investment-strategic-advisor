@@ -15,11 +15,11 @@ describe('SmartVest P6.3 Dashboard Visual Hierarchy Refinement', () => {
     expect(el.type).toBe(OverviewDashboard);
   });
 
-  it('verifies P6.1 dark palette color tokens are available for the dashboard hierarchy', () => {
-    expect(colorTokens.BACKGROUND).toBe('#050816');
-    expect(colorTokens.SURFACE).toBe('#0A1022');
-    expect(colorTokens.CARD).toBe('#101827');
-    expect(colorTokens.ACCENT_TEAL).toBe('#00D4AA');
+  it('verifies dark palette color tokens are available for the dashboard hierarchy', () => {
+    expect(colorTokens.BACKGROUND).toBe('#101217');
+    expect(colorTokens.SURFACE).toBe('#181C23');
+    expect(colorTokens.CARD).toBe('#1C2129');
+    expect(colorTokens.ACCENT_TEAL).toBe('#C1E8FF');
     expect(colorTokens.SUCCESS).toBe('#00C853');
     expect(colorTokens.WARNING).toBe('#F59E0B');
   });

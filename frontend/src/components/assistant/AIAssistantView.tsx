@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { 
-  Bot, 
   Send, 
-  Sparkles, 
   ShieldCheck, 
   Copy,
   Check
 } from 'lucide-react';
+import { VestiqMark } from '../common/VestiqLogo';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
 import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
@@ -158,14 +157,14 @@ How can I help guide your financial and investment decisions today?`,
       {/* Top Advisor Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/80 border border-slate-800/80 rounded-3xl p-6 shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20">
-            <Bot className="w-6 h-6 stroke-[2.2]" />
+          <div className="w-12 h-12 rounded-2xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+            <VestiqMark size={24} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white">AI Financial Advisor</h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Institutional AI
+              <h1 className="text-xl font-bold text-white">VestIQ Advisory Engine</h1>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                Institutional Advisory
               </span>
             </div>
             <p className="text-xs text-slate-400">
@@ -194,8 +193,8 @@ How can I help guide your financial and investment decisions today?`,
                 className={`flex gap-3.5 ${isUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center shrink-0 mt-1 shadow-md shadow-emerald-500/20">
-                    <Sparkles className="w-4 h-4 stroke-[2.5]" />
+                  <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 text-teal-400 flex items-center justify-center shrink-0 mt-1">
+                    <VestiqMark size={16} />
                   </div>
                 )}
 
@@ -245,12 +244,12 @@ How can I help guide your financial and investment decisions today?`,
 
           {loading && (
             <div className="flex gap-3.5 items-start">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center shrink-0 shadow-md animate-pulse">
-                <Sparkles className="w-4 h-4 stroke-[2.5]" />
+              <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 text-teal-400 flex items-center justify-center shrink-0">
+                <VestiqMark size={16} />
               </div>
               <div className="p-4 rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 text-xs flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>SmartVest AI analyzing market data & financial parameters...</span>
+                <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                <span>VestIQ analyzing market data & financial parameters...</span>
               </div>
             </div>
           )}

@@ -9,7 +9,7 @@ import {
   X, 
   Search, 
   AlertTriangle,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 import { useFintechStore } from '../../store/useFintechStore';
 
@@ -100,10 +100,10 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'R';
 
   return (
-    <aside className="w-[280px] min-w-[280px] h-full bg-white border-r border-[#E2E8F0] flex flex-col justify-between shrink-0 font-sans z-20 shadow-xs">
+    <aside className="w-[280px] min-w-[280px] h-full bg-[var(--color-surface)] border-r border-[var(--color-border)] flex flex-col justify-between shrink-0 font-sans z-20 shadow-xs">
       
       {/* Top Header & Actions (StockGro Inspiration) */}
-      <div className="p-3.5 space-y-3 border-b border-[#F1F5F9]">
+      <div className="p-3.5 space-y-3 border-b border-[var(--color-border-subtle)]">
         
         {/* Start a New Thread Trigger */}
         <button
@@ -113,27 +113,27 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
             onCloseMobile?.();
           }}
           disabled={loading}
-          className="w-full h-[40px] rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[#0F172A] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs disabled:opacity-60"
+          className="w-full h-[40px] rounded-xl bg-[var(--color-surface-3)] hover:bg-[var(--color-border-strong)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs disabled:opacity-60"
         >
-          <Plus className="w-4 h-4 text-teal-600 stroke-[2.5]" />
+          <Plus className="w-4 h-4 text-[var(--color-accent-strong)] stroke-[2.5]" />
           <span>Start a New Thread</span>
         </button>
 
         {/* Quick Search */}
         {onSearchChange && (
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--color-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full h-[34px] pl-8 pr-3 text-xs bg-slate-50 border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-teal-500 focus:bg-white transition-all"
+              className="w-full h-[34px] pl-8 pr-3 text-xs bg-[var(--color-surface-3)] border border-[var(--color-border)] rounded-lg text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => onSearchChange('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0F172A] cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -142,9 +142,9 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
         )}
 
         {/* Section Header */}
-        <div className="flex items-center justify-between px-1 text-[10.5px] font-bold text-[#64748B] uppercase tracking-wider">
+        <div className="flex items-center justify-between px-1 text-[10.5px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
           <span>Recent Threads</span>
-          <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-[10px] text-[#475569]">{filteredSessions.length}</span>
+          <span className="font-mono bg-[var(--color-surface-3)] px-1.5 py-0.5 rounded text-[10px] text-[var(--color-text-secondary)]">{filteredSessions.length}</span>
         </div>
       </div>
 
@@ -162,7 +162,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
                 onNewAnalysis();
                 onCloseMobile?.();
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-teal-50 border border-teal-200 text-[#00A884] text-xs font-bold cursor-pointer hover:bg-teal-100"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--color-accent-soft)] border border-[var(--color-border-accent)] text-[var(--color-text-accent)] text-xs font-bold cursor-pointer hover:brightness-105"
             >
               <Plus className="w-3 h-3" />
               <span>+ New Thread</span>
@@ -248,12 +248,12 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
                   }}
                   className={`group relative flex items-center justify-between p-2 rounded-lg text-xs transition-all cursor-pointer border ${
                     isActive 
-                      ? 'bg-teal-50 text-teal-900 font-bold border-teal-200/90 shadow-2xs' 
-                      : 'border-transparent text-[#475569] hover:text-[#0F172A] hover:bg-slate-100'
+                      ? 'bg-[var(--accent-teal-dim)] text-[var(--color-text-accent)] font-bold border-[var(--border-accent)] shadow-2xs' 
+                      : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate flex-1 min-w-0 pr-1">
-                    <span className="text-[#94A3B8] shrink-0 text-xs">
+                    <span className="text-[var(--color-text-muted)] shrink-0 text-xs">
                       {sess.is_pinned ? '📌' : '💬'}
                     </span>
                     <span className="truncate text-xs" title={sess.title}>
@@ -268,7 +268,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
                         e.stopPropagation();
                         onTogglePinSession(sess.id, !sess.is_pinned);
                       }}
-                      className="p-1 rounded text-slate-500 hover:text-slate-900"
+                      className="p-1 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                       title={sess.is_pinned ? 'Unpin' : 'Pin'}
                     >
                       <Pin className={`w-3 h-3 ${sess.is_pinned ? 'text-amber-500' : ''}`} />
@@ -276,7 +276,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
 
                     <button
                       onClick={(e) => startRename(sess, e)}
-                      className="p-1 rounded text-slate-500 hover:text-slate-900"
+                      className="p-1 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                       title="Rename"
                     >
                       <Edit3 className="w-3 h-3" />
@@ -284,7 +284,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
 
                     <button
                       onClick={(e) => handleDeletePrompt(sess.id, e)}
-                      className="p-1 rounded text-slate-500 hover:text-red-600"
+                      className="p-1 rounded text-[var(--color-text-muted)] hover:text-red-500"
                       title="Delete"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -298,36 +298,36 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
       </div>
 
       {/* Bottom Area: Quota & User Profile Widget (StockGro Inspiration) */}
-      <div className="p-3 border-t border-[#F1F5F9] bg-slate-50/70 space-y-2.5">
+      <div className="p-3 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] space-y-2.5">
         {/* Intelligence Status Pill */}
-        <div className="p-2.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1.5 shadow-2xs">
+        <div className="p-2.5 rounded-xl bg-[var(--color-card)] border border-[var(--color-border)] space-y-1.5 shadow-2xs">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-bold text-[#0F172A] flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-teal-600" />
-              <span>Intelligence Engine</span>
+            <span className="font-bold text-[var(--color-text-primary)] flex items-center gap-1.5">
+              <ShieldCheck className="w-3 h-3 text-[var(--color-accent-strong)]" />
+              <span>Advisory Engine</span>
             </span>
-            <span className="font-bold text-teal-700 font-mono text-[10px]">ACTIVE</span>
+            <span className="font-bold text-[var(--color-accent-strong)] font-mono text-[10px]">ACTIVE</span>
           </div>
-          <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-            <div className="h-full bg-[#00D4AA] rounded-full w-full" />
+          <div className="w-full bg-[var(--color-surface-3)] h-1 rounded-full overflow-hidden">
+            <div className="h-full bg-[var(--color-accent)] rounded-full w-full" />
           </div>
-          <div className="text-[10px] text-[#94A3B8] flex justify-between">
+          <div className="text-[10px] text-[var(--color-text-muted)] flex justify-between">
             <span>Fiduciary Mandate</span>
             <span>Real-time</span>
           </div>
         </div>
 
         {/* User Profile Pill */}
-        <div className="flex items-center justify-between px-2 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs">
+        <div className="flex items-center justify-between px-2 py-1.5 rounded-xl bg-[var(--color-card)] border border-[var(--color-border)] shadow-2xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-7 h-7 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-text)] font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
               {userInitial}
             </div>
             <div className="min-w-0 truncate">
-              <div className="text-xs font-bold text-[#0F172A] truncate">
+              <div className="text-xs font-bold text-[var(--color-text-primary)] truncate">
                 {user?.name || 'Investor'}
               </div>
-              <div className="text-[10px] text-[#64748B] truncate">
+              <div className="text-[10px] text-[var(--color-text-secondary)] truncate">
                 {user?.riskTolerance || 'Moderate'} Investor
               </div>
             </div>

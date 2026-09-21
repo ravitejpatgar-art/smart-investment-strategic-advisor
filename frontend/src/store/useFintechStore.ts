@@ -27,7 +27,14 @@ export type ActiveNavTab =
   | 'vestiq'
   | 'profile';
 
+export type ThemeMode = 'dark' | 'light';
+
 interface FintechState {
+  // Global Two-Theme System
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
+  toggleTheme: () => void;
+
   currency: Currency;
   currencySymbol: string;
   currencyRate: number;
@@ -71,6 +78,59 @@ interface FintechState {
   deleteGoal: (id: string) => void;
 }
 
+const THEME_STORAGE_KEY = 'smartvest-theme';
+let themeTransitionTimer: ReturnType<typeof setTimeout> | null = null;
+
+export const applyThemeToDocument = (theme: ThemeMode, withTransition: boolean = false) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+
+  if (withTransition && typeof window !== 'undefined') {
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion) {
+      root.classList.add('theme-transition');
+      if (themeTransitionTimer) clearTimeout(themeTransitionTimer);
+      themeTransitionTimer = setTimeout(() => {
+        root.classList.remove('theme-transition');
+        themeTransitionTimer = null;
+      }, 850);
+    } else {
+      root.classList.remove('theme-transition');
+      if (themeTransitionTimer) {
+        clearTimeout(themeTransitionTimer);
+        themeTransitionTimer = null;
+      }
+    }
+  }
+
+  root.setAttribute('data-theme', theme);
+  if (theme === 'dark') {
+    root.classList.add('dark');
+    root.classList.remove('light');
+  } else {
+    root.classList.add('light');
+    root.classList.remove('dark');
+  }
+};
+
+const getInitialTheme = (): ThemeMode => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return 'dark';
+  }
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'dark' || saved === 'light') {
+      return saved;
+    }
+  } catch {
+    // Ignore
+  }
+  return 'dark';
+};
+
+const initialTheme = getInitialTheme();
+applyThemeToDocument(initialTheme, false);
+
 // Load authoritative session data from UserProfileRepository
 const authActive = isAuthEnabled();
 const storedToken = localStorage.getItem('smartvest_token');
@@ -104,6 +164,26 @@ if (initialUser && initialUser.onboardingCompleted) {
 }
 
 export const useFintechStore = create<FintechState>((set, get) => ({
+  theme: initialTheme,
+  setTheme: (theme: ThemeMode) => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore
+    }
+    applyThemeToDocument(theme, true);
+    set({ theme });
+  },
+  toggleTheme: () => {
+    const nextTheme: ThemeMode = get().theme === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch {
+      // Ignore
+    }
+    applyThemeToDocument(nextTheme, true);
+    set({ theme: nextTheme });
+  },
 
   currency: 'INR',
   currencySymbol: '₹',
@@ -195,6 +275,8 @@ export const useFintechStore = create<FintechState>((set, get) => ({
             routeView = 'expenses';
           } else if (path === '/profile' || hash === '#profile') {
             routeView = 'profile';
+          } else if (path === '/landing' || hash === '#landing') {
+            routeView = 'landing';
           } else if (currentView !== 'landing' && currentView !== 'onboarding') {
             routeView = currentView;
           }
@@ -333,6 +415,9 @@ export const useFintechStore = create<FintechState>((set, get) => ({
       }
       if (path === '/profile' || hash === '#profile') {
         return 'profile';
+      }
+      if (path === '/landing' || hash === '#landing') {
+        return 'landing';
       }
       if (path === '/dashboard' || hash === '#dashboard') {
         return 'dashboard';

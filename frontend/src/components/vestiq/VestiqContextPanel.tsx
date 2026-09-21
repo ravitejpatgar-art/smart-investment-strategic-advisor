@@ -27,22 +27,22 @@ export const VestiqContextPanel: React.FC<{ onNavigateToProfile?: () => void }> 
     <aside className="w-full lg:w-[270px] shrink-0 space-y-4 font-sans">
       
       {/* Active Context Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 space-y-3.5 shadow-xs">
+      <div className="financial-section-card p-4 space-y-3.5">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#F1F5F9]">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-teal-600" />
-            <span className="text-[12px] font-bold text-[#0F172A] uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 text-[var(--color-accent-strong)]" />
+            <span className="text-[12px] font-bold text-[var(--color-text-primary)] uppercase tracking-wider">
               SmartVest Context
             </span>
           </div>
-          <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+          <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent-strong)] border border-[var(--color-accent)]/20">
             Active Profile
           </span>
         </div>
 
-        <div className="text-[12px] text-[#64748B] leading-relaxed">
+        <div className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed">
           VestIQ tailors financial analysis, allocations, and simulations to your verified parameters.
         </div>
 
@@ -50,62 +50,62 @@ export const VestiqContextPanel: React.FC<{ onNavigateToProfile?: () => void }> 
         <div className="space-y-2.5">
           
           {/* Monthly Surplus */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-0.5">
-            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+          <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border-subtle)] space-y-0.5">
+            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider block">
               Investable Surplus
             </span>
-            <div className="text-[17px] font-black text-teal-800 font-mono">
+            <div className="text-[17px] font-black text-[var(--color-accent-strong)] font-mono">
               {formatCurrency(surplus)}/mo
             </div>
-            <span className="text-[11px] text-[#94A3B8]">
+            <span className="text-[11px] text-[var(--color-text-muted)]">
               From {formatCurrency(totalIncome)} Inflow
             </span>
           </div>
 
           {/* Risk Tolerance */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-0.5">
-            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+          <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border-subtle)] space-y-0.5">
+            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider block">
               Risk Mandate
             </span>
-            <div className="text-[14.5px] font-bold text-[#0F172A]">
+            <div className="text-[14.5px] font-bold text-[var(--color-text-primary)]">
               {risk} Strategy
             </div>
-            <span className="text-[11px] text-[#94A3B8]">
+            <span className="text-[11px] text-[var(--color-text-muted)]">
               Calibrated Asset Core
             </span>
           </div>
 
           {/* Horizon */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-0.5">
-            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+          <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border-subtle)] space-y-0.5">
+            <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider block">
               Investment Horizon
             </span>
-            <div className="text-[14.5px] font-bold text-[#0F172A]">
+            <div className="text-[14.5px] font-bold text-[var(--color-text-primary)]">
               {horizon}
             </div>
           </div>
 
           {/* Emergency Fund */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-1.5">
+          <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border-subtle)] space-y-1.5">
             <div className="flex justify-between items-center text-[11px]">
-              <span className="font-semibold text-[#64748B] uppercase">Emergency Reserve</span>
-              <span className="font-bold text-teal-700 font-mono">{emergencyPct}%</span>
+              <span className="font-semibold text-[var(--color-text-secondary)] uppercase">Emergency Reserve</span>
+              <span className="font-bold text-[var(--color-accent-strong)] font-mono">{emergencyPct}%</span>
             </div>
-            <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-              <div className="h-full bg-[#00D4AA] rounded-full transition-all" style={{ width: `${emergencyPct}%` }} />
+            <div className="w-full bg-[var(--color-surface-3)] h-2 rounded-full overflow-hidden">
+              <div className="h-full bg-[var(--color-accent)] rounded-full transition-all" style={{ width: `${emergencyPct}%` }} />
             </div>
           </div>
 
           {/* Primary Goal */}
           {primaryGoal && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] space-y-0.5">
-              <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+            <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border-subtle)] space-y-0.5">
+              <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider block">
                 Primary Milestone
               </span>
-              <div className="text-[14px] font-bold text-[#0F172A] truncate">
+              <div className="text-[14px] font-bold text-[var(--color-text-primary)] truncate">
                 {primaryGoal.title}
               </div>
-              <span className="text-[11px] text-teal-700 font-mono font-semibold">
+              <span className="text-[11px] text-[var(--color-accent-strong)] font-mono font-semibold">
                 Target: {formatCurrency(primaryGoal.targetAmount)} ({primaryGoal.targetDate || '2030'})
               </span>
             </div>
@@ -117,19 +117,19 @@ export const VestiqContextPanel: React.FC<{ onNavigateToProfile?: () => void }> 
         {onNavigateToProfile && (
           <button
             onClick={onNavigateToProfile}
-            className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-[#0F172A] flex items-center justify-between transition-colors cursor-pointer"
+            className="w-full py-2 px-3 rounded-xl bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)] border border-[var(--color-border)] text-xs font-bold text-[var(--color-text-primary)] flex items-center justify-between transition-colors cursor-pointer"
           >
             <span>Update Mandate</span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#64748B]" />
+            <ChevronRight className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
           </button>
         )}
 
       </div>
 
       {/* Trust & Privacy Pill */}
-      <div className="p-3 rounded-xl bg-slate-50 border border-[#E2E8F0] text-[11px] text-[#64748B] space-y-1 shadow-2xs">
-        <div className="flex items-center gap-1.5 font-bold text-[#0F172A]">
-          <Lock className="w-3.5 h-3.5 text-teal-600" />
+      <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border-subtle)] text-[11px] text-[var(--color-text-secondary)] space-y-1 shadow-2xs">
+        <div className="flex items-center gap-1.5 font-bold text-[var(--color-text-primary)]">
+          <Lock className="w-3.5 h-3.5 text-[var(--color-accent-strong)]" />
           <span>Fiduciary Confidentiality</span>
         </div>
         <p className="leading-relaxed text-[10.5px]">

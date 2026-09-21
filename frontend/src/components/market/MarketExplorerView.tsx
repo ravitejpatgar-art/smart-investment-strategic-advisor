@@ -13,7 +13,7 @@ import {
   Database,
   Clock,
   Filter,
-  Sparkles,
+  MessageSquareText,
   X,
   RotateCcw
 } from 'lucide-react';
@@ -334,44 +334,28 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
     }
   };
 
-  const getFreshnessVariant = (status?: string, freshness?: string): "live" | "delayed" | "fallback" | "stale" | "demo" | "unavailable" => {
-    const s = (status || freshness || "").toUpperCase();
-    if (s === "LIVE" || s === "REALTIME") return "live";
-    if (s === "DELAYED") return "delayed";
-    if (s === "FALLBACK" || s === "LATEST_AVAILABLE" || s === "HISTORICAL") return "fallback";
-    if (s === "DEMO" || s === "MODEL_ASSUMPTION") return "demo";
-    if (s === "STALE") return "stale";
-    return "unavailable";
-  };
-
   const totalResults = instrumentsData?.total ?? 0;
   const totalPages = instrumentsData?.totalPages ?? Math.max(1, Math.ceil(totalResults / limit));
   const startItem = totalResults === 0 ? 0 : (page - 1) * limit + 1;
   const endItem = Math.min(page * limit, totalResults);
 
   return (
-    <div className="space-y-6 pb-12 font-sans">
+    <div className="space-y-8 pb-12 font-sans">
       
       {/* 1. MARKET TERMINAL HEADER & TELEMETRY */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+      <section className="financial-section-card p-5 sm:p-6 space-y-5">
         
         {/* Top Title & Quick Actions Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
-                <Globe className="w-4 h-4" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <span>Market Terminal</span>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-800 font-semibold uppercase tracking-wider">
-                    Institutional Workspace
-                  </span>
-                </h1>
-              </div>
+              <Globe className="w-5 h-5 text-[var(--color-accent-strong)]" />
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] tracking-tight flex items-center gap-2">
+                <span>Market Terminal</span>
+                <span className="text-xs text-[var(--color-text-muted)] font-normal hidden sm:inline">· Institutional Workspace</span>
+              </h1>
             </div>
-            <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
+            <p className="text-sm text-[var(--color-text-secondary)] max-w-2xl leading-relaxed">
               Discover, track, and research global stocks, ETFs, mutual fund schemes, and key benchmarks with institutional-grade data integrity.
             </p>
           </div>
@@ -386,9 +370,9 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                   setActiveView('ai');
                 }
               }}
-              className="px-3.5 py-2 rounded-xl bg-[#00D4AA] text-[#0F172A] hover:bg-teal-400 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
+              className="px-3.5 py-2 rounded-xl bg-[var(--color-accent)] text-[var(--color-accent-text)] hover:brightness-105 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <MessageSquareText className="w-3.5 h-3.5" />
               <span>Consult VestIQ</span>
             </button>
 
@@ -400,9 +384,9 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                 fetchInstruments();
               }}
               disabled={isLoading}
-              className="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-teal-600 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[var(--color-accent-strong)] ${isLoading ? 'animate-spin' : ''}`} />
               <span>Refresh Feed</span>
             </button>
           </div>
@@ -410,73 +394,67 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
 
         {/* Dynamic Catalog & Coverage Status Bar */}
         {coverageData && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 border-t border-slate-100 text-xs text-slate-500">
-            <div className="flex items-center gap-1.5 text-teal-800 font-semibold">
-              <Database className="w-3.5 h-3.5 text-teal-600" />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 border-t border-[var(--color-border-subtle)] text-xs text-[var(--color-text-secondary)]">
+            <div className="flex items-center gap-1.5 text-[var(--color-text-primary)] font-semibold">
+              <Database className="w-3.5 h-3.5 text-[var(--color-accent-strong)]" />
               <span>{Number(coverageData.total_instruments ?? coverageData.instrumentCount ?? 0).toLocaleString()} Instruments Universe</span>
             </div>
-            <span className="text-slate-300">•</span>
+            <span className="text-[var(--color-text-muted)]">·</span>
             <div>
               <span>Stocks: </span>
-              <strong className="text-slate-800 font-mono">{Number(coverageData.stocks_count ?? coverageData.stockCount ?? coverageData.by_asset_type?.STOCK ?? 0).toLocaleString()}</strong>
+              <strong className="text-[var(--color-text-primary)] font-mono">{Number(coverageData.stocks_count ?? coverageData.stockCount ?? coverageData.by_asset_type?.STOCK ?? 0).toLocaleString()}</strong>
             </div>
-            <span className="text-slate-300">•</span>
+            <span className="text-[var(--color-text-muted)]">·</span>
             <div>
               <span>ETFs: </span>
-              <strong className="text-slate-800 font-mono">{Number(coverageData.etfs_count ?? coverageData.etfCount ?? coverageData.by_asset_type?.ETF ?? 0).toLocaleString()}</strong>
+              <strong className="text-[var(--color-text-primary)] font-mono">{Number(coverageData.etfs_count ?? coverageData.etfCount ?? coverageData.by_asset_type?.ETF ?? 0).toLocaleString()}</strong>
             </div>
-            <span className="text-slate-300">•</span>
+            <span className="text-[var(--color-text-muted)]">·</span>
             <div>
               <span>Mutual Funds: </span>
-              <strong className="text-slate-800 font-mono">{Number(coverageData.mutual_funds_count ?? coverageData.mutualFundCount ?? coverageData.by_asset_type?.MUTUAL_FUND ?? 0).toLocaleString()}</strong>
+              <strong className="text-[var(--color-text-primary)] font-mono">{Number(coverageData.mutual_funds_count ?? coverageData.mutualFundCount ?? coverageData.by_asset_type?.MUTUAL_FUND ?? 0).toLocaleString()}</strong>
             </div>
-            <span className="text-slate-300">•</span>
+            <span className="text-[var(--color-text-muted)]">·</span>
             <div>
-              <strong className="text-slate-800 font-mono">{coverageData.exchanges_count ?? coverageData.exchangeCount ?? coverageData.exchanges?.length ?? 0} Exchanges</strong> ({coverageData.countries_count ?? coverageData.countryCount ?? coverageData.countries?.length ?? 0} Countries)
+              <strong className="text-[var(--color-text-primary)] font-mono">{coverageData.exchanges_count ?? coverageData.exchangeCount ?? coverageData.exchanges?.length ?? 0} Exchanges</strong> ({coverageData.countries_count ?? coverageData.countryCount ?? coverageData.countries?.length ?? 0} Countries)
             </div>
-            <span className="text-slate-300">•</span>
-            <div className="flex items-center gap-1 text-slate-500">
-              <Clock className="w-3 h-3 text-slate-400" />
+            <span className="text-[var(--color-text-muted)]">·</span>
+            <div className="flex items-center gap-1 text-[var(--color-text-secondary)]">
+              <Clock className="w-3 h-3 text-[var(--color-text-muted)]" />
               <span>Synced {formatSyncTime(coverageData.last_synced_at ?? coverageData.lastSyncedAt)}</span>
             </div>
           </div>
         )}
 
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative pt-2">
           <style>{`
             .market-search-input,
             .market-search-input:focus,
             .market-search-input:active {
-              color: #0F172A !important;
-              -webkit-text-fill-color: #0F172A !important;
-              caret-color: #0F172A !important;
+              color: var(--color-input-text) !important;
+              -webkit-text-fill-color: var(--color-input-text) !important;
+              caret-color: var(--color-accent) !important;
               opacity: 1 !important;
             }
             .market-search-input::placeholder {
-              color: #94A3B8 !important;
-              -webkit-text-fill-color: #94A3B8 !important;
+              color: var(--color-input-placeholder) !important;
+              -webkit-text-fill-color: var(--color-input-placeholder) !important;
             }
           `}</style>
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search stocks, ETFs, mutual funds, ISIN, ticker (e.g. AAPL, AMD, RELIANCE, SPY, VOO, Nippon India, HDFC Flexi Cap)..."
-            className="market-search-input w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#0F172A] caret-[#0F172A] font-medium text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white placeholder:text-slate-400 shadow-2xs transition-all"
-            style={{
-              color: '#0F172A',
-              WebkitTextFillColor: '#0F172A',
-              caretColor: '#0F172A',
-              opacity: 1
-            }}
+            className="market-search-input w-full pl-10 pr-10 py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-[var(--color-input-text)] caret-[var(--color-accent)] font-medium text-xs sm:text-sm focus:outline-none focus:border-[var(--color-accent)] placeholder:text-[var(--color-input-placeholder)] shadow-2xs transition-all"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] p-0.5 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -492,16 +470,16 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                 key={cat.id}
                 type="button"
                 onClick={() => handleCategoryChange(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
                   selectedCategory === cat.id
-                    ? 'bg-[#00D4AA] text-[#0F172A] font-bold shadow-xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'bg-[var(--color-accent)] text-[var(--color-accent-text)] font-bold'
+                    : 'bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]'
                 }`}
               >
                 <span>{cat.label}</span>
                 {cat.count !== undefined && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-normal ${
-                    selectedCategory === cat.id ? 'bg-[#0F172A]/10 text-[#0F172A]' : 'bg-slate-200/70 text-slate-600'
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-normal ${
+                    selectedCategory === cat.id ? 'bg-[var(--color-accent-text)]/20 text-[var(--color-accent-text)]' : 'bg-[var(--color-border)]/50 text-[var(--color-text-secondary)]'
                   }`}>
                     {cat.count.toLocaleString()}
                   </span>
@@ -512,43 +490,43 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
 
           {/* Secondary Dropdowns & Reset */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-600">
-              <Filter className="w-3 h-3 text-slate-400" />
+            <div className="flex items-center gap-1.5 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-lg px-2.5 py-1 text-xs text-[var(--color-text-secondary)]">
+              <Filter className="w-3 h-3 text-[var(--color-text-muted)]" />
               <select
                 value={selectedExchange}
                 onChange={(e) => handleExchangeChange(e.target.value)}
-                className="bg-transparent text-slate-900 font-medium text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-[var(--color-text-primary)] font-medium text-xs focus:outline-none cursor-pointer"
                 aria-label="Filter by exchange"
               >
                 {exchanges.map((ex) => (
-                  <option key={ex.code} value={ex.code}>{ex.label}</option>
+                  <option key={ex.code} value={ex.code} className="bg-[var(--color-card)] text-[var(--color-text-primary)]">{ex.label}</option>
                 ))}
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-600">
-              <Globe className="w-3 h-3 text-slate-400" />
+            <div className="flex items-center gap-1.5 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-lg px-2.5 py-1 text-xs text-[var(--color-text-secondary)]">
+              <Globe className="w-3 h-3 text-[var(--color-text-muted)]" />
               <select
                 value={selectedCountry}
                 onChange={(e) => handleCountryChange(e.target.value)}
-                className="bg-transparent text-slate-900 font-medium text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-[var(--color-text-primary)] font-medium text-xs focus:outline-none cursor-pointer"
                 aria-label="Filter by country"
               >
                 {countries.map((c) => (
-                  <option key={c.code} value={c.code}>{c.label}</option>
+                  <option key={c.code} value={c.code} className="bg-[var(--color-card)] text-[var(--color-text-primary)]">{c.label}</option>
                 ))}
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-lg px-2.5 py-1 text-xs text-[var(--color-text-secondary)]">
               <select
                 value={selectedCurrency}
                 onChange={(e) => handleCurrencyChange(e.target.value)}
-                className="bg-transparent text-slate-900 font-medium text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-[var(--color-text-primary)] font-medium text-xs focus:outline-none cursor-pointer"
                 aria-label="Filter by currency"
               >
                 {currencies.map((cur) => (
-                  <option key={cur.code} value={cur.code}>{cur.label}</option>
+                  <option key={cur.code} value={cur.code} className="bg-[var(--color-card)] text-[var(--color-text-primary)]">{cur.label}</option>
                 ))}
               </select>
             </div>
@@ -557,31 +535,31 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                 title="Reset all filters"
               >
-                <RotateCcw className="w-3 h-3 text-slate-500" />
+                <RotateCcw className="w-3 h-3 text-[var(--color-text-muted)]" />
                 <span>Reset</span>
               </button>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 2. MARKET OVERVIEW SECTION (Key Benchmarks & Indices) */}
       {!isFiltered && overview && !error && (
-        <div className="space-y-3">
+        <section className="financial-section-card-interactive p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-teal-600" />
+            <h2 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-[var(--color-accent)]" />
               <span>Key Benchmarks & Global Indices</span>
             </h2>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>NSE: {overview?.india_status?.status || 'OPEN'}</span>
               </span>
-              <span className="text-slate-300">•</span>
+              <span>•</span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
                 <span>NASDAQ: {overview?.us_status?.status || 'OPEN'}</span>
@@ -589,7 +567,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-[var(--color-border-subtle)]">
             {overview?.indices?.india?.slice(0, 2).map((idx: any) => (
               <div 
                 key={idx.symbol}
@@ -606,16 +584,16 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all shadow-xs"
+                className="space-y-0.5 cursor-pointer group"
               >
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-slate-900">{idx.symbol}</span>
-                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono">NSE</span>
+                  <span className="text-xs font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">{idx.symbol}</span>
+                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] font-mono">NSE</span>
                 </div>
-                <div className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                <div className="text-base sm:text-xl font-bold text-[var(--color-text-primary)] font-mono">
                   ₹{idx.price?.toLocaleString('en-IN', { maximumFractionDigits: 1 }) || '—'}
                 </div>
-                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {(idx.changePct ?? 0) >= 0 ? '+' : ''}{idx.changePct?.toFixed(2)}%
                 </div>
               </div>
@@ -637,16 +615,16 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all shadow-xs"
+                className="space-y-0.5 cursor-pointer group"
               >
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-slate-900">{idx.symbol}</span>
-                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-blue-50 border border-blue-200 text-blue-700 font-mono">NASDAQ</span>
+                  <span className="text-xs font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">{idx.symbol}</span>
+                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] font-mono">NASDAQ</span>
                 </div>
-                <div className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                <div className="text-base sm:text-xl font-bold text-[var(--color-text-primary)] font-mono">
                   ${idx.price?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '—'}
                 </div>
-                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {(idx.changePct ?? 0) >= 0 ? '+' : ''}{idx.changePct?.toFixed(2)}%
                 </div>
               </div>
@@ -668,32 +646,32 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                   status: 'ACTIVE',
                   quote: idx
                 })}
-                className="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-amber-400 hover:shadow-md transition-all shadow-xs"
+                className="space-y-0.5 cursor-pointer group"
               >
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-slate-900">{idx.symbol}</span>
-                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-amber-50 border border-amber-200 text-amber-800 font-mono">MCX</span>
+                  <span className="text-xs font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">{idx.symbol}</span>
+                  <span className="text-[9.5px] uppercase px-1.5 py-0.2 rounded bg-[var(--color-surface-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] font-mono">MCX</span>
                 </div>
-                <div className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                <div className="text-base sm:text-xl font-bold text-[var(--color-text-primary)] font-mono">
                   ₹{idx.price?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '—'}
                 </div>
-                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <div className={`text-xs font-mono font-semibold ${(idx.changePct ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {(idx.changePct ?? 0) >= 0 ? '+' : ''}{idx.changePct?.toFixed(2)}%
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* 3. DISCOVERY & INSTRUMENT CARDS GRID */}
-      <div className="space-y-4">
+      <section className="financial-section-card p-5 sm:p-6 space-y-4 min-w-0">
         
         {/* Results Metadata Bar */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-teal-600" />
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+            <Layers className="w-4 h-4 text-[var(--color-accent)]" />
+            <h2 className="text-xs font-bold text-[var(--color-text-primary)] uppercase tracking-wider">
               {selectedCategory === 'WATCHLIST' 
                 ? 'Saved Watchlist' 
                 : debouncedQuery 
@@ -701,48 +679,47 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                 : 'Market Catalog'}
             </h2>
             {!error && !isLoading && (
-              <span className="text-xs text-slate-500 font-mono">
+              <span className="text-xs text-[var(--color-text-muted)] font-mono">
                 ({totalResults.toLocaleString()} items)
               </span>
             )}
           </div>
 
           {!error && !isLoading && totalResults > 0 && (
-            <span className="text-xs text-slate-500">
-              Showing <strong className="text-slate-800 font-mono">{startItem}–{endItem}</strong> of <strong className="text-slate-800 font-mono">{totalResults.toLocaleString()}</strong>
+            <span className="text-xs text-[var(--color-text-muted)]">
+              Showing <strong className="text-[var(--color-text-primary)] font-mono">{startItem}–{endItem}</strong> of <strong className="text-[var(--color-text-primary)] font-mono">{totalResults.toLocaleString()}</strong>
             </span>
           )}
         </div>
 
-        {/* Loading Skeleton Grid */}
+        {/* Loading Skeleton Ledger */}
         {isLoading || isSearching ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-xs">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1.5 w-3/4">
-                    <Skeleton variant="text" width="40%" height={14} />
-                    <Skeleton variant="text" width="80%" height={18} />
-                    <Skeleton variant="text" width="50%" height={12} />
-                  </div>
-                  <Skeleton variant="rectangular" width={28} height={28} className="rounded-lg" />
+          <div className="divide-y divide-[var(--color-border-subtle)] border-t border-b border-[var(--color-border-subtle)]">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="py-3.5 flex items-center justify-between gap-4">
+                <div className="space-y-1.5 w-1/3">
+                  <Skeleton variant="text" width="35%" height={16} />
+                  <Skeleton variant="text" width="75%" height={12} />
                 </div>
-                <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
-                  <Skeleton variant="text" width="35%" height={20} />
-                  <Skeleton variant="text" width="25%" height={14} />
+                <div className="w-1/4">
+                  <Skeleton variant="text" width="50%" height={14} />
+                </div>
+                <div className="w-1/4 text-right space-y-1 flex flex-col items-end">
+                  <Skeleton variant="text" width="45%" height={16} />
+                  <Skeleton variant="text" width="25%" height={12} />
                 </div>
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-3 shadow-xs">
-            <AlertCircle className="w-6 h-6 text-red-600 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-900">Market Directory Unavailable</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">{error}</p>
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-lg p-8 text-center space-y-3">
+            <AlertCircle className="w-6 h-6 text-red-500 mx-auto" />
+            <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Market Directory Unavailable</h3>
+            <p className="text-xs text-[var(--color-text-secondary)] max-w-sm mx-auto">{error}</p>
             <button
               type="button"
               onClick={() => fetchInstruments()}
-              className="px-4 py-2 bg-[#00D4AA] text-[#0F172A] rounded-xl text-xs font-bold cursor-pointer hover:bg-teal-400 shadow-xs"
+              className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-accent-text)] rounded-lg text-xs font-bold cursor-pointer hover:brightness-105"
             >
               Retry Connection
             </button>
@@ -756,265 +733,176 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
           />
         ) : (
           <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {instrumentsData.items.map((item) => {
-              const quote = item.quote;
-              const isWatchlisted = watchlistIds.has(item.canonicalId);
-              const isPos = (quote?.changePct ?? 0) >= 0;
-              const curr = item.currency === 'USD' ? '$' : (item.currency === 'TWD' ? 'NT$' : (item.currency === 'GBP' ? '£' : (item.currency === 'EUR' ? '€' : '₹')));
-              const isMf = item.assetType === 'MUTUAL_FUND';
-              const isEtf = item.assetType === 'ETF';
-              const displayNav = item.nav ?? quote?.price;
-              const displayPrice = quote?.price;
-              const hasPrice = displayPrice !== null && displayPrice !== undefined;
-              const hasNav = displayNav !== null && displayNav !== undefined;
+          <div className="overflow-x-auto border-t border-b border-[var(--color-border-subtle)]">
+            <table className="w-full text-left text-xs min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[var(--color-border-subtle)] text-[var(--color-text-muted)] font-mono uppercase text-[10px] tracking-wider">
+                  <th className="py-3 px-3.5 font-semibold">Instrument & Identifier</th>
+                  <th className="py-3 px-3 font-semibold">Asset Class</th>
+                  <th className="py-3 px-3 font-semibold">Exchange</th>
+                  <th className="py-3 px-3 font-semibold text-right">Price / NAV</th>
+                  <th className="py-3 px-3 font-semibold text-right">24h Change</th>
+                  <th className="py-3 px-3 font-semibold">Analytical Signal</th>
+                  <th className="py-3 px-3.5 font-semibold text-right">Watchlist</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border-subtle)]">
+                {instrumentsData.items.map((item) => {
+                  const quote = item.quote;
+                  const isWatchlisted = watchlistIds.has(item.canonicalId);
+                  const isPos = (quote?.changePct ?? 0) >= 0;
+                  const curr = item.currency === 'USD' ? '$' : (item.currency === 'TWD' ? 'NT$' : (item.currency === 'GBP' ? '£' : (item.currency === 'EUR' ? '€' : '₹')));
+                  const isMf = item.assetType === 'MUTUAL_FUND';
+                  const isEtf = item.assetType === 'ETF';
+                  const displayNav = item.nav ?? quote?.price;
+                  const displayPrice = quote?.price;
+                  const hasPrice = displayPrice !== null && displayPrice !== undefined;
+                  const hasNav = displayNav !== null && displayNav !== undefined;
 
-              // AI Signal Badge & Risk Attributes (Long-term signal primary)
-              const signal = item.signalBadge?.long_term_signal || item.signalBadge?.signal || item.signal || 'HOLD';
-              const isInsufficient = signal === 'INSUFFICIENT DATA';
-              const confidence = isInsufficient ? 0 : (item.signalBadge?.confidence ?? item.confidence ?? 75);
-              const riskScore = isInsufficient ? 'UNKNOWN' : (item.signalBadge?.riskScore || item.riskScore || 'MEDIUM');
+                  const signal = item.signalBadge?.long_term_signal || item.signalBadge?.signal || item.signal || 'HOLD';
+                  const isInsufficient = signal === 'INSUFFICIENT DATA';
+                  const confidence = isInsufficient ? 0 : (item.signalBadge?.confidence ?? item.confidence ?? 75);
 
-              // User Portfolio Integration
-              const symUpper = (item.symbol || '').toUpperCase();
-              const tickerUpper = (item.ticker || '').toUpperCase();
-              const nameUpper = (item.name || '').toUpperCase();
-              const isOwned = Boolean(userOwnedMap.has(symUpper) || userOwnedMap.has(tickerUpper) || userOwnedMap.has(nameUpper));
-              const ownedInfo = userOwnedMap.get(symUpper) || userOwnedMap.get(tickerUpper) || userOwnedMap.get(nameUpper);
+                  const symUpper = (item.symbol || '').toUpperCase();
+                  const tickerUpper = (item.ticker || '').toUpperCase();
+                  const nameUpper = (item.name || '').toUpperCase();
+                  const isOwned = Boolean(userOwnedMap.has(symUpper) || userOwnedMap.has(tickerUpper) || userOwnedMap.has(nameUpper));
+                  const ownedInfo = userOwnedMap.get(symUpper) || userOwnedMap.get(tickerUpper) || userOwnedMap.get(nameUpper);
 
-              // Calculate Suggested Action based on institutional signal
-              let suggestedAction = 'HOLD';
-              if (signal === 'STRONG BUY') suggestedAction = 'BUY MORE';
-              else if (signal === 'BUY') suggestedAction = 'ACCUMULATE';
-              else if (signal === 'HOLD') suggestedAction = 'HOLD';
-              else if (signal === 'SELL') suggestedAction = 'REDUCE';
-              else if (signal === 'STRONG SELL') suggestedAction = 'EXIT';
-              else if (signal === 'INSUFFICIENT DATA') suggestedAction = 'MONITOR';
+                  const getSignalColor = (sig: string) => {
+                    switch (sig) {
+                      case 'STRONG BUY':
+                        return 'bg-emerald-950 text-emerald-300 border-emerald-700';
+                      case 'BUY':
+                        return 'bg-emerald-600 text-white border-emerald-500';
+                      case 'HOLD':
+                        return 'bg-blue-600 text-white border-blue-500';
+                      case 'SELL':
+                        return 'bg-amber-600 text-white border-amber-500';
+                      case 'STRONG SELL':
+                        return 'bg-red-600 text-white border-red-500';
+                      case 'INSUFFICIENT DATA':
+                        return 'bg-slate-200 text-slate-700 border-slate-300';
+                      default:
+                        return 'bg-slate-700 text-white border-slate-600';
+                    }
+                  };
 
-              // Exact institutional color mapping
-              const getSignalColor = (sig: string) => {
-                switch (sig) {
-                  case 'STRONG BUY':
-                    return 'bg-emerald-950 text-emerald-300 border-emerald-700';
-                  case 'BUY':
-                    return 'bg-emerald-600 text-white border-emerald-500';
-                  case 'HOLD':
-                    return 'bg-blue-600 text-white border-blue-500';
-                  case 'SELL':
-                    return 'bg-amber-600 text-white border-amber-500';
-                  case 'STRONG SELL':
-                    return 'bg-red-600 text-white border-red-500';
-                  case 'INSUFFICIENT DATA':
-                    return 'bg-slate-200 text-slate-700 border-slate-300';
-                  default:
-                    return 'bg-slate-700 text-white border-slate-600';
-                }
-              };
+                  return (
+                    <tr
+                      key={item.canonicalId}
+                      onClick={() => handleOpenDetail(item)}
+                      className="hover:bg-[var(--color-surface-soft)]/60 cursor-pointer transition-colors group"
+                    >
+                      {/* 1. Instrument / Identifier */}
+                      <td className="py-3 px-3.5 max-w-[280px]">
+                        <div className="flex items-center gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors font-mono text-xs sm:text-sm">
+                                {item.symbol}
+                              </span>
+                              {isOwned && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[var(--color-accent)]/15 text-[var(--color-accent)] border border-[var(--color-accent)]/30 font-semibold">
+                                  Portfolio {ownedInfo?.weight ? `${ownedInfo.weight}%` : ''}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-[var(--color-text-secondary)] truncate" title={item.name}>
+                              {item.name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-              const getActionColor = (act: string) => {
-                switch (act) {
-                  case 'BUY MORE':
-                    return 'bg-emerald-900 text-emerald-200 border-emerald-700';
-                  case 'ACCUMULATE':
-                    return 'bg-emerald-700 text-emerald-100 border-emerald-600';
-                  case 'HOLD':
-                    return 'bg-blue-700 text-blue-100 border-blue-600';
-                  case 'REDUCE':
-                    return 'bg-amber-700 text-amber-100 border-amber-600';
-                  case 'EXIT':
-                    return 'bg-red-700 text-red-100 border-red-600';
-                  default:
-                    return 'bg-slate-700 text-slate-200 border-slate-600';
-                }
-              };
-
-              // Volume formatting
-              const rawVol = quote?.volume;
-              let formattedVol = '—';
-              if (rawVol && !isNaN(Number(rawVol)) && Number(rawVol) > 0) {
-                const v = Number(rawVol);
-                if (v >= 1e7) formattedVol = `${(v / 1e7).toFixed(1)}Cr`;
-                else if (v >= 1e6) formattedVol = `${(v / 1e6).toFixed(1)}M`;
-                else if (v >= 1e3) formattedVol = `${(v / 1e3).toFixed(0)}K`;
-                else formattedVol = v.toLocaleString();
-              }
-
-              return (
-                <div
-                  key={item.canonicalId}
-                  onClick={() => handleOpenDetail(item)}
-                  className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between gap-3 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all shadow-xs group"
-                >
-                  {/* Top Row: Symbol, Badges, Watchlist */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* 2. Asset Class */}
+                      <td className="py-3 px-3">
                         <Badge 
                           variant={isMf ? 'purple' as any : isEtf ? 'blue' : 'teal'} 
                           size="sm"
                         >
                           {item.assetType.replace('_', ' ')}
                         </Badge>
-                        <span className="text-[10px] font-mono text-slate-500 uppercase font-semibold">
-                          {item.exchange}
-                        </span>
-                        {item.country && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
-                            {item.country}
-                          </span>
-                        )}
-                        {item.plan && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-100 font-medium">
-                            {item.plan}
-                          </span>
-                        )}
-                        {item.option && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-100 font-medium">
-                            {item.option}
-                          </span>
-                        )}
-                      </div>
+                      </td>
 
-                      <h3 className="text-sm font-bold text-slate-900 truncate max-w-[220px] group-hover:text-teal-700 transition-colors" title={item.name}>
-                        {item.name}
-                      </h3>
+                      {/* 3. Exchange & Country */}
+                      <td className="py-3 px-3 font-mono text-xs text-[var(--color-text-secondary)]">
+                        <span>{item.exchange}</span>
+                        {item.country && <span className="text-[10px] text-[var(--color-text-muted)] ml-1">({item.country})</span>}
+                      </td>
 
-                      <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                        <span className="font-semibold text-slate-700">{item.symbol}</span>
-                        {item.isin && (
-                          <span className="text-[10.5px] text-slate-400">ISIN: {item.isin}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleWatchlist(item.canonicalId);
-                      }}
-                      className={`p-2 rounded-xl border text-xs cursor-pointer transition-all ${
-                        isWatchlisted
-                          ? 'bg-teal-50 border-teal-300 text-teal-700 shadow-2xs'
-                          : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-                      }`}
-                      aria-label={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                      title={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                    >
-                      {isWatchlisted ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                    </button>
-                  </div>
-
-                  {/* AI Signal Badge & Confidence Row */}
-                  <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold font-mono tracking-wide uppercase border shadow-2xs ${getSignalColor(signal)}`}>
-                        {signal}
-                      </span>
-                      <span className="text-[11px] font-mono text-slate-600">
-                        Conf: <strong className="text-slate-900">{confidence}%</strong>
-                      </span>
-                    </div>
-
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border font-mono ${
-                      riskScore === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
-                      riskScore === 'LOW' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      Risk: {riskScore}
-                    </span>
-                  </div>
-
-                  {/* Price, Change & Volume Row */}
-                  <div className="flex items-baseline justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
-                        {isMf ? 'Latest NAV' : 'Price'}
-                      </span>
-                      <div className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                      {/* 4. Price / NAV */}
+                      <td className="py-3 px-3 text-right font-mono font-bold text-xs sm:text-sm text-[var(--color-text-primary)]">
                         {isMf ? (
-                          hasNav ? `₹${displayNav?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'NAV Unavailable'
+                          hasNav ? `₹${displayNav?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'
                         ) : (
-                          hasPrice ? `${curr}${displayPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'On Request'
+                          hasPrice ? `${curr}${displayPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'
                         )}
-                      </div>
-                    </div>
+                      </td>
 
-                    <div className="text-right">
-                      {isMf ? (
-                        <div className="text-[10px] font-mono text-slate-500">
-                          {item.navDate || quote?.asOf ? `As of ${item.navDate || quote?.asOf}` : 'AMFI NAV'}
+                      {/* 5. 24h Change */}
+                      <td className="py-3 px-3 text-right font-mono text-xs font-semibold">
+                        {quote?.changePct !== null && quote?.changePct !== undefined ? (
+                          <span className={isPos ? 'text-emerald-500' : 'text-rose-500'}>
+                            {isPos ? '+' : ''}{quote.changePct.toFixed(2)}%
+                          </span>
+                        ) : (
+                          <span className="text-[var(--color-text-muted)]">—</span>
+                        )}
+                      </td>
+
+                      {/* 6. Analytical Signal */}
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wide uppercase border ${getSignalColor(signal)}`}>
+                            {signal}
+                          </span>
+                          {!isInsufficient && (
+                            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+                              {confidence}%
+                            </span>
+                          )}
                         </div>
-                      ) : quote?.changePct !== null && quote?.changePct !== undefined ? (
-                        <div className={`text-xs font-mono font-bold ${isPos ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {isPos ? '+' : ''}{quote.changePct.toFixed(2)}%
-                        </div>
-                      ) : (
-                        <span className="text-[10px] font-mono text-slate-400 uppercase">
-                          {quote?.freshness || 'HISTORICAL'}
-                        </span>
-                      )}
-                      {!isMf && (
-                        <div className="text-[10.5px] font-mono text-slate-500">
-                          Vol: <strong className="text-slate-700">{formattedVol}</strong>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      </td>
 
-                  {/* Portfolio Integration Banner if owned by user */}
-                  {isOwned && (
-                    <div className="p-2 rounded-xl bg-teal-50/70 border border-teal-200 text-xs space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-ping" />
-                          <span>Owned in Portfolio</span>
-                        </span>
-                        <span className={`px-2 py-0.2 rounded text-[10px] font-bold font-mono border ${getActionColor(suggestedAction)}`}>
-                          {suggestedAction}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] text-teal-800">
-                        <span>Weight: <strong>{ownedInfo?.weight || 0}%</strong></span>
-                        <span className="truncate max-w-[120px] text-[10.5px]">{ownedInfo?.role || 'Core Asset'}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Footer Action & Freshness Strip */}
-                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5">
-                      <Badge 
-                        variant={getFreshnessVariant(quote?.status, quote?.freshness)} 
-                        size="sm"
-                        showDot
-                      >
-                        {quote?.status ?? quote?.freshness ?? 'LATEST_AVAILABLE'}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-teal-700 font-semibold group-hover:translate-x-0.5 transition-transform">
-                      <span>Inspect & Research</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                      {/* 7. Watchlist Action */}
+                      <td className="py-3 px-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleWatchlist(item.canonicalId);
+                          }}
+                          className={`p-1.5 rounded-lg border text-xs cursor-pointer transition-all inline-flex items-center justify-center ${
+                            isWatchlisted
+                              ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)] text-[var(--color-accent)]'
+                              : 'bg-[var(--color-surface-soft)] border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                          }`}
+                          aria-label={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                          title={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                        >
+                          {isWatchlisted ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           {/* Compliance Disclaimer Banner */}
-          <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-[11px] text-slate-500 leading-relaxed">
-            Signals are AI-generated analytical insights based on market data, technical indicators and fundamental metrics. They are not financial advice.
+          <div className="mt-4 p-3 bg-[var(--color-surface-soft)] border border-[var(--color-border)] rounded-lg text-center text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
+            Market signals are quantitative analytical indicators based on price history, technical models, and fundamental data. They do not constitute financial advice.
           </div>
         </>
         )}
 
         {/* 4. SERVER-SIDE PAGINATION CONTROLS */}
         {!error && !isLoading && totalPages > 1 && selectedCategory !== 'WATCHLIST' && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200 text-xs">
-            <span className="text-slate-500">
-              Showing page <strong className="text-slate-900 font-mono">{page}</strong> of <strong className="text-slate-900 font-mono">{totalPages}</strong> ({totalResults.toLocaleString()} items)
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[var(--color-border)] text-xs">
+            <span className="text-[var(--color-text-secondary)]">
+              Showing page <strong className="text-[var(--color-text-primary)] font-mono">{page}</strong> of <strong className="text-[var(--color-text-primary)] font-mono">{totalPages}</strong> ({totalResults.toLocaleString()} items)
             </span>
 
             <div className="flex items-center gap-2">
@@ -1022,7 +910,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 shadow-2xs transition-colors"
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--color-card)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-soft)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Previous</span>
@@ -1045,8 +933,8 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                       onClick={() => setPage(pageNum)}
                       className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
                         page === pageNum
-                          ? 'bg-[#00D4AA] text-[#0F172A] shadow-2xs'
-                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                          ? 'bg-[var(--color-accent)] text-[var(--color-accent-text)]'
+                          : 'bg-[var(--color-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]'
                       }`}
                     >
                       {pageNum}
@@ -1059,7 +947,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 shadow-2xs transition-colors"
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--color-card)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-soft)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 transition-colors"
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -1067,7 +955,7 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* 5. INSTRUMENT DETAIL RESEARCH TERMINAL MODAL */}
       <InstrumentDetailModal

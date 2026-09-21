@@ -40,13 +40,13 @@ export function generateAdvisoryPdfReport({
   <meta charset="UTF-8">
   <title>SmartVest AI — Strategic Financial Advisory Report</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
     
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     body {
       background-color: #ffffff;
@@ -140,6 +140,8 @@ export function generateAdvisoryPdfReport({
       font-size: 18px;
       font-weight: 800;
       color: #0f172a;
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
     }
     .card-value.highlight {
       color: #059669;
@@ -205,7 +207,7 @@ export function generateAdvisoryPdfReport({
     <div class="brand">
       <span class="logo-badge">SmartVest</span>
       <div>
-        <h1>SmartVest AI Advisory Blueprint</h1>
+        <h1>SmartVest Strategic Advisory Blueprint</h1>
         <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Quantitative Multi-Asset Strategic Allocation Blueprint</div>
       </div>
     </div>

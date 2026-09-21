@@ -49,23 +49,23 @@ const CustomChartTooltip = ({
   }
 
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-xl p-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.10)] space-y-1 text-xs pointer-events-none min-w-[140px]">
-      <div className="text-[11px] font-semibold text-[#64748B] border-b border-[#F1F5F9] pb-1 flex items-center justify-between">
+    <div className="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-lg p-2.5 shadow-md space-y-1 text-xs pointer-events-none min-w-[140px]">
+      <div className="text-[11px] font-semibold text-[var(--color-text-secondary)] border-b border-[var(--color-border-subtle)] pb-1 flex items-center justify-between">
         <span>{formattedDate}</span>
-        <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-[#F8FAFC] text-[#00A884] font-bold border border-[#E2E8F0]">
+        <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-[var(--color-surface-3)] text-[var(--color-accent-strong)] font-bold border border-[var(--color-border)]">
           {isMutualFund ? 'NAV' : 'Close'}
         </span>
       </div>
       <div className="flex items-baseline justify-between gap-3 pt-0.5">
-        <span className="text-[#64748B] font-medium text-xs">{isMutualFund ? 'NAV:' : 'Price:'}</span>
-        <span className="font-mono font-bold text-[#0F172A] text-xs">
+        <span className="text-[var(--color-text-secondary)] font-medium text-xs">{isMutualFund ? 'NAV:' : 'Price:'}</span>
+        <span className="font-mono font-bold text-[var(--color-text-primary)] text-xs">
           {currency}{val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
       {changeFromStart !== null && (
-        <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-0.5">
+        <div className="flex items-center justify-between text-[11px] text-[var(--color-text-secondary)] pt-0.5">
           <span>Return:</span>
-          <span className={`font-mono font-bold ${changeFromStart >= 0 ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
+          <span className={`font-mono font-bold ${changeFromStart >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
             {changeFromStart >= 0 ? '+' : ''}{changeFromStart.toFixed(2)}%
           </span>
         </div>
@@ -153,14 +153,14 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
   const isStale = candles?.freshness === 'STALE';
 
   return (
-    <div className={`w-full bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 flex flex-col justify-between space-y-2 ${className}`}>
+    <div className={`w-full bg-[var(--color-surface-2)] rounded-lg border border-[var(--color-border-subtle)] p-3 flex flex-col justify-between space-y-2 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[#E2E8F0]">
+      <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[var(--color-border-subtle)]">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-[#0F172A]">
+          <span className="text-xs font-bold text-[var(--color-text-primary)]">
             {isMutualFund ? 'NAV Trajectory' : 'Price Trajectory'}
           </span>
-          <span className="text-[11px] text-[#64748B] font-mono font-medium">
+          <span className="text-[11px] text-[var(--color-text-secondary)] font-mono font-medium">
             {timeframe}
           </span>
           {isStale && (
@@ -171,7 +171,7 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
         </div>
 
         {/* Timeframe Switcher */}
-        <div className="flex items-center bg-white p-0.5 rounded-lg border border-[#E2E8F0]">
+        <div className="flex items-center bg-[var(--color-surface-3)] p-0.5 rounded-lg border border-[var(--color-border)]">
           {(['1Y', '3Y', '5Y'] as const).map((tf) => (
             <button
               key={tf}
@@ -179,8 +179,8 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
               onClick={() => setTimeframe(tf)}
               className={`px-2 py-0.5 rounded-md text-[11px] font-mono transition-colors cursor-pointer ${
                 timeframe === tf
-                  ? 'bg-[#00D4AA] text-[#050816] font-bold shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-[var(--color-accent)] text-[var(--color-accent-text)] font-bold shadow-xs'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               {tf}
@@ -191,17 +191,17 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
 
       {/* Metrics Row */}
       {stats.periodReturnPct !== null && stats.startValue !== null && stats.endValue !== null && (
-        <div className="flex items-center justify-between text-xs text-[#0F172A] font-mono">
+        <div className="flex items-center justify-between text-xs text-[var(--color-text-primary)] font-mono">
           <div className="flex items-center gap-1">
-            <span className="text-[#64748B] font-sans text-[11px]">Range:</span>
+            <span className="text-[var(--color-text-secondary)] font-sans text-[11px]">Range:</span>
             <span>{currency}{stats.startValue.toLocaleString('en-IN', { maximumFractionDigits: 1 })}</span>
-            <span className="text-[#94A3B8]">→</span>
+            <span className="text-[var(--color-text-muted)]">→</span>
             <span className="font-bold">{currency}{stats.endValue.toLocaleString('en-IN', { maximumFractionDigits: 1 })}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-[#64748B] font-sans text-[11px]">Return:</span>
-            <span className={`font-bold ${stats.periodReturnPct >= 0 ? 'text-[#00C853]' : 'text-[#FF5252]'}`}>
+            <span className="text-[var(--color-text-secondary)] font-sans text-[11px]">Return:</span>
+            <span className={`font-bold ${stats.periodReturnPct >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
               {stats.periodReturnPct >= 0 ? '+' : ''}{stats.periodReturnPct.toFixed(2)}%
             </span>
           </div>
@@ -211,20 +211,20 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
       {/* Chart Canvas Area */}
       <div className="w-full relative h-[145px] flex items-center justify-center">
         {isLoading ? (
-          <div className="flex items-center gap-2 text-[#64748B] text-xs">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#00D4AA]" />
+          <div className="flex items-center gap-2 text-[var(--color-text-secondary)] text-xs">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-[var(--color-accent-strong)]" />
             <span>Loading {timeframe} data...</span>
           </div>
         ) : error || chartData.length < 2 ? (
-          <div className="flex flex-col items-center justify-center p-3 text-center text-[#64748B] space-y-1">
+          <div className="flex flex-col items-center justify-center p-3 text-center text-[var(--color-text-secondary)] space-y-1">
             <AlertCircle className="w-4 h-4 text-amber-500" />
-            <span className="text-xs font-medium text-[#0F172A]">
+            <span className="text-xs font-medium text-[var(--color-text-primary)]">
               {error || 'Historical observations unavailable'}
             </span>
             <button
               onClick={() => refetch()}
               disabled={isLoading}
-              className="text-xs text-[#00A884] hover:underline font-bold cursor-pointer"
+              className="text-xs text-[var(--color-accent-strong)] hover:underline font-bold cursor-pointer"
             >
               Retry
             </button>
@@ -241,12 +241,12 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
                   <stop offset="95%" stopColor={color} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" vertical={false} />
               <XAxis 
                 dataKey="date" 
                 tickLine={false} 
-                axisLine={{ stroke: '#E2E8F0' }}
-                tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'monospace' }}
+                axisLine={{ stroke: 'var(--color-border-subtle)' }}
+                tick={{ fill: 'var(--color-text-muted)', fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
                 tickFormatter={(val: string) => {
                   try {
                     const dt = new Date(val);
@@ -262,7 +262,7 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
                 domain={yDomain}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#64748B', fontSize: 10, fontFamily: 'monospace' }}
+                tick={{ fill: 'var(--color-text-muted)', fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
                 tickFormatter={(val: number) => {
                   if (val >= 1000) return `${currency}${(val / 1000).toFixed(1)}k`;
                   return `${currency}${val.toFixed(0)}`;
@@ -293,9 +293,9 @@ export const HistoricalPerformanceChart: React.FC<HistoricalPerformanceChartProp
       </div>
 
       {/* Source Footer */}
-      <div className="flex items-center justify-between text-[10.5px] text-[#94A3B8] pt-1 border-t border-[#E2E8F0]">
+      <div className="flex items-center justify-between text-[10.5px] text-[var(--color-text-muted)] pt-1 border-t border-[var(--color-border-subtle)]">
         <div className="flex items-center gap-1">
-          <Database className="w-3 h-3 text-[#94A3B8]" />
+          <Database className="w-3 h-3 text-[var(--color-text-muted)]" />
           <span>Source: {candles?.source || (isMutualFund ? 'AMFI' : 'NSE')}</span>
         </div>
         <span className="italic">Advisory illustration</span>

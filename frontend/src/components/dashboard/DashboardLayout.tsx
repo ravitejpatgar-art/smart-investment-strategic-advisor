@@ -12,7 +12,9 @@ import {
   X,
   Layers,
   LogOut,
-  GraduationCap
+  GraduationCap,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isAuthEnabled } from '../../services/firebase';
@@ -21,6 +23,8 @@ import { FloatingAIAssistantButton } from '../assistant/FloatingAIAssistantButto
 import { generateAdvisoryPdfReport } from '../../services/pdfReportGenerator';
 import { BrandLogo } from '../common/BrandLogo';
 import { VestiqMark } from '../common/VestiqLogo';
+import { ThemeToggle } from '../common/ThemeToggle';
+import { AmbientCursorGlow } from '../common/AmbientCursorGlow';
 
 export const formatInvestorRiskLabel = (risk?: string): string => {
   if (!risk) return 'Medium Investor';
@@ -55,6 +59,30 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        return localStorage.getItem('smartvest-sidebar-collapsed') === 'true';
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return false;
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+          localStorage.setItem('smartvest-sidebar-collapsed', String(next));
+        }
+      } catch {
+        // Ignore
+      }
+      return next;
+    });
+  };
 
   const navItems: { id: ActiveNavTab; label: string; icon: React.ElementType; desc: string }[] = [
     { id: 'dashboard',       label: 'Wealth Overview',  icon: LayoutDashboard, desc: 'Portfolio & KPIs' },
@@ -96,88 +124,217 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'R';
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#F8F9FA] text-[#0F172A] font-sans">
+    <div className="h-screen flex overflow-hidden bg-[var(--color-bg)] text-[var(--color-text-primary)] font-sans relative">
+      <AmbientCursorGlow />
 
       {/* ================================================================
-          MODERN LIGHT FINTECH SIDEBAR — Desktop
+          THEME-AWARE INSTITUTIONAL SIDEBAR — Desktop
       ================================================================ */}
       <aside
-        className="hidden lg:flex flex-col w-[240px] shrink-0 h-full bg-white border-r border-[#E2E8F0] shadow-xs"
+        className={`hidden lg:flex flex-col shrink-0 h-full bg-[var(--color-surface)] border-r border-[var(--color-border)] shadow-xs transition-[width] duration-250 ease-in-out motion-reduce:transition-none ${
+          isSidebarCollapsed ? 'w-[76px]' : 'w-[260px]'
+        }`}
+        aria-label="Sidebar Navigation"
       >
         {/* Brand Header */}
-        <div className="px-5 py-4 border-b border-[#F1F5F9]">
-          <BrandLogo size="md" subtitleText="SMARTVEST ADVISOR" />
+        <div
+          className={`border-b border-[var(--color-border-subtle)] flex items-center min-h-[57px] ${
+            isSidebarCollapsed ? 'flex-col justify-center py-3 px-1 gap-1.5' : 'justify-between px-4 py-3.5'
+          }`}
+        >
+          {isSidebarCollapsed ? (
+            <>
+              <BrandLogo size="sm" variant="icon" onClick={() => setActiveView('dashboard')} />
+              <button
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                aria-expanded="false"
+                title="Expand sidebar"
+                className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] border border-transparent hover:border-[var(--color-border-subtle)] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="overflow-hidden flex-1">
+                <BrandLogo size="md" variant="horizontal" subtitleText="SMARTVEST ADVISOR" onClick={() => setActiveView('dashboard')} />
+              </div>
+              <button
+                onClick={toggleSidebar}
+                aria-label="Collapse sidebar"
+                aria-expanded="true"
+                title="Collapse sidebar"
+                className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] border border-transparent hover:border-[var(--color-border-subtle)] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] shrink-0"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-none">
-          <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[#94A3B8]">
-            PORTFOLIO MODULES
-          </div>
+        <nav
+          className={`flex-1 overflow-y-auto space-y-1 scrollbar-none ${
+            isSidebarCollapsed ? 'px-2 py-3' : 'px-3 py-4'
+          }`}
+        >
+          {!isSidebarCollapsed && (
+            <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[var(--color-text-muted)] animate-fade-in">
+              PORTFOLIO MODULES
+            </div>
+          )}
 
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
             return (
-              <button
-                key={item.id}
-                onClick={() => setActiveView(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-teal-500 ${
-                  isActive
-                    ? 'bg-teal-50 text-teal-900 border border-teal-200/80 font-bold shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 border border-transparent'
-                }`}
-              >
-                <Icon className={`w-4 h-4 shrink-0 transition-colors duration-150 ${isActive ? 'text-teal-700' : 'text-[#94A3B8]'}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate">{item.label}</div>
-                </div>
-                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]" />}
-              </button>
+              <div key={item.id} className="relative group">
+                <button
+                  onClick={() => setActiveView(item.id)}
+                  title={item.label}
+                  aria-label={item.label}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`w-full flex items-center rounded-xl text-[13.5px] font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] ${
+                    isSidebarCollapsed
+                      ? 'justify-center p-2.5'
+                      : 'gap-3 px-3 py-2.5'
+                  } ${
+                    isActive
+                      ? 'bg-[var(--accent-teal-dim)] text-[var(--text-accent)] border border-[var(--border-accent)] font-bold shadow-2xs'
+                      : `text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] ${!isSidebarCollapsed ? 'hover:translate-x-0.5 motion-reduce:hover:translate-x-0' : ''} border border-transparent`
+                  }`}
+                >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors duration-150 ${
+                      isActive ? 'text-[var(--text-accent)]' : 'text-[var(--color-text-muted)]'
+                    }`}
+                  />
+                  {!isSidebarCollapsed && (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate">{item.label}</div>
+                      </div>
+                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />}
+                    </>
+                  )}
+                </button>
+
+                {/* Accessible Floating Tooltip in Collapsed Mode */}
+                {isSidebarCollapsed && (
+                  <div
+                    role="tooltip"
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-semibold whitespace-nowrap shadow-lg opacity-0 scale-98 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-focus-within:opacity-100 group-focus-within:scale-100 transition-all duration-150 z-50 motion-reduce:transition-none motion-reduce:scale-100"
+                  >
+                    <span>{item.label}</span>
+                  </div>
+                )}
+              </div>
             );
           })}
 
-          {/* AI Intelligence Workspace Link */}
-          <div className="pt-4 mt-4 border-t border-[#F1F5F9]">
-            <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[#94A3B8]">
-              INTELLIGENCE
+          {/* Advisory Workspace Link */}
+          <div className="pt-3 mt-3 border-t border-[var(--color-border-subtle)]">
+            {!isSidebarCollapsed && (
+              <div className="text-[10px] font-bold tracking-wider uppercase px-2.5 mb-2 text-[var(--color-text-muted)] animate-fade-in">
+                ADVISORY
+              </div>
+            )}
+            <div className="relative group">
+              <button
+                onClick={() => setActiveView('ai')}
+                title="VestIQ Advisory"
+                aria-label="VestIQ Advisory"
+                className={`w-full flex items-center rounded-xl text-[13.5px] font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] ${
+                  isSidebarCollapsed
+                    ? 'justify-center p-2.5'
+                    : 'gap-3 px-3 py-2.5'
+                } ${
+                  activeView === 'ai' || activeView === 'vestiq'
+                    ? 'bg-[var(--accent-teal-dim)] text-[var(--text-accent)] border border-[var(--border-accent)] font-bold shadow-2xs'
+                    : `text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] ${!isSidebarCollapsed ? 'hover:translate-x-0.5 motion-reduce:hover:translate-x-0' : ''} border border-transparent`
+                }`}
+              >
+                <VestiqMark size={16} className="shrink-0" />
+                {!isSidebarCollapsed && <span>VestIQ Advisory</span>}
+              </button>
+
+              {/* Accessible Floating Tooltip in Collapsed Mode */}
+              {isSidebarCollapsed && (
+                <div
+                  role="tooltip"
+                  className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-semibold whitespace-nowrap shadow-lg opacity-0 scale-98 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-focus-within:opacity-100 group-focus-within:scale-100 transition-all duration-150 z-50 motion-reduce:transition-none motion-reduce:scale-100"
+                >
+                  <span>VestIQ Advisory</span>
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => setActiveView('ai')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-teal-500 ${
-                activeView === 'ai' || activeView === 'vestiq'
-                  ? 'bg-teal-50 text-teal-900 border border-teal-200/80 font-bold shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 border border-transparent'
-              }`}
-            >
-              <VestiqMark size={16} className="shrink-0" />
-              <span>VestIQ Strategic AI</span>
-            </button>
           </div>
         </nav>
 
         {/* Sidebar Footer — Client Account Card */}
-        <div className="p-3 border-t border-[#F1F5F9] bg-slate-50/70 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs min-w-0 flex-1">
-            <div className="w-7 h-7 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-              {userInitial}
+        <div
+          className={`p-3 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] ${
+            isSidebarCollapsed ? 'flex flex-col items-center gap-2 px-2' : 'flex items-center justify-between gap-2'
+          }`}
+        >
+          {isSidebarCollapsed ? (
+            <div className="relative group flex flex-col items-center gap-2 w-full">
+              <div
+                className="w-8 h-8 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-text)] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs cursor-default"
+                title={`${user?.name || 'Investor'} (${formatInvestorRiskLabel(user?.riskTolerance)})`}
+              >
+                {userInitial}
+              </div>
+
+              {/* Tooltip for profile in collapsed state */}
+              <div
+                role="tooltip"
+                className="absolute left-full ml-3 bottom-0 px-2.5 py-1 rounded-md bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs font-semibold whitespace-nowrap shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50"
+              >
+                <div>{user?.name || 'Investor'}</div>
+                <div className="text-[10px] text-[var(--color-text-muted)]">{formatInvestorRiskLabel(user?.riskTolerance)}</div>
+              </div>
+
+              {authActive && (
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    setActiveView('landing');
+                  }}
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                  className="p-2 rounded-lg bg-[var(--color-surface)] hover:bg-red-500/10 border border-[var(--color-border)] hover:border-red-400/40 text-[var(--color-text-muted)] hover:text-red-500 transition-all duration-150 active:scale-95 cursor-pointer shrink-0 shadow-2xs"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-[#0F172A] truncate">{user?.name || 'Investor'}</div>
-              <div className="text-[10px] text-[#64748B] truncate">{formatInvestorRiskLabel(user?.riskTolerance)}</div>
-            </div>
-          </div>
-          {authActive && (
-            <button
-              onClick={async () => {
-                await signOut();
-                setActiveView('landing');
-              }}
-              title="Sign Out"
-              className="p-2 rounded-xl bg-white hover:bg-red-50 border border-[#E2E8F0] hover:border-red-200 text-[#64748B] hover:text-red-600 transition-all duration-150 active:scale-95 cursor-pointer shrink-0 shadow-2xs"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+          ) : (
+            <>
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xs min-w-0 flex-1">
+                <div className="w-7 h-7 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-text)] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  {userInitial}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-[var(--color-text-primary)] truncate">{user?.name || 'Investor'}</div>
+                  <div className="text-[10px] text-[var(--color-text-muted)] truncate">{formatInvestorRiskLabel(user?.riskTolerance)}</div>
+                </div>
+              </div>
+              {authActive && (
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    setActiveView('landing');
+                  }}
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                  className="p-2 rounded-xl bg-[var(--color-surface)] hover:bg-red-500/10 border border-[var(--color-border)] hover:border-red-400/40 text-[var(--color-text-muted)] hover:text-red-500 transition-all duration-150 active:scale-95 cursor-pointer shrink-0 shadow-2xs"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </>
           )}
         </div>
       </aside>
@@ -188,22 +345,39 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Modern Clean TopBar */}
-        <header className="h-14 shrink-0 bg-white border-b border-[#E2E8F0] px-3 sm:px-4 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 z-20 shadow-xs">
+        <header className="h-14 shrink-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-3 sm:px-4 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 z-20 shadow-xs">
           {/* Mobile Menu Toggle & Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
-              className="lg:hidden p-2 rounded-lg bg-slate-50 border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] cursor-pointer active:scale-95 transition-all duration-150"
+              className="lg:hidden p-2 rounded-lg bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer active:scale-95 transition-all duration-150"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
 
+            <div className="lg:hidden shrink-0">
+              <BrandLogo size="sm" variant="icon" onClick={() => setActiveView('dashboard')} />
+            </div>
+
+            {/* Desktop Quick Toggle in Topbar when Collapsed */}
+            {isSidebarCollapsed && (
+              <button
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                aria-expanded="false"
+                title="Expand sidebar"
+                className="hidden lg:flex p-1.5 rounded-lg bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] shrink-0"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
+            )}
+
             <div className="min-w-0">
-              <h1 className="text-xs sm:text-sm md:text-base font-bold text-[#0F172A] tracking-tight truncate leading-none">
+              <h1 className="text-sm sm:text-base md:text-lg font-bold text-[var(--color-text-primary)] tracking-tight truncate leading-none">
                 {currentMeta.title}
               </h1>
-              <p className="text-[10px] sm:text-[11px] text-[#64748B] hidden sm:block truncate mt-0.5">
+              <p className="text-[11px] sm:text-xs text-[var(--color-text-secondary)] hidden sm:block truncate mt-1">
                 {currentMeta.subtitle}
               </p>
             </div>
@@ -211,12 +385,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
           {/* Right Action Tools */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Global Theme Toggle */}
+            <ThemeToggle variant="header" />
+
             {/* Currency Selector */}
-            <div className="flex items-center bg-slate-100 border border-[#E2E8F0] rounded-lg p-0.5 text-xs">
+            <div className="flex items-center bg-[var(--color-surface-3)] border border-[var(--color-border)] rounded-lg p-0.5 text-xs">
               <button
                 onClick={() => setCurrency('INR')}
                 className={`px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
-                  currency === 'INR' ? 'bg-white text-[#0F172A] shadow-2xs font-bold' : 'text-[#64748B] hover:text-[#0F172A]'
+                  currency === 'INR' ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-2xs font-bold border border-[var(--color-border-subtle)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                 }`}
               >
                 ₹ INR
@@ -224,7 +401,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <button
                 onClick={() => setCurrency('USD')}
                 className={`px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
-                  currency === 'USD' ? 'bg-white text-[#0F172A] shadow-2xs font-bold' : 'text-[#64748B] hover:text-[#0F172A]'
+                  currency === 'USD' ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-2xs font-bold border border-[var(--color-border-subtle)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                 }`}
               >
                 $ USD
@@ -236,9 +413,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               onClick={handleReanalyze}
               disabled={isReanalyzing}
               title="Recalculate Multi-Asset Blueprint"
-              className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[#475569] hover:text-[#0F172A] transition-all duration-150 cursor-pointer text-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-[var(--color-surface-3)] hover:bg-[var(--color-border-strong)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all duration-150 cursor-pointer text-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-teal-600' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-[var(--color-accent-strong)]' : ''}`} />
               <span className="hidden sm:inline text-[11px] font-semibold">Recalculate</span>
             </button>
 
@@ -247,19 +424,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               onClick={handleExportPdf}
               disabled={isExportingPdf}
               title="Export PDF Report"
-              className="p-1.5 sm:px-3 sm:py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[#475569] hover:text-[#0F172A] text-[11px] font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 sm:px-3 sm:py-1 rounded-lg bg-[var(--color-surface-3)] hover:bg-[var(--color-border-strong)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-[11px] font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FileText className="w-3.5 h-3.5 text-teal-600" />
+              <FileText className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">Export PDF</span>
-            </button>
-
-            {/* VestIQ Assistant Trigger */}
-            <button
-              onClick={() => setActiveView('ai')}
-              className="px-3 py-1.5 rounded-lg bg-[#00D4AA] hover:bg-teal-400 text-[#0F172A] text-[10.5px] sm:text-[11px] font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-            >
-              <VestiqMark size={14} className="shrink-0" />
-              <span>VestIQ AI</span>
             </button>
           </div>
         </header>
@@ -268,19 +436,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex animate-fade-in">
             <div
-              className="fixed inset-0 bg-black/40"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
               onClick={() => setMobileMenuOpen(false)}
             />
-            <div className="relative z-10 w-[280px] bg-white h-full p-4 flex flex-col justify-between shadow-2xl animate-slide-left">
+            <div className="relative z-10 w-[280px] bg-[var(--color-surface)] h-full p-4 flex flex-col justify-between shadow-2xl border-r border-[var(--color-border)] animate-slide-left">
               <div className="space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-                  <BrandLogo size="md" subtitleText="SMARTVEST" />
+                <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border-subtle)]">
+                  <BrandLogo size="md" subtitleText="SMARTVEST" onClick={() => { setActiveView('dashboard'); setMobileMenuOpen(false); }} />
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A]"
+                    className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   >
                     <X className="w-5 h-5" />
                   </button>
+                </div>
+
+                <div className="pt-1">
+                  <ThemeToggle variant="pill" />
                 </div>
 
                 <nav className="space-y-1">
@@ -296,11 +468,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                         }}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left ${
                           isActive
-                            ? 'bg-teal-50 text-teal-900 border border-teal-200 font-bold'
-                            : 'text-[#64748B] hover:bg-slate-100 hover:text-[#0F172A]'
+                            ? 'bg-[var(--accent-teal-dim)] text-[var(--text-accent)] border border-[var(--border-accent)] font-bold shadow-2xs'
+                            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-3)] hover:text-[var(--color-text-primary)]'
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${isActive ? 'text-teal-700' : 'text-[#94A3B8]'}`} />
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-[var(--text-accent)]' : 'text-[var(--color-text-muted)]'}`} />
                         <span>{item.label}</span>
                       </button>
                     );
@@ -308,14 +480,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </nav>
               </div>
 
-              <div className="pt-3 border-t border-[#E2E8F0]">
+              <div className="pt-3 border-t border-[var(--color-border-subtle)]">
                 {authActive && (
                   <button
                     onClick={async () => {
                       await signOut();
                       setActiveView('landing');
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-red-50 text-red-700 font-bold text-xs border border-red-200"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-red-500/10 text-red-500 font-bold text-xs border border-red-500/20"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign Out</span>
@@ -327,22 +499,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         )}
 
         {/* Content Wrapper */}
-        <main className="flex-1 overflow-y-auto bg-[#F8F9FA] p-3 sm:p-5 lg:p-6">
-          <div className="max-w-[1440px] mx-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto bg-[var(--color-bg)] p-3 sm:p-5 lg:p-6">
+          <div className="w-full min-w-0">
             {children}
           </div>
         </main>
 
       </div>
 
-      {/* Floating Assistant Drawer & Trigger */}
+      {/* Floating Assistant Drawer */}
       {isAdvisorOpen && (
         <AIAssistantDrawer
           onClose={() => setAdvisorOpen(false)}
         />
       )}
-      <FloatingAIAssistantButton />
 
+      {/* Floating Ask VestIQ Quick-Chat Shortcut */}
+      <FloatingAIAssistantButton />
     </div>
   );
 };
