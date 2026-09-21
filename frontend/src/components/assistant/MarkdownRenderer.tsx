@@ -39,12 +39,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
       if (firstMatch && firstMatch.index !== undefined && matchType) {
         if (firstMatch.index > 0) {
-          parts.push(<span key={keyIdx++}>{remaining.substring(0, firstMatch.index)}</span>);
+          parts.push(<span key={keyIdx++} className="text-[var(--color-text-primary)]">{remaining.substring(0, firstMatch.index)}</span>);
         }
 
         if (matchType === 'bold') {
           parts.push(
-            <strong key={keyIdx++} className="font-bold text-[#172033]">
+            <strong key={keyIdx++} className="font-bold text-[var(--color-text-primary)]">
               {firstMatch[1]}
             </strong>
           );
@@ -58,7 +58,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
         remaining = remaining.substring(firstMatch.index + firstMatch[0].length);
       } else {
-        parts.push(<span key={keyIdx++}>{remaining}</span>);
+        parts.push(<span key={keyIdx++} className="text-[var(--color-text-primary)]">{remaining}</span>);
         break;
       }
     }
@@ -79,7 +79,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       <div key={`table_${index}`} className="my-2.5 overflow-x-auto rounded-xl border border-[#E7E9F0] bg-white">
         <table className="w-full text-left text-[13.5px] border-collapse">
           <thead>
-            <tr className="border-b border-[#E7E9F0] bg-[#F8F9FC] text-[#172033] font-semibold">
+            <tr className="border-b border-[#E7E9F0] bg-[#F8F9FC] text-[var(--color-text-primary)] font-semibold">
               {headers.map((h, i) => (
                 <th key={i} className="p-2.5">
                   {renderFormattedText(h)}
@@ -87,7 +87,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F1F5F9] text-slate-700">
+          <tbody className="divide-y divide-[#F1F5F9] text-[var(--color-text-primary)]">
             {bodyRows.map((r, rowIdx) => (
               <tr key={rowIdx} className="hover:bg-[#F8F9FC] transition-colors">
                 {r.map((cell, cellIdx) => (
@@ -139,7 +139,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       renderedElements.push(
         <div
           key={`sec_${i}`}
-          className="text-[12.5px] font-bold text-teal-800 tracking-wider uppercase pt-2.5 pb-1 border-b border-[#E7E9F0]"
+          className="text-[12.5px] font-bold text-[var(--color-text-accent)] tracking-wider uppercase pt-2.5 pb-1 border-b border-[#E7E9F0]"
         >
           {line.trim()}
         </div>
@@ -149,7 +149,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
     if (line.startsWith('### ')) {
       renderedElements.push(
-        <h3 key={`h3_${i}`} className="text-[15.5px] font-bold text-[#172033] mt-2.5 mb-1">
+        <h3 key={`h3_${i}`} className="text-[15.5px] font-bold text-[var(--color-text-primary)] mt-2.5 mb-1">
           {renderFormattedText(line.replace('### ', ''))}
         </h3>
       );
@@ -158,7 +158,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
     if (line.startsWith('#### ')) {
       renderedElements.push(
-        <h4 key={`h4_${i}`} className="text-[14px] font-semibold text-teal-700 mt-2 mb-0.5">
+        <h4 key={`h4_${i}`} className="text-[14px] font-semibold text-[var(--color-text-accent)] mt-2 mb-0.5">
           {renderFormattedText(line.replace('#### ', ''))}
         </h4>
       );
@@ -168,8 +168,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
       const text = line.trim().replace(/^[*|-]\s+/, '');
       renderedElements.push(
-        <div key={`li_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-slate-700 text-[14px]">
-          <span className="text-teal-600 font-bold shrink-0 mt-0.5 text-[13px]">•</span>
+        <div key={`li_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-[var(--color-text-primary)] text-[14px]">
+          <span className="text-[var(--color-accent)] font-bold shrink-0 mt-0.5 text-[13px]">•</span>
           <div className="flex-1 leading-relaxed">{renderFormattedText(text)}</div>
         </div>
       );
@@ -179,8 +179,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     const numMatch = line.trim().match(/^(\d+)\.\s+(.*)$/);
     if (numMatch) {
       renderedElements.push(
-        <div key={`num_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-slate-700 text-[14px]">
-          <span className="text-teal-600 font-bold shrink-0 text-[13px]">{numMatch[1]}.</span>
+        <div key={`num_${i}`} className="flex items-start gap-2 pl-1 py-0.5 text-[var(--color-text-primary)] text-[14px]">
+          <span className="text-[var(--color-accent)] font-bold shrink-0 text-[13px]">{numMatch[1]}.</span>
           <div className="flex-1 leading-relaxed">{renderFormattedText(numMatch[2])}</div>
         </div>
       );
@@ -193,7 +193,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
     }
 
     renderedElements.push(
-      <p key={`p_${i}`} className="leading-relaxed text-[#172033] text-[14px]">
+      <p key={`p_${i}`} className="leading-relaxed text-[var(--color-text-primary)] text-[14px]">
         {renderFormattedText(line)}
       </p>
     );

@@ -55,12 +55,12 @@ const renderFormattedText = (text: string): React.ReactNode => {
 
     if (firstMatch && firstMatch.index !== undefined && matchType) {
       if (firstMatch.index > 0) {
-        parts.push(<span key={keyIdx++}>{remaining.substring(0, firstMatch.index)}</span>);
+        parts.push(<span key={keyIdx++} className="text-[var(--color-text-primary)]">{remaining.substring(0, firstMatch.index)}</span>);
       }
 
       if (matchType === 'bold') {
         parts.push(
-          <strong key={keyIdx++} className="font-bold text-[#0F172A]">
+          <strong key={keyIdx++} className="font-bold text-[var(--color-text-primary)]">
             {firstMatch[1]}
           </strong>
         );
@@ -74,7 +74,7 @@ const renderFormattedText = (text: string): React.ReactNode => {
 
       remaining = remaining.substring(firstMatch.index + firstMatch[0].length);
     } else {
-      parts.push(<span key={keyIdx++}>{remaining}</span>);
+      parts.push(<span key={keyIdx++} className="text-[var(--color-text-primary)]">{remaining}</span>);
       break;
     }
   }
@@ -102,7 +102,7 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
       <div key={`tbl_${index}`} className="my-2.5 overflow-x-auto rounded-xl border border-[#E2E8F0] bg-white shadow-2xs">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="border-b border-[#E2E8F0] bg-slate-50 text-[#0F172A] font-semibold">
+            <tr className="border-b border-[#E2E8F0] bg-slate-50 text-[var(--color-text-primary)] font-semibold">
               {headers.map((h, i) => (
                 <th key={i} className="p-2.5">
                   {renderFormattedText(h)}
@@ -110,7 +110,7 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
+          <tbody className="divide-y divide-slate-100 text-[var(--color-text-primary)]">
             {bodyRows.map((r, rowIdx) => (
               <tr key={rowIdx} className="hover:bg-slate-50/80 transition-colors">
                 {r.map((cell, cellIdx) => (
@@ -164,7 +164,7 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
       renderedElements.push(
         <div
           key={`sec_${i}`}
-          className="text-[11px] font-bold text-teal-700 tracking-wider uppercase pt-2 pb-1 border-b border-[#E2E8F0]"
+          className="text-[11px] font-bold text-[var(--color-text-accent)] tracking-wider uppercase pt-2 pb-1 border-b border-[#E2E8F0]"
         >
           {line.trim()}
         </div>
@@ -174,7 +174,7 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
 
     if (line.startsWith('### ')) {
       renderedElements.push(
-        <h3 key={`h3_${i}`} className="text-[14.5px] font-bold text-[#0F172A] mt-2 mb-0.5">
+        <h3 key={`h3_${i}`} className="text-[14.5px] font-bold text-[var(--color-text-primary)] mt-2 mb-0.5">
           {renderFormattedText(line.replace('### ', ''))}
         </h3>
       );
@@ -183,7 +183,7 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
 
     if (line.startsWith('#### ')) {
       renderedElements.push(
-        <h4 key={`h4_${i}`} className="text-[13.5px] font-semibold text-teal-700 mt-1.5 mb-0.5">
+        <h4 key={`h4_${i}`} className="text-[13.5px] font-semibold text-[var(--color-text-accent)] mt-1.5 mb-0.5">
           {renderFormattedText(line.replace('#### ', ''))}
         </h4>
       );
@@ -193,8 +193,8 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
     if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
       const text = line.trim().replace(/^[*|-]\s+/, '');
       renderedElements.push(
-        <div key={`li_${i}`} className="flex items-start gap-2 pl-0.5 py-0.5 text-slate-700 text-[13.5px]">
-          <span className="text-teal-600 font-bold shrink-0 mt-0.5 text-[12px]">•</span>
+        <div key={`li_${i}`} className="flex items-start gap-2 pl-0.5 py-0.5 text-[var(--color-text-primary)] text-[13.5px]">
+          <span className="text-[var(--color-accent)] font-bold shrink-0 mt-0.5 text-[12px]">•</span>
           <div className="flex-1 leading-relaxed">{renderFormattedText(text)}</div>
         </div>
       );
@@ -204,8 +204,8 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
     const numMatch = line.trim().match(/^(\d+)\.\s+(.*)$/);
     if (numMatch) {
       renderedElements.push(
-        <div key={`num_${i}`} className="flex items-start gap-2 pl-0.5 py-0.5 text-slate-700 text-[13.5px]">
-          <span className="text-teal-600 font-mono font-bold shrink-0 text-[12px]">{numMatch[1]}.</span>
+        <div key={`num_${i}`} className="flex items-start gap-2 pl-0.5 py-0.5 text-[var(--color-text-primary)] text-[13.5px]">
+          <span className="text-[var(--color-accent)] font-mono font-bold shrink-0 text-[12px]">{numMatch[1]}.</span>
           <div className="flex-1 leading-relaxed">{renderFormattedText(numMatch[2])}</div>
         </div>
       );
@@ -218,7 +218,7 @@ const renderMarkdownContent = (content: string): React.ReactNode => {
     }
 
     renderedElements.push(
-      <p key={`p_${i}`} className="leading-relaxed text-slate-800 text-[13.5px]">
+      <p key={`p_${i}`} className="leading-relaxed text-[var(--color-text-primary)] text-[13.5px]">
         {renderFormattedText(line)}
       </p>
     );
@@ -318,7 +318,7 @@ export const VestiqMessage: React.FC<VestiqMessageProps> = ({
         {/* Message Content or Edit Input */}
         {isEditing ? (
           <div className="space-y-3 min-w-[260px] sm:min-w-[420px] animate-scale-in">
-            <div className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+            <div className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
               <Pencil className="w-3.5 h-3.5 text-[var(--color-accent-strong)]" />
               <span>Edit message (everything below will be reset)</span>
             </div>
@@ -331,7 +331,7 @@ export const VestiqMessage: React.FC<VestiqMessageProps> = ({
               className="w-full p-2.5 rounded-lg bg-[var(--color-surface)] border border-[var(--color-accent)] text-[var(--color-text-primary)] text-[13.5px] leading-relaxed outline-none resize-y min-h-[70px] shadow-inner"
               placeholder="Edit your message..."
             />
-            <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-[var(--color-text-muted)]">
+            <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-[var(--color-text-secondary)]">
               <span className="hidden sm:inline">Enter to save • Esc to cancel</span>
               <div className="flex items-center gap-2 ml-auto">
                 <button
@@ -368,7 +368,7 @@ export const VestiqMessage: React.FC<VestiqMessageProps> = ({
         {/* Dynamic Suggested Follow-ups */}
         {!isEditing && message.followUps && message.followUps.length > 0 && (
           <div className="pt-2.5 border-t border-[var(--color-border-subtle)] space-y-1.5">
-            <span className="text-[10.5px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider block">
+            <span className="text-[10.5px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider block">
               Suggested Next Steps:
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -389,7 +389,7 @@ export const VestiqMessage: React.FC<VestiqMessageProps> = ({
         {/* Footer: Timestamp + Actions */}
         {!isEditing && (
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--color-border-subtle)] text-[11px] text-[var(--color-text-secondary)]">
-            <span className="font-mono text-[10.5px] text-[var(--color-text-muted)] shrink-0">{message.timestamp}</span>
+            <span className="font-mono text-[10.5px] text-[var(--color-text-secondary)] shrink-0">{message.timestamp}</span>
 
             {/* Action Buttons: Visible, accessible, high contrast */}
             <div className="flex items-center gap-1.5 flex-wrap justify-end">
