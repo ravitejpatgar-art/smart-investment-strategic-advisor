@@ -4,7 +4,12 @@ from datetime import datetime, timezone
 from app.core.config import settings
 from app.services.market_data.base import BaseMarketDataProvider, ProviderCapabilities
 from app.services.market_data.freshness import DataFreshness
-from app.services.market_data.normalizer import normalize_market_quote, create_unavailable_quote
+from app.services.market_data.normalizer import (
+    normalize_market_quote,
+    create_unavailable_quote,
+    normalize_symbol,
+    normalize_global_symbol
+)
 from app.services.market_data.validator import validate_quote_data
 from app.services.market_data.market_hours import get_us_market_status
 from app.services.market_data.cache import market_cache
@@ -76,13 +81,8 @@ class USEquitiesProvider(BaseMarketDataProvider):
         )
 
     def resolve_symbol(self, symbol: str) -> str:
-        s_upper = symbol.upper().strip()
-        # Validation: US ETFs must never receive or retain .NS suffix
-        if s_upper.endswith(".NS"):
-            base = s_upper[:-3]
-            if base in {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}:
-                return base
-        return US_SYMBOL_MAP.get(s_upper, s_upper)
+        canonical = normalize_symbol(symbol)
+        return US_SYMBOL_MAP.get(canonical, canonical)
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         canonical_sym = symbol.upper().strip()

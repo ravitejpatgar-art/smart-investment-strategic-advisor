@@ -115,19 +115,25 @@ class MarketDataProviderRegistry:
                 return self.router.angel
             return self.india_provider
 
-        # 2. ETFs (MON100, NiftyBeES, JuniorBeES, etc.)
+        # 2. US Equities & ETFs (Strictly US Market Providers, NEVER Indian Brokers)
+        if norm.get("market") == "US":
+            if asset_type == "ETF":
+                return self.etf_provider
+            return self.us_provider
+
+        # 3. Indian ETFs (MON100, NiftyBeES, JuniorBeES, etc.)
         if asset_type == "ETF" or s in ["NASDAQ_ETF", "MON100", "MON100.NS", "NIFTYBEES", "NIFTYBEES.NS", "JUNIORBEES", "BANKBEES", "ITBEES"]:
             if self.router.angel.capabilities.is_configured and self.router.health_trackers["Angel One SmartAPI"].is_available():
                 return self.router.angel
             return self.etf_provider
 
-        # 3. Gold & SGB
+        # 4. Gold & SGB
         if s in ["GOLD_HEDGE", "GOLDBEES", "GOLDBEES.NS", "SGB", "SOVEREIGN_GOLD_BOND", "GOLD (10G)", "GOLD (10g)", "GOLD"]:
             return self.gold_provider
         if "GOLD" in s or "SGB" in s:
             return self.gold_provider
 
-        # 4. Direct Mutual Fund Candidates
+        # 5. Direct Mutual Fund Candidates
         if asset_type == "MUTUAL_FUND" or s.startswith("AMFI:") or s.startswith("MF:") or s.isdigit():
             return self.mf_provider
 
@@ -135,7 +141,7 @@ class MarketDataProviderRegistry:
             if self.mf_provider.resolve_scheme(symbol) is not None:
                 return self.mf_provider
 
-        # 5. Default to Angel One if available, else India Provider
+        # 6. Default to Angel One if available, else India Provider
         if self.router.angel.capabilities.is_configured and self.router.health_trackers["Angel One SmartAPI"].is_available():
             return self.router.angel
         return self.india_provider

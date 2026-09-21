@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, Tuple, Union
+from typing import Dict, Any, Optional, Tuple, Union, Set
 from zoneinfo import ZoneInfo
+import logging
 from app.services.market_data.freshness import DataFreshness, sanitize_freshness_state
+
+logger = logging.getLogger(__name__)
 
 IST_ZONE = ZoneInfo("Asia/Kolkata")
 
@@ -140,15 +143,95 @@ INDEX_MAPPINGS = {
     "^RUT": "^RUT"
 }
 
-# Known US ETFs that must NEVER receive or retain .NS suffix
-US_KNOWN_ETFS = {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
+# Known US Stocks that must NEVER receive or retain .NS or .BO suffix
+US_KNOWN_STOCKS: Set[str] = {
+    "META", "AAPL", "MSFT", "NVDA", "GOOGL", "GOOG", "AMZN", "TSLA", "NFLX", "AMD",
+    "INTC", "CSCO", "ADBE", "CRM", "ORCL", "IBM", "QCOM", "TXN", "AVGO", "PYPL",
+    "UBER", "ABNB", "PLTR", "SNOW", "COIN", "DIS", "NKE", "SBUX", "MCD", "WMT",
+    "TGT", "COST", "HD", "LOW", "PG", "KO", "PEP", "JNJ", "PFE", "MRK", "ABBV",
+    "UNH", "LLY", "V", "MA", "JPM", "BAC", "WFC", "C", "GS", "MS", "BRK.A", "BRK.B",
+    "XOM", "CVX", "COP", "SLB", "EOG", "BA", "CAT", "GE", "HON", "UPS", "FDX"
+}
+
+# Known US ETFs that must NEVER receive or retain .NS or .BO suffix
+US_KNOWN_ETFS: Set[str] = {
+    "SPY", "QQQ", "VOO", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV",
+    "DIA", "XLF", "XLK", "XLE", "XLV", "XLI", "XLP", "XLU", "XLB", "XLRE", "XLC",
+    "VUG", "VTV", "SCHD", "ARKK", "SMH", "SOXX", "TLT", "IEF", "SHY", "BND", "AGG"
+}
+
+ALL_US_SYMBOLS: Set[str] = US_KNOWN_STOCKS | US_KNOWN_ETFS
+
+
+def normalize_symbol(symbol: str) -> str:
+    """
+    Returns the canonical ticker string for any given input symbol.
+    Guarantees:
+      - US stocks (META, AAPL, MSFT, NVDA, GOOGL, AMZN, TSLA, NFLX, AMD) NEVER become .NS
+      - US ETFs (SPY, QQQ, VOO, VTI, IVV, IWM, EEM, GLD, SLV) NEVER become .NS
+      - Indian stocks (RELIANCE, TCS, INFY, HDFCBANK, ICICIBANK) resolve to .NS
+      - Any inadvertent .NS on US symbols (e.g. META.NS, SPY.NS) is stripped immediately.
+    """
+    if not symbol or not isinstance(symbol, str):
+        return ""
+    s_clean = symbol.strip().upper()
+
+    # 1. Mutual Funds
+    if s_clean.startswith("AMFI:"):
+        return s_clean
+    if s_clean.startswith("MF:"):
+        return f"AMFI:{s_clean[3:].strip()}"
+    if s_clean.isdigit() and len(s_clean) in (5, 6):
+        return f"AMFI:{s_clean}"
+
+    # 2. Indices
+    if s_clean in INDEX_MAPPINGS:
+        return INDEX_MAPPINGS[s_clean]
+
+    # 3. Strip trailing exchange suffix to check base symbol
+    base = s_clean[:-3] if s_clean.endswith((".NS", ".BO")) else s_clean
+
+    # 4. Strict US Stock & ETF Protection
+    if base in US_KNOWN_STOCKS or base in US_KNOWN_ETFS or base in ALL_US_SYMBOLS:
+        return base
+
+    # 5. Indian Equities & ETFs mappings
+    if s_clean in INDIA_STOCK_MAPPINGS:
+        return INDIA_STOCK_MAPPINGS[s_clean]
+    if base in INDIA_STOCK_MAPPINGS:
+        return INDIA_STOCK_MAPPINGS[base]
+
+    # 6. Preserved Indian exchange suffix
+    if s_clean.endswith((".NS", ".BO")):
+        return s_clean
+
+    # 7. Fallback: Check if recognized Indian database instrument
+    try:
+        from app.models.instrument import Instrument
+        from app.core.database import SessionLocal
+        with SessionLocal() as db:
+            inst = db.query(Instrument).filter(
+                (Instrument.symbol.ilike(s_clean)) |
+                (Instrument.ticker.ilike(s_clean))
+            ).first()
+            if inst and inst.market == "INDIA":
+                return inst.symbol or f"{s_clean}.NS"
+            if inst and inst.market == "US":
+                return inst.ticker or base
+    except Exception:
+        pass
+
+    # 8. Unmapped symbols:
+    # Standard 1-5 letter symbols without .NS are treated as US / Global symbols, NEVER appending .NS
+    return s_clean
+
 
 def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
     """
     Normalizes any input ticker, scheme code, or symbol string into its canonical representation,
-    provider symbol, and recognized asset class.
+    provider symbol, recognized asset class, and market region.
     """
-    s_raw = symbol.strip()
+    s_raw = (symbol or "").strip()
     s_upper = s_raw.upper()
 
     # 1. Mutual Fund Scheme Resolution (AMFI:122639, MF:122639, or numeric code)
@@ -172,7 +255,7 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
             "exchange": "AMFI",
             "scheme_code": code
         }
-    if s_raw.isdigit() and len(s_raw) >= 5:
+    if s_raw.isdigit() and len(s_raw) in (5, 6):
         return {
             "canonical_symbol": f"AMFI:{s_raw}",
             "provider_symbol": s_raw,
@@ -185,30 +268,44 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
     # 2. Indices
     if s_upper in INDEX_MAPPINGS:
         canonical = INDEX_MAPPINGS[s_upper]
+        is_india_idx = "^NSE" in canonical or "^BSE" in canonical or "^CNX" in canonical
         return {
             "canonical_symbol": canonical,
             "provider_symbol": canonical,
             "asset_type": "INDEX",
-            "market": "INDIA" if "^NSE" in canonical or "^BSE" in canonical or "^CNX" in canonical else "US",
+            "market": "INDIA" if is_india_idx else "US",
             "exchange": "NSE" if "^NSE" in canonical or "^CNX" in canonical else ("BSE" if "^BSE" in canonical else "INDEX"),
             "scheme_code": None
         }
 
-    # 3. US ETFs Validation - US ETFs must NEVER receive or retain .NS suffix (e.g. SPY.NS -> SPY, QQQ.NS -> QQQ, VOO.NS -> VOO, VTI.NS -> VTI)
-    clean_us_sym = s_upper[:-3] if s_upper.endswith(".NS") else s_upper
-    if clean_us_sym in US_KNOWN_ETFS:
+    # Strip exchange suffix for base identity check
+    base = s_upper[:-3] if s_upper.endswith((".NS", ".BO")) else s_upper
+
+    # 3. US Stocks Validation - Must NEVER receive or retain .NS or .BO suffix
+    if base in US_KNOWN_STOCKS:
         return {
-            "canonical_symbol": clean_us_sym,
-            "provider_symbol": clean_us_sym,
-            "asset_type": "ETF",
+            "canonical_symbol": base,
+            "provider_symbol": base,
+            "asset_type": "STOCK",
             "market": "US",
-            "exchange": "NASDAQ" if clean_us_sym in ["QQQ"] else "NYSE",
+            "exchange": "NASDAQ" if base in ["AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "AMD", "TSLA", "META", "NFLX", "INTC", "CSCO", "ADBE", "CRM", "PYPL", "ABNB"] else "NYSE",
             "scheme_code": None
         }
 
-    # 4. Indian Equities & ETFs
-    if s_upper in INDIA_STOCK_MAPPINGS:
-        canonical = INDIA_STOCK_MAPPINGS[s_upper]
+    # 4. US ETFs Validation - Must NEVER receive or retain .NS or .BO suffix
+    if base in US_KNOWN_ETFS:
+        return {
+            "canonical_symbol": base,
+            "provider_symbol": base,
+            "asset_type": "ETF",
+            "market": "US",
+            "exchange": "NASDAQ" if base in ["QQQ"] else "NYSE",
+            "scheme_code": None
+        }
+
+    # 5. Indian Equities & ETFs (from canonical mapping dictionary)
+    if s_upper in INDIA_STOCK_MAPPINGS or base in INDIA_STOCK_MAPPINGS:
+        canonical = INDIA_STOCK_MAPPINGS.get(s_upper) or INDIA_STOCK_MAPPINGS.get(base)
         is_etf = "BEES" in canonical or "MON100" in canonical or "ETF" in canonical
         return {
             "canonical_symbol": canonical,
@@ -219,6 +316,7 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
             "scheme_code": None
         }
 
+    # 6. Explicit .NS or .BO suffix where base is not a US asset
     if s_upper.endswith(".NS") or s_upper.endswith(".BO"):
         is_etf = "BEES" in s_upper or "MON100" in s_upper or "ETF" in s_upper
         exch = "NSE" if s_upper.endswith(".NS") else "BSE"
@@ -231,7 +329,7 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
             "scheme_code": None
         }
 
-    # Check database instrument master for India market listing before defaulting to US
+    # 7. Check database instrument master for India market listing before defaulting to US
     try:
         from app.models.instrument import Instrument
         from app.core.database import SessionLocal
@@ -250,10 +348,20 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
                     "exchange": inst.exchange or "NSE",
                     "scheme_code": inst.scheme_code
                 }
+            if inst and inst.market == "US":
+                is_etf = inst.asset_type == "ETF"
+                return {
+                    "canonical_symbol": inst.ticker or base,
+                    "provider_symbol": inst.provider_symbol or inst.ticker or base,
+                    "asset_type": inst.asset_type,
+                    "market": "US",
+                    "exchange": inst.exchange or "NASDAQ",
+                    "scheme_code": None
+                }
     except Exception:
         pass
 
-    # 5. Standard US / Global Equities & ETFs (e.g. AAPL, MSFT, SPY, QQQ)
+    # 8. Standard US / Global Equities & ETFs fallback (never append .NS)
     is_us_etf = s_upper in US_KNOWN_ETFS or "ETF" in s_upper
 
     return {

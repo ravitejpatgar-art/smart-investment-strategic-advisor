@@ -225,6 +225,13 @@ class AngelScripMasterManager:
         ):
             return None
 
+        # 0a. STRICT REJECTION OF US STOCKS & US ETFS
+        # Prevent false-positive matches on Indian penny stocks (e.g. BSE META token 534535)
+        base_check = clean[:-3] if clean.endswith((".NS", ".BO")) else clean
+        from app.services.market_data.normalizer import ALL_US_SYMBOLS
+        if clean in ALL_US_SYMBOLS or base_check in ALL_US_SYMBOLS:
+            return None
+
         # 0b. CANONICAL INDEX & TICKER ALIAS RESOLUTION
         INDEX_ALIAS_MAP = {
             "^NSEI": "99926000",

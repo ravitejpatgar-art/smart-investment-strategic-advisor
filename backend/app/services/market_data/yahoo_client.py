@@ -11,8 +11,15 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 def fetch_yahoo_chart_data(symbol: str, range_period: str = "1mo", interval: str = "1d", timeout: int = 6) -> Optional[Dict[str, Any]]:
     """
     Directly queries Yahoo Finance Chart API (v8) with resilient fallbacks across query1 and query2 hosts.
+    Guarantees US stocks (e.g. META) and US ETFs (e.g. SPY) never query .NS symbols.
     Returns the parsed JSON response dict or None.
     """
+    from app.services.market_data.normalizer import normalize_symbol, ALL_US_SYMBOLS
+    clean_sym = normalize_symbol(symbol)
+    base_sym = clean_sym[:-3] if clean_sym.endswith((".NS", ".BO")) else clean_sym
+    if base_sym in ALL_US_SYMBOLS:
+        clean_sym = base_sym
+
     hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"]
     
     # Clean range and interval
@@ -35,7 +42,7 @@ def fetch_yahoo_chart_data(symbol: str, range_period: str = "1mo", interval: str
         i = "1mo"
 
     for host in hosts:
-        url = f"https://{host}/v8/finance/chart/{symbol}?range={r}&interval={i}&includePrePost=false"
+        url = f"https://{host}/v8/finance/chart/{clean_sym}?range={r}&interval={i}&includePrePost=false"
         try:
             req = urllib.request.Request(
                 url,

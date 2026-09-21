@@ -356,10 +356,9 @@ def get_instrument_fundamentals(symbol: str) -> Dict[str, Any]:
     if cached:
         return cached
 
-    # Resolve yfinance ticker symbol for Indian stocks
-    yf_sym = s_upper
-    if s_upper in ["RELIANCE", "TCS", "HDFCBANK", "INFY", "TATAMOTORS", "TATASTEEL", "WIPRO", "ICICIBANK", "SBIN"]:
-        yf_sym = f"{s_upper}.NS"
+    # Resolve yfinance ticker symbol using canonical normalizer
+    from app.services.market_data.normalizer import normalize_symbol
+    yf_sym = normalize_symbol(s_upper)
 
     try:
         ticker = yf.Ticker(yf_sym)

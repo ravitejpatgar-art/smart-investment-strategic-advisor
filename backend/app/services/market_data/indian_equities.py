@@ -4,7 +4,13 @@ from datetime import datetime, timezone
 from app.core.config import settings
 from app.services.market_data.base import BaseMarketDataProvider, ProviderCapabilities
 from app.services.market_data.freshness import DataFreshness
-from app.services.market_data.normalizer import normalize_market_quote, create_unavailable_quote
+from app.services.market_data.normalizer import (
+    normalize_market_quote,
+    create_unavailable_quote,
+    normalize_symbol,
+    normalize_global_symbol,
+    ALL_US_SYMBOLS
+)
 from app.services.market_data.validator import validate_quote_data
 from app.services.market_data.market_hours import get_indian_market_status
 from app.services.market_data.cache import market_cache
@@ -73,8 +79,11 @@ class IndianEquitiesProvider(BaseMarketDataProvider):
         )
 
     def resolve_symbol(self, symbol: str) -> str:
-        s_upper = symbol.upper().strip()
-        return INDIA_SYMBOL_MAP.get(s_upper, s_upper if "." in s_upper or "^" in s_upper else f"{s_upper}.NS")
+        norm = normalize_global_symbol(symbol)
+        # US stocks and ETFs must NEVER receive .NS suffix
+        if norm.get("market") == "US":
+            return norm["canonical_symbol"]
+        return normalize_symbol(symbol)
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         canonical_sym = symbol.upper().strip()

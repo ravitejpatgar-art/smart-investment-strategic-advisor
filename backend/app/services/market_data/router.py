@@ -18,7 +18,14 @@ from app.services.market_data.mutual_funds import MutualFundsProvider
 from app.services.market_data.gold import GoldProvider
 from app.services.market_data.etfs import ETFProvider
 from app.services.market_data.cache import market_cache, build_quote_cache_key
-from app.services.market_data.normalizer import create_unavailable_quote, normalize_global_symbol
+from app.services.market_data.normalizer import (
+    create_unavailable_quote,
+    normalize_global_symbol,
+    normalize_symbol,
+    ALL_US_SYMBOLS,
+    US_KNOWN_STOCKS,
+    US_KNOWN_ETFS
+)
 from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.providers.angel_scrip_master import angel_scrip_master
 from app.core.config import settings
@@ -178,6 +185,7 @@ class ProviderRouter:
         norm = normalize_global_symbol(symbol)
         s = norm["canonical_symbol"].upper().strip()
         asset_type = norm.get("asset_type")
+        market = norm.get("market")
 
         # 1. Mutual Funds -> AMFI Official NAV Feed -> MFAPI (STRICTLY MUTUAL FUNDS ONLY, NEVER LIVE/EQUITY)
         if (
@@ -189,7 +197,27 @@ class ProviderRouter:
         ):
             return [self.mutual_funds]
 
-        # 2. Check Angel One Master for Indian Stock, ETF, REIT, or INVIT
+        # 2. US Stocks & US ETFs (STRICTLY US PROVIDERS, NEVER INDIAN BROKERS OR INDIAN EQUITIES)
+        base_s = s[:-3] if s.endswith((".NS", ".BO")) else s
+        is_us = (
+            market == "US"
+            or base_s in ALL_US_SYMBOLS
+            or s in ALL_US_SYMBOLS
+        )
+        if is_us:
+            chain = []
+            if self.finnhub.capabilities.is_configured and self.health_trackers["Finnhub"].is_available():
+                chain.append(self.finnhub)
+            if self.twelvedata.capabilities.is_configured and self.health_trackers["TwelveData"].is_available():
+                chain.append(self.twelvedata)
+            if self.polygon.capabilities.is_configured and self.health_trackers["Polygon.io"].is_available():
+                chain.append(self.polygon)
+            chain.append(self.yahoo)
+            if self.alphavantage.capabilities.is_configured and self.health_trackers["AlphaVantage"].is_available():
+                chain.append(self.alphavantage)
+            return chain
+
+        # 3. Check Angel One Master for Indian Stock, ETF, REIT, or INVIT
         angel_scrip = angel_scrip_master.resolve(s)
         if angel_scrip and angel_scrip.get("asset_type") in ("STOCK", "ETF", "REIT", "INVIT"):
             chain = []
@@ -203,11 +231,11 @@ class ProviderRouter:
                 chain.append(fallback_provider)
             return chain
 
-        # 3. Gold & Precious Metals -> NSE GoldBeES -> MCX Spot -> Yahoo
+        # 4. Gold & Precious Metals -> NSE GoldBeES -> MCX Spot -> Yahoo
         if "GOLD" in s or "SGB" in s or "SILVER" in s or s in ["MCX:GOLD", "GOLDBEES.NS", "GOLDBEES"]:
             return [self.gold_provider, self.indian_equities, self.yahoo]
 
-        # 4. Global / US ETFs
+        # 5. Global / US ETFs fallback
         if asset_type == "ETF" or "ETF" in s or "BEES" in s or s in ["MON100.NS", "MON100", "SP500.NS", "QQQ", "SPY", "VOO", "VTI"]:
             chain = []
             is_us_etf = s in ["QQQ", "SPY", "VOO", "VTI"] or norm.get("market") == "US"
@@ -216,7 +244,7 @@ class ProviderRouter:
             chain.extend([self.etf_provider, self.yahoo])
             return chain
 
-        # 5. Indian Equities & Indices
+        # 6. Indian Equities & Indices
         if norm.get("market") == "INDIA" or s.endswith(".NS") or s.endswith(".BO") or s in ["NIFTY 50", "^NSEI", "SENSEX", "^BSESN", "BANKNIFTY", "^NSEBANK"]:
             chain = []
             if self.angel.capabilities.is_configured and self.health_trackers["Angel One SmartAPI"].is_available():
@@ -226,7 +254,7 @@ class ProviderRouter:
             chain.extend([self.indian_equities, self.yahoo])
             return chain
 
-        # 6. US Stocks & Global Equities
+        # 7. US Stocks & Global Equities fallback
         chain = []
         if self.finnhub.capabilities.is_configured and self.health_trackers["Finnhub"].is_available():
             chain.append(self.finnhub)
@@ -242,6 +270,13 @@ class ProviderRouter:
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         norm = normalize_global_symbol(symbol)
         s_clean = norm["canonical_symbol"].strip()
+        market_detected = norm.get("market", "UNKNOWN")
+
+        logger.info(
+            f"[MARKET_DATA_ROUTER] Original symbol='{symbol}' | "
+            f"Normalized symbol='{s_clean}' | "
+            f"Market detected='{market_detected}'"
+        )
 
         # Check cache using stable identity
         angel_scrip = angel_scrip_master.resolve(s_clean)
@@ -263,6 +298,12 @@ class ProviderRouter:
                 if "." not in requested_sym and cached_copy.get("symbol", "").endswith((".NS", ".BO")):
                     cached_copy["canonicalSymbol"] = cached_copy["symbol"]
                     cached_copy["symbol"] = requested_sym
+                logger.info(
+                    f"[MARKET_DATA_CACHE_HIT] Original symbol='{symbol}' | "
+                    f"Normalized symbol='{s_clean}' | "
+                    f"Market detected='{market_detected}' | "
+                    f"Provider used='{cached_copy.get('source', 'Cache')}'"
+                )
                 return cached_copy
 
         chain = self._get_provider_chain(s_clean)
@@ -302,9 +343,14 @@ class ProviderRouter:
                             quote["canonicalSymbol"] = quote["symbol"]
                             quote["symbol"] = requested_sym
 
-                        # Phase 2: Provider tracing log
+                        # Structured audit log
                         prov_tag = "ANGEL" if "Angel" in provider.name else ("YAHOO" if ("Yahoo" in provider.name or "IndianEquities" in provider.name) else provider.name.upper())
-                        logger.info(f"QUOTE_PROVIDER={prov_tag}\nSYMBOL={requested_sym}")
+                        logger.info(
+                            f"[MARKET_DATA_SUCCESS] Original symbol='{symbol}' | "
+                            f"Normalized symbol='{s_clean}' | "
+                            f"Market detected='{market_detected}' | "
+                            f"Provider used='{provider.name}' ({prov_tag})"
+                        )
 
                         # Cache successful quote with stable identity key
                         ttl = getattr(settings, "MARKET_DATA_CACHE_TTL_SECONDS", 30)
@@ -367,6 +413,14 @@ class ProviderRouter:
     def get_candles(self, symbol: str, interval: str = "1d", range_period: str = "1mo") -> Dict[str, Any]:
         norm = normalize_global_symbol(symbol)
         s_clean = norm["canonical_symbol"].strip()
+        market_detected = norm.get("market", "UNKNOWN")
+
+        logger.info(
+            f"[MARKET_CANDLES_ROUTER] Original symbol='{symbol}' | "
+            f"Normalized symbol='{s_clean}' | "
+            f"Market detected='{market_detected}'"
+        )
+
         cache_key = f"candles:router:{s_clean.upper()}:{interval}:{range_period}"
         cached = market_cache.get(cache_key, allow_stale=False)
         if cached:
@@ -384,6 +438,12 @@ class ProviderRouter:
                 if candles and candles.get("observations") and len(candles["observations"]) > 0:
                     if tracker:
                         tracker.record_success(latency)
+                    logger.info(
+                        f"[MARKET_CANDLES_SUCCESS] Original symbol='{symbol}' | "
+                        f"Normalized symbol='{s_clean}' | "
+                        f"Market detected='{market_detected}' | "
+                        f"Provider used='{provider.name}'"
+                    )
                     # Cache candles for 60s
                     market_cache.set(cache_key, candles, ttl_seconds=60)
                     return candles

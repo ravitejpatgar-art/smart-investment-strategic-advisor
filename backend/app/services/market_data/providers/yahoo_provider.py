@@ -4,7 +4,14 @@ from datetime import datetime, timezone
 import yfinance as yf
 from app.services.market_data.base import BaseMarketDataProvider, ProviderCapabilities
 from app.services.market_data.freshness import DataFreshness
-from app.services.market_data.normalizer import normalize_market_quote, create_unavailable_quote
+from app.services.market_data.normalizer import (
+    normalize_market_quote,
+    create_unavailable_quote,
+    normalize_symbol,
+    normalize_global_symbol,
+    ALL_US_SYMBOLS,
+    US_KNOWN_ETFS
+)
 from app.services.market_data.yahoo_client import fetch_yahoo_chart_data, parse_yahoo_chart_candles
 from app.services.market_data.fundamentals import get_enhanced_fundamentals
 
@@ -32,36 +39,31 @@ class YahooFinanceProvider(BaseMarketDataProvider):
 
     def _normalize_symbol(self, symbol: str) -> str:
         s = symbol.strip()
-        # Common aliases
-        if s.upper() == "NIFTY 50" or s.upper() == "NIFTY":
-            return "^NSEI"
-        if s.upper() == "SENSEX":
-            return "^BSESN"
-        if s.upper() == "BANKNIFTY" or s.upper() == "BANK NIFTY":
-            return "^NSEBANK"
-        if s.upper() == "S&P 500" or s.upper() == "S&P500":
-            return "^GSPC"
-        if s.upper() == "NASDAQ" or s.upper() == "NASDAQ 100":
-            return "^IXIC"
-        if s.upper() == "DOW JONES" or s.upper() == "DOW":
-            return "^DJI"
-        if s.upper() in ["RUSSELL 2000", "RUSSELL2000", "RUSSELL", "^RUT"]:
-            return "^RUT"
-        if s.upper() == "GOLD" or s.upper() == "GOLD (10G)":
+        # Commodity aliases
+        if s.upper() in ["GOLD", "GOLD (10G)"]:
             return "GC=F"
         if s.upper() == "SILVER":
             return "SI=F"
-        # Validation: US ETFs must never receive or retain .NS suffix
-        s_upper = s.upper()
-        if s_upper.endswith(".NS"):
-            base = s_upper[:-3]
-            if base in {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}:
-                return base
-        return s
+
+        canonical = normalize_symbol(s)
+        # Strict safeguard: US Stocks and ETFs must NEVER retain or receive .NS or .BO suffix
+        base = canonical[:-3] if canonical.endswith((".NS", ".BO")) else canonical
+        if base in ALL_US_SYMBOLS:
+            return base
+        return canonical
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         target_sym = self._normalize_symbol(symbol)
-        is_us_etf = target_sym in {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
+        norm = normalize_global_symbol(target_sym)
+        is_us = norm.get("market") == "US"
+        is_us_etf = is_us and (norm.get("asset_type") == "ETF" or target_sym in US_KNOWN_ETFS)
+
+        logger.info(
+            f"[YAHOO_PROVIDER] Original symbol='{symbol}' | "
+            f"Normalized symbol='{target_sym}' | "
+            f"Market detected='{norm.get('market', 'UNKNOWN')}' | "
+            f"Provider used='Yahoo Finance'"
+        )
         
         # 1. First attempt fast v8 chart quote
         chart_res = fetch_yahoo_chart_data(target_sym, range_period="1d", interval="1d", timeout=5)

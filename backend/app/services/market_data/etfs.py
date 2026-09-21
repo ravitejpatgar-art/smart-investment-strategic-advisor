@@ -3,14 +3,17 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from app.services.market_data.base import BaseMarketDataProvider, ProviderCapabilities
 from app.services.market_data.freshness import DataFreshness
-from app.services.market_data.normalizer import normalize_market_quote, create_unavailable_quote
+from app.services.market_data.normalizer import (
+    normalize_market_quote,
+    create_unavailable_quote,
+    normalize_symbol,
+    normalize_global_symbol,
+    US_KNOWN_ETFS
+)
 from app.services.market_data.validator import validate_quote_data
 from app.services.market_data.market_hours import get_indian_market_status, get_us_market_status
 from app.services.market_data.cache import market_cache
 from app.services.market_data.yahoo_client import fetch_yahoo_chart_data, parse_yahoo_chart_candles, parse_yahoo_chart_quote
-
-# Known US ETFs that must NEVER receive or retain .NS suffix
-US_KNOWN_ETFS = {"SPY", "VOO", "QQQ", "VTI", "IVV", "IWM", "EEM", "GLD", "SLV"}
 
 ETF_SYMBOL_MAP = {
     "NIFTYBEES": "NIFTYBEES.NS",
@@ -58,12 +61,7 @@ class ETFProvider(BaseMarketDataProvider):
         )
 
     def resolve_symbol(self, symbol: str) -> str:
-        s_upper = symbol.upper().strip()
-        # Validation: US ETFs must never receive .NS suffix; strip if present
-        base_sym = s_upper[:-3] if s_upper.endswith(".NS") else s_upper
-        if base_sym in US_KNOWN_ETFS:
-            return base_sym
-        return ETF_SYMBOL_MAP.get(s_upper, s_upper if "." in s_upper else f"{s_upper}.NS")
+        return normalize_symbol(symbol)
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         canonical_sym = symbol.upper().strip()
@@ -74,7 +72,8 @@ class ETFProvider(BaseMarketDataProvider):
         if cached:
             return cached
 
-        is_us = yf_sym in US_KNOWN_ETFS or canonical_sym in US_KNOWN_ETFS
+        norm = normalize_global_symbol(canonical_sym)
+        is_us = norm.get("market") == "US" or yf_sym in US_KNOWN_ETFS or canonical_sym in US_KNOWN_ETFS
         m_status = get_us_market_status() if is_us else get_indian_market_status()
         currency = "USD" if is_us else "INR"
         exchange = "NASDAQ" if yf_sym == "QQQ" else ("NYSE" if is_us else "NSE")
