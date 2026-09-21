@@ -69,18 +69,43 @@ class ProviderHealthTracker:
     def record_fallback(self):
         self.fallback_count += 1
 
-    def record_error(self, error_msg: str = "", is_rate_limit: bool = False, is_network: bool = False):
+    def record_error(
+        self,
+        error_msg: str = "",
+        is_rate_limit: bool = False,
+        is_network: bool = False,
+        is_server_error: bool = False,
+        is_auth: bool = False,
+        is_ws_disconnect: bool = False
+    ):
         self.total_requests += 1
         self.error_count += 1
-        self.consecutive_errors += 1
-        self.last_status = "RATE_LIMITED" if is_rate_limit else ("NETWORK_FAILURE" if is_network else "DEGRADED")
         self.last_failure_at = datetime.now(timezone.utc).isoformat()
         self.last_error = scrub_sensitive_tokens(error_msg)[:200] if error_msg else "Provider error"
         self.last_updated = self.last_failure_at
 
-        # Exponential backoff cooldown if multiple failures: 60s for 429, else backoff capped at 300s
-        cooldown_sec = 60 if is_rate_limit else min(300, 5 * (2 ** min(self.consecutive_errors, 5)))
-        self.cooldown_until = time.time() + cooldown_sec
+        # Phase 6: Cooldown ONLY for genuine infrastructure failures:
+        # - 429 (rate limit)
+        # - 5xx (server error)
+        # - websocket disconnects
+        # - authentication failures
+        # - network / timeout failures
+        # Unmapped symbol errors or empty quotes MUST NOT place provider into cooldown!
+        is_infra_failure = is_rate_limit or is_network or is_server_error or is_auth or is_ws_disconnect
+        if is_infra_failure:
+            self.consecutive_errors += 1
+            self.last_status = (
+                "RATE_LIMITED" if is_rate_limit
+                else ("AUTH_FAILURE" if is_auth
+                      else ("WS_DISCONNECTED" if is_ws_disconnect
+                            else ("NETWORK_FAILURE" if is_network else "SERVER_ERROR")))
+            )
+            cooldown_sec = 60 if is_rate_limit else min(300, 5 * (2 ** min(self.consecutive_errors, 5)))
+            self.cooldown_until = time.time() + cooldown_sec
+        else:
+            # Unmapped symbols, missing quote items, or symbol-specific validation errors:
+            # Strictly do NOT put provider into cooldown!
+            self.last_status = "DEGRADED"
 
     def is_available(self) -> bool:
         if self.provider and hasattr(self.provider, "capabilities") and not self.provider.capabilities.is_configured:
@@ -233,7 +258,12 @@ class ProviderRouter:
                 if "Yahoo" in cached_src or "Fallback" in cached_src:
                     cached = None
             if cached:
-                return cached
+                cached_copy = dict(cached)
+                requested_sym = symbol.strip().upper()
+                if "." not in requested_sym and cached_copy.get("symbol", "").endswith((".NS", ".BO")):
+                    cached_copy["canonicalSymbol"] = cached_copy["symbol"]
+                    cached_copy["symbol"] = requested_sym
+                return cached_copy
 
         chain = self._get_provider_chain(s_clean)
         last_error_msg = ""
@@ -242,6 +272,7 @@ class ProviderRouter:
         mkt_status = get_indian_market_status() if is_india else get_us_market_status()
         is_market_open = mkt_status.get("isOpen", False)
 
+        requested_sym = symbol.strip().upper()
         for i, provider in enumerate(chain):
             tracker = self.health_trackers.get(provider.name)
             t_start = time.time()
@@ -258,27 +289,52 @@ class ProviderRouter:
                             tracker.record_success(latency)
 
                         # Apply market closed detection without converting to UNAVAILABLE
+                        # For Angel One quotes, preserve real-time broker feed freshness and live status
                         if not is_market_open and norm.get("asset_type") != "MUTUAL_FUND":
                             quote["marketStatus"] = mkt_status.get("status", "CLOSED")
-                            quote["isLive"] = False
-                            if quote.get("freshness") in ["LIVE", "REALTIME"]:
-                                quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
+                            if "Angel" not in str(provider.name):
+                                quote["isLive"] = False
+                                if quote.get("freshness") in ["LIVE", "REALTIME"]:
+                                    quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
+
+                        # Preserve requested symbol when requested without exchange suffix
+                        if "." not in requested_sym and quote.get("symbol") and quote["symbol"].endswith((".NS", ".BO")):
+                            quote["canonicalSymbol"] = quote["symbol"]
+                            quote["symbol"] = requested_sym
+
+                        # Phase 2: Provider tracing log
+                        prov_tag = "ANGEL" if "Angel" in provider.name else ("YAHOO" if ("Yahoo" in provider.name or "IndianEquities" in provider.name) else provider.name.upper())
+                        logger.info(f"QUOTE_PROVIDER={prov_tag}\nSYMBOL={requested_sym}")
 
                         # Cache successful quote with stable identity key
                         ttl = getattr(settings, "MARKET_DATA_CACHE_TTL_SECONDS", 30)
                         market_cache.set(cache_key, quote, ttl_seconds=ttl)
                         return quote
                     else:
+                        if "Angel" in provider.name:
+                            logger.warning(f"FALLBACK_ACTIVATION\nsymbol={requested_sym}\nreason=Angel returned empty quote")
                         break
                 except Exception as e:
                     err_str = str(e)
                     last_error_msg = scrub_sensitive_tokens(err_str)
                     is_rate_limit = "429" in err_str or "rate limit" in err_str.lower()
-                    is_auth = "401" in err_str or "403" in err_str or "unauthorized" in err_str.lower()
+                    is_auth = "401" in err_str or "403" in err_str or "unauthorized" in err_str.lower() or "token" in err_str.lower()
                     is_network = "network" in err_str.lower() or "connection" in err_str.lower() or "timeout" in err_str.lower()
+                    is_server_error = any(code in err_str for code in ["500", "502", "503", "504"])
+                    is_ws_disconnect = "websocket" in err_str.lower() or "socket" in err_str.lower()
 
                     if tracker:
-                        tracker.record_error(error_msg=last_error_msg, is_rate_limit=is_rate_limit, is_network=is_network)
+                        tracker.record_error(
+                            error_msg=last_error_msg,
+                            is_rate_limit=is_rate_limit,
+                            is_network=is_network,
+                            is_server_error=is_server_error,
+                            is_auth=is_auth,
+                            is_ws_disconnect=is_ws_disconnect
+                        )
+
+                    if "Angel" in provider.name:
+                        logger.warning(f"FALLBACK_ACTIVATION\nsymbol={requested_sym}\nreason={last_error_msg or 'Angel provider error'}")
 
                     if is_rate_limit or is_auth or attempt >= max_attempts - 1:
                         break

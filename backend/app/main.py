@@ -53,6 +53,10 @@ def on_startup():
         startup_logger.info(f"Scrip master: {scrip_loaded}")
         startup_logger.info(f"Provider ready: {'YES' if provider_ready else 'NO'}")
         startup_logger.info("=" * 60)
+
+        # Initialize live WebSocket stream on startup
+        if angel_provider.is_configured:
+            angel_provider.initialize_websocket_stream()
     except Exception as e:
         startup_logger.warning(f"Angel One startup diagnostic notice: {e}")
 

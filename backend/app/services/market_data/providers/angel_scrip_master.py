@@ -225,6 +225,24 @@ class AngelScripMasterManager:
         ):
             return None
 
+        # 0b. CANONICAL INDEX & TICKER ALIAS RESOLUTION
+        INDEX_ALIAS_MAP = {
+            "^NSEI": "99926000",
+            "NIFTY": "99926000",
+            "NIFTY 50": "99926000",
+            "NIFTY50": "99926000",
+            "NSE:NIFTY": "99926000",
+            "NSE:NIFTY 50": "99926000",
+            "^BSESN": "99919000",
+            "SENSEX": "99919000",
+            "BSE:SENSEX": "99919000",
+            "^NSEBANK": "99926009",
+            "BANKNIFTY": "99926009",
+            "NIFTY BANK": "99926009",
+            "NSE:BANKNIFTY": "99926009",
+            "TATAMOTORS": "3456",
+            "TATAMOTORS.NS": "3456",
+        }
         # Strip exchange suffixes if present
         target_exch = exchange.upper().strip() if exchange else None
         base_symbol = clean
@@ -236,6 +254,14 @@ class AngelScripMasterManager:
             base_symbol = clean[:-3]
             if not target_exch:
                 target_exch = "BSE"
+
+        if clean in INDEX_ALIAS_MAP or base_symbol in INDEX_ALIAS_MAP:
+            target_token = INDEX_ALIAS_MAP.get(clean) or INDEX_ALIAS_MAP.get(base_symbol)
+            if target_token:
+                with self._master_lock:
+                    rec = self._by_token.get(target_token)
+                    if rec:
+                        return dict(rec)
 
         exchanges_to_try = [target_exch] if target_exch else ["NSE", "BSE"]
 

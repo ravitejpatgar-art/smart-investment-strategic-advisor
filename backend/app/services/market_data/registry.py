@@ -109,12 +109,16 @@ class MarketDataProviderRegistry:
         s = norm["canonical_symbol"].upper().strip()
         asset_type = norm.get("asset_type")
         
-        # 1. Direct Indian Market Index overrides
+        # 1. Direct Indian Market Index overrides (Angel One SmartAPI priority)
         if s in ["NIFTY 50", "NIFTY_50", "NIFTY", "^NSEI", "SENSEX", "^BSESN", "BANKNIFTY", "^NSEBANK", "NIFTY IT", "^CNXIT", "NIFTY AUTO", "NIFTY MIDCAP"]:
+            if self.router.angel.capabilities.is_configured and self.router.health_trackers["Angel One SmartAPI"].is_available():
+                return self.router.angel
             return self.india_provider
 
         # 2. ETFs (MON100, NiftyBeES, JuniorBeES, etc.)
         if asset_type == "ETF" or s in ["NASDAQ_ETF", "MON100", "MON100.NS", "NIFTYBEES", "NIFTYBEES.NS", "JUNIORBEES", "BANKBEES", "ITBEES"]:
+            if self.router.angel.capabilities.is_configured and self.router.health_trackers["Angel One SmartAPI"].is_available():
+                return self.router.angel
             return self.etf_provider
 
         # 3. Gold & SGB
@@ -131,7 +135,9 @@ class MarketDataProviderRegistry:
             if self.mf_provider.resolve_scheme(symbol) is not None:
                 return self.mf_provider
 
-        # 5. Default to Provider Router
+        # 5. Default to Angel One if available, else India Provider
+        if self.router.angel.capabilities.is_configured and self.router.health_trackers["Angel One SmartAPI"].is_available():
+            return self.router.angel
         return self.india_provider
 
     def get_quote(self, symbol: str, asset_type: Optional[str] = None) -> Dict[str, Any]:

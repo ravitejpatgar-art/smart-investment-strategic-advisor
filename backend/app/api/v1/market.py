@@ -865,3 +865,66 @@ def subscribe_websocket_universe(mode: int = Query(1, description="Subscription 
     from app.services.market_data.providers.angel_provider import angel_provider
     return angel_provider.subscribe_universe(mode=mode)
 
+
+@router.get("/debug/providers")
+def get_debug_providers():
+    """
+    Phase 1: Backend diagnostics endpoint for real-time market data provider health.
+    Returns:
+    - angel_authenticated (bool)
+    - feed_token_valid (bool)
+    - websocket_connected (bool)
+    - subscribed_symbols (int)
+    - active_provider ("ANGEL" or "YAHOO")
+    - fallback_enabled (bool)
+    - detailed provider health information
+    """
+    from app.services.market_data.providers.angel_provider import angel_provider
+    from app.services.market_data.providers.angel_scrip_master import angel_scrip_master
+    from app.services.market_data.router import provider_router
+
+    # Check authentication and token validity
+    angel_auth = bool(
+        angel_provider.is_configured
+        and angel_provider.jwt_token
+        and not angel_provider.is_jwt_expired()
+        and angel_provider.connection_status == "AUTHENTICATED"
+    )
+    if not angel_auth and angel_provider.is_configured:
+        angel_auth = angel_provider.ensure_authenticated()
+
+    feed_valid = angel_provider.is_feed_token_valid()
+    ws_connected = bool(angel_provider.is_connected or any(w.is_connected for w in angel_provider.workers))
+    subscribed_count = max(len(angel_provider.subscribed_instruments), len(angel_provider.token_to_symbol))
+
+    # Health tracker status
+    tracker = provider_router.health_trackers.get("Angel One SmartAPI")
+    is_available = tracker.is_available() if tracker else False
+
+    is_angel_active = bool(angel_provider.is_configured and angel_auth and is_available)
+    active_provider = "ANGEL" if is_angel_active else "YAHOO"
+    fallback_enabled = not is_angel_active
+
+    return {
+        "angel_authenticated": angel_auth,
+        "feed_token_valid": feed_valid,
+        "websocket_connected": ws_connected,
+        "subscribed_symbols": subscribed_count,
+        "active_provider": active_provider,
+        "fallback_enabled": fallback_enabled,
+        "provider_health": {
+            name: t.to_dict()
+            for name, t in provider_router.health_trackers.items()
+        },
+        "angel_details": {
+            "is_configured": angel_provider.is_configured,
+            "connection_status": angel_provider.connection_status,
+            "workers_count": len(angel_provider.workers),
+            "reconnect_count": angel_provider.reconnect_count,
+            "total_scrips_loaded": angel_scrip_master.total_loaded,
+            "last_heartbeat_at": angel_provider.last_heartbeat_at,
+            "last_reconnect_at": angel_provider.last_reconnect_at
+        }
+    }
+
+

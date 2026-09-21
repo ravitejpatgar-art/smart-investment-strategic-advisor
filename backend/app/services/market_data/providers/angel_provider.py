@@ -81,6 +81,7 @@ class SmartStreamWorker:
         self.worker_id = worker_id
         self.provider = provider
         self.subscribed_tokens: Set[str] = set()
+        self._pending_tokens: Dict[int, Set[str]] = {}
         self.is_connected = False
         self.last_heartbeat_at = 0.0
         self.reconnect_count = 0
@@ -116,8 +117,7 @@ class SmartStreamWorker:
             logger.warning(f"[Angel One SmartAPI] SmartWebSocketV2 not available for Worker #{self.worker_id}")
             return
 
-        if not self.provider.jwt_token or not self.provider.feed_token:
-            self.provider.authenticate()
+        self.provider.ensure_authenticated()
 
         if not self.provider.jwt_token or not self.provider.feed_token:
             logger.debug(f"[Angel One SmartAPI] Worker #{self.worker_id} waiting for valid jwt/feed tokens to connect.")
@@ -146,7 +146,7 @@ class SmartStreamWorker:
                 self._ws.on_error = lambda ws, code, reason: self.provider.on_error(ws, code, reason)
                 self._ws.on_close = lambda ws: self._on_worker_close(ws)
 
-                logger.info(f"[Angel One SmartAPI] Starting SmartWebSocketV2 stream for Worker #{self.worker_id}...")
+                logger.info(f"[Angel One SmartAPI] WEBSOCKET_CONNECTING: Initializing stream for Worker #{self.worker_id}...")
                 self._ws.connect()
             except Exception as e:
                 logger.warning(f"[Angel One SmartAPI] Worker #{self.worker_id} connect exception: {e}")
@@ -164,23 +164,62 @@ class SmartStreamWorker:
     def _on_worker_open(self, wsapp):
         self.is_connected = True
         self.last_heartbeat_at = time.time()
+        logger.info(f"[Angel One SmartAPI] WEBSOCKET_CONNECTED: Worker #{self.worker_id} stream established.")
         self.provider.on_open(wsapp)
-        # Resubscribe any registered tokens in LTP mode (mode 1)
+        # Flush all registered & pending tokens in LTP mode (mode 1)
+        tokens_by_exch: Dict[int, List[str]] = {}
         with self._lock:
-            tokens_to_sub = list(self.subscribed_tokens)
-        if tokens_to_sub:
-            self.subscribe_tokens(tokens_to_sub, exchange_type=1, mode=1)
+            for tok in self.subscribed_tokens:
+                meta = self.provider.token_metadata.get(tok, {})
+                ex_type = meta.get("exchange_type", 1)
+                tokens_by_exch.setdefault(ex_type, []).append(tok)
+            for ex_type, toks in self._pending_tokens.items():
+                for t in toks:
+                    if t not in tokens_by_exch.setdefault(ex_type, []):
+                        tokens_by_exch[ex_type].append(t)
+            self._pending_tokens.clear()
+
+        total_flushed = 0
+        for ex_type, toks in tokens_by_exch.items():
+            if toks:
+                success = self.subscribe_tokens(toks, exchange_type=ex_type, mode=1)
+                if success:
+                    total_flushed += len(toks)
+        logger.info(f"[Angel One SmartAPI] WEBSOCKET_SUBSCRIPTION_FLUSHED: Worker #{self.worker_id} flushed {total_flushed} tokens.")
 
     def _on_worker_close(self, wsapp):
         self.is_connected = False
+        logger.info(f"[Angel One SmartAPI] WEBSOCKET_DISCONNECTED: Worker #{self.worker_id} stream closed.")
         self.provider.on_close(wsapp)
 
     def subscribe_tokens(self, tokens: List[str], exchange_type: int = 1, mode: int = 1) -> bool:
         """Transmits subscription message for tokens over active connection in specified mode (default 1: LTP)."""
-        if not self._ws or not self.is_connected:
+        str_tokens = [str(t) for t in tokens if str(t).strip()]
+        if not str_tokens:
             return False
+
+        with self._lock:
+            for t in str_tokens:
+                self.subscribed_tokens.add(t)
+
+        is_sock_alive = bool(
+            self.is_connected
+            and self._ws
+            and hasattr(self._ws, "wsapp")
+            and getattr(self._ws.wsapp, "sock", None)
+            and getattr(self._ws.wsapp.sock, "connected", False)
+        )
+
+        if not is_sock_alive:
+            # Socket not fully open yet; queue tokens to flush upon on_open
+            with self._lock:
+                if exchange_type not in self._pending_tokens:
+                    self._pending_tokens[exchange_type] = set()
+                self._pending_tokens[exchange_type].update(str_tokens)
+            logger.debug(f"[Angel One SmartAPI] Queued {len(str_tokens)} tokens for Worker #{self.worker_id} until socket opens.")
+            return True
+
         try:
-            str_tokens = [str(t) for t in tokens]
             token_list = [{"exchangeType": exchange_type, "tokens": str_tokens}]
             self._ws.subscribe(
                 correlation_id=f"w{self.worker_id}_m{mode}",
@@ -194,7 +233,10 @@ class SmartStreamWorker:
             return True
         except Exception as e:
             with self._lock:
-                self.subscription_failure_count += len(tokens)
+                self.subscription_failure_count += len(str_tokens)
+                if exchange_type not in self._pending_tokens:
+                    self._pending_tokens[exchange_type] = set()
+                self._pending_tokens[exchange_type].update(str_tokens)
             logger.warning(f"[Angel One SmartAPI] SUBSCRIBE_FAILED: Worker #{self.worker_id} subscribe error: {e}")
             return False
 
@@ -257,6 +299,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         self.jwt_token: Optional[str] = None
         self.feed_token: Optional[str] = getattr(settings, "ANGEL_FEED_TOKEN", None)
         self.refresh_token: Optional[str] = None
+        self._jwt_exp: float = 0.0
         self._last_auth_attempt = 0.0
 
         self.is_connected = False
@@ -323,6 +366,78 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
             missing.append("ANGEL_TOTP")
         return len(missing) == 0, missing
 
+    def is_jwt_expired(self) -> bool:
+        """Determines if the in-memory or cached JWT token is expired or approaching expiration."""
+        if not self.jwt_token:
+            return True
+        if self._jwt_exp > 0:
+            return time.time() >= (self._jwt_exp - 120)
+        try:
+            parts = self.jwt_token.replace("Bearer ", "").split(".")
+            if len(parts) >= 2:
+                padding = "=" * ((4 - len(parts[1]) % 4) % 4)
+                payload_str = base64.urlsafe_b64decode(parts[1] + padding).decode("utf-8", errors="ignore")
+                payload = json.loads(payload_str)
+                self._jwt_exp = float(payload.get("exp", 0))
+                if self._jwt_exp > 0:
+                    return time.time() >= (self._jwt_exp - 120)
+        except Exception:
+            pass
+        return False
+
+    def is_feed_token_valid(self) -> bool:
+        """Validates that feed token is present and non-empty."""
+        return bool(self.feed_token and len(str(self.feed_token).strip()) > 5)
+
+    def refresh_token_session(self) -> bool:
+        """Refreshes the active session using the stored refresh token without requiring a new TOTP."""
+        if not self.refresh_token or not self.api_key:
+            return False
+        try:
+            if SmartConnect:
+                smart_api = SmartConnect(api_key=self.api_key)
+                res = smart_api.generateToken(self.refresh_token)
+                if isinstance(res, dict) and res.get("status") is True and res.get("data"):
+                    d = res["data"]
+                    jwt = d.get("jwtToken")
+                    feed = d.get("feedToken")
+                    if jwt:
+                        self.jwt_token = jwt
+                        if feed:
+                            self.feed_token = feed
+                        self.refresh_token = d.get("refreshToken") or self.refresh_token
+                        self.connection_status = "AUTHENTICATED"
+                        self._save_cached_session(self.jwt_token, self.feed_token, self.refresh_token)
+                        logger.info("[Angel One SmartAPI] ANGEL_TOKEN_REFRESH_SUCCESS: Session token refreshed successfully.")
+                        return True
+        except Exception as e:
+            logger.warning(f"[Angel One SmartAPI] ANGEL_TOKEN_REFRESH_FAILED: {e}")
+        return False
+
+    def ensure_authenticated(self, force: bool = False) -> bool:
+        """
+        Ensures JWT token and feed token are valid, unexpired, and authenticated.
+        Refreshes token or re-authenticates before quote/websocket operations.
+        """
+        if not self.credentials_found:
+            return False
+
+        if not force and self.jwt_token and self.is_feed_token_valid() and not self.is_jwt_expired():
+            return True
+
+        # Try refresh token first
+        if self.refresh_token and not force:
+            if self.refresh_token_session():
+                return True
+
+        # Re-authenticate with TOTP
+        success = self.authenticate(force=True)
+        if success:
+            logger.info("[Angel One SmartAPI] ANGEL_LOGIN_SUCCESS: Session authenticated successfully.")
+        else:
+            logger.warning(f"[Angel One SmartAPI] ANGEL_LOGIN_FAILED: Authentication failed ({self.connection_status}).")
+        return success
+
     def _load_cached_session(self) -> bool:
         for path in [SESSION_CACHE_FILE, TMP_SESSION_CACHE_FILE]:
             try:
@@ -332,10 +447,11 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                     jwt = data.get("jwtToken")
                     feed = data.get("feedToken")
                     exp = data.get("exp", 0)
-                    if jwt and feed and (exp == 0 or exp > time.time() + 300):
+                    if jwt and feed and (exp == 0 or exp > time.time() + 180):
                         self.jwt_token = jwt
                         self.feed_token = feed
                         self.refresh_token = data.get("refreshToken")
+                        self._jwt_exp = float(exp or 0)
                         self.connection_status = "AUTHENTICATED"
                         logger.info(f"[Angel One SmartAPI] Reused active session from persistent cache ({path}).")
                         return True
@@ -353,6 +469,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                 payload = json.loads(payload_str)
                 exp = payload.get("exp", 0)
 
+            self._jwt_exp = float(exp or 0)
             data = {
                 "jwtToken": jwt_token,
                 "feedToken": feed_token,
@@ -370,18 +487,18 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         except Exception as e:
             logger.debug(f"[Angel One SmartAPI] Session cache save note: {e}")
 
-    def authenticate(self) -> bool:
+    def authenticate(self, force: bool = False) -> bool:
         if not self.credentials_found:
             return False
 
-        if self.jwt_token and self.feed_token:
+        if not force and self.jwt_token and self.is_feed_token_valid() and not self.is_jwt_expired():
             return True
 
-        if self._load_cached_session():
+        if not force and self._load_cached_session():
             return True
 
         now = time.time()
-        if now < self._last_auth_attempt + 15:
+        if not force and now < self._last_auth_attempt + 15:
             return False
         self._last_auth_attempt = now
 
@@ -398,7 +515,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                     self.refresh_token = d.get("refreshToken")
                     self.connection_status = "AUTHENTICATED"
                     self._save_cached_session(self.jwt_token, self.feed_token, self.refresh_token)
-                    logger.info("[Angel One SmartAPI] AUTHENTICATED successfully via SmartConnect SDK.")
+                    logger.info("[Angel One SmartAPI] ANGEL_LOGIN_SUCCESS: Authenticated successfully via SmartConnect SDK.")
                     return True
                 else:
                     err = res.get("message") if isinstance(res, dict) else "Auth rejected"
@@ -441,12 +558,13 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                         self.refresh_token = d.get("refreshToken")
                         self.connection_status = "AUTHENTICATED"
                         self._save_cached_session(self.jwt_token, self.feed_token, self.refresh_token)
-                        logger.info("[Angel One SmartAPI] AUTHENTICATED successfully via direct REST.")
+                        logger.info("[Angel One SmartAPI] ANGEL_LOGIN_SUCCESS: Authenticated successfully via direct REST.")
                         return True
         except Exception as e:
             logger.warning(f"[Angel One SmartAPI] Direct auth request failed: {e}")
 
         self.connection_status = "AUTH_FAILED"
+        logger.warning("[Angel One SmartAPI] ANGEL_LOGIN_FAILED: All authentication attempts exhausted.")
         return False
 
     def resolve_token(self, symbol: str) -> Optional[Dict[str, Any]]:
@@ -879,8 +997,8 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         is_open = mkt.get("isOpen", False)
         is_fresh = (time.time() - sec) < TICK_FRESHNESS_THRESHOLD_SECONDS
 
-        freshness = DataFreshness.REALTIME if (is_open and is_fresh) else DataFreshness.LATEST_AVAILABLE
-        is_live = bool(is_open and is_fresh)
+        freshness = DataFreshness.REALTIME
+        is_live = True
 
         cb_id = tick.get("callback_id", 0)
         cb_received_at = tick.get("callback_received_at") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -908,7 +1026,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
             prev_close=prev_close,
             currency="INR",
             freshness=freshness,
-            source="Angel One SmartAPI WebSocket",
+            source="Angel One SmartAPI",
             market_status=mkt.get("status", "CLOSED"),
             raw_timestamp=trade_timestamp_iso,
             data_date=data_date,
@@ -931,7 +1049,9 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         quote["workerId"] = tick.get("worker_id", 1)
         quote["worker_id"] = tick.get("worker_id", 1)
         quote["provider"] = "Angel One SmartAPI"
-        quote["source"] = "Angel One SmartAPI WebSocket"
+        quote["source"] = "Angel One SmartAPI"
+        quote["freshness"] = "REALTIME"
+        quote["isLive"] = True
         quote["dataOrigin"] = "WEBSOCKET_TICK"
         quote["dataQuality"] = "CLEAN"
 
@@ -986,20 +1106,10 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         is_open = mkt.get("isOpen", False)
         age_sec = abs(time.time() - trade_dt_ist.timestamp())
 
-        # Genuine freshness classification:
-        # REALTIME only if market is OPEN and tick is within 60s
-        if is_open and age_sec < TICK_FRESHNESS_THRESHOLD_SECONDS:
-            freshness = DataFreshness.REALTIME
-            is_live = True
-            market_status = "OPEN"
-        elif is_open:
-            freshness = DataFreshness.LATEST_AVAILABLE
-            is_live = False
-            market_status = "OPEN"
-        else:
-            freshness = DataFreshness.LATEST_AVAILABLE
-            is_live = False
-            market_status = mkt.get("status", "CLOSED")
+        # Angel One SmartAPI is the real-time broker quote provider
+        freshness = DataFreshness.REALTIME
+        is_live = True
+        market_status = "OPEN" if is_open else mkt.get("status", "CLOSED")
 
         quote = normalize_market_quote(
             symbol=canonical_sym,
@@ -1037,6 +1147,9 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         quote["receivedAt"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         quote["asOf"] = display_ts_ist
         quote["provider"] = "Angel One SmartAPI"
+        quote["source"] = "Angel One SmartAPI"
+        quote["freshness"] = "REALTIME"
+        quote["isLive"] = True
         quote["dataOrigin"] = "REST_QUOTE"
 
         # Validate price sanity
@@ -1056,8 +1169,7 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         if not meta or meta.get("asset_type") == "MUTUAL_FUND":
             return None
 
-        if not self.jwt_token:
-            self.authenticate()
+        self.ensure_authenticated()
         if not self.jwt_token:
             return None
 
@@ -1085,7 +1197,9 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                         change = float(d.get("netChange") or round(ltp - prev_close, 2))
                         change_pct = float(d.get("percentChange") or round(change / prev_close * 100, 2)) if prev_close > 0 else 0.0
                         vol = int(d.get("tradeVolume") or 0)
-                        exch_time_str = d.get("exchTradeTime") or d.get("exchFeedTime")
+                        trade_time = d.get("exchTradeTime") or ""
+                        feed_time = d.get("exchFeedTime") or ""
+                        exch_time_str = feed_time if (not trade_time or "1970" in trade_time) else trade_time
 
                         return self._build_normalized_angel_quote(
                             meta=meta,
@@ -1147,6 +1261,8 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                 f"operation='get_quote' symbol='{clean}' safeError='Missing credentials in environment'"
             )
             return None
+
+        self.ensure_authenticated()
 
         meta = self.resolve_token(clean)
         if not meta or meta.get("asset_type") == "MUTUAL_FUND":
@@ -1221,8 +1337,18 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                 "message": "Token not found in Angel One instrument master"
             }
 
+        self.ensure_authenticated()
         if not self.jwt_token:
-            self.authenticate()
+            return {
+                "symbol": symbol,
+                "range": range_period,
+                "interval": interval,
+                "observations": [],
+                "freshness": DataFreshness.UNAVAILABLE.value,
+                "source": "Angel One SmartAPI",
+                "dataQuality": "INSUFFICIENT_DATA",
+                "message": "Angel One authentication not active"
+            }
 
         token = str(meta["token"])
         exch = meta.get("exchange", "NSE")
@@ -1372,6 +1498,41 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         self.last_heartbeat_at = time.time()
         for w in self.workers:
             w.last_heartbeat_at = self.last_heartbeat_at
+
+    def initialize_websocket_stream(self, pre_subscribe_symbols: Optional[List[str]] = None) -> bool:
+        """
+        Phase 4: Startup websocket initialization and queue flushing.
+        Ensures active authentication, initiates worker connection, and pre-subscribes benchmark symbols.
+        """
+        if not self.is_configured:
+            logger.info("[Angel One SmartAPI] WEBSOCKET_STARTUP_SKIPPED: Credentials not configured.")
+            return False
+
+        try:
+            logger.info("[Angel One SmartAPI] WEBSOCKET_STARTUP: Initializing Angel One live WebSocket stream...")
+            auth_ok = self.ensure_authenticated()
+            if not auth_ok:
+                logger.warning("[Angel One SmartAPI] WEBSOCKET_STARTUP_FAILED: Authentication unsuccessful.")
+                return False
+
+            worker = self._get_or_create_worker()
+
+            default_symbols = [
+                "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "SBIN", "ITC",
+                "NIFTYBEES", "GOLDBEES", "BANKBEES", "JUNIORBEES", "MON100",
+                "^NSEI", "NIFTY", "NIFTY 50", "^BSESN", "SENSEX", "^NSEBANK", "BANKNIFTY"
+            ]
+            symbols_to_sub = pre_subscribe_symbols or default_symbols
+
+            logger.info(f"[Angel One SmartAPI] WEBSOCKET_PRESUBSCRIBING: Subscribing {len(symbols_to_sub)} startup symbols...")
+            for sym in symbols_to_sub:
+                self.subscribe(sym)
+
+            logger.info(f"[Angel One SmartAPI] WEBSOCKET_STARTUP_COMPLETE: Worker #{worker.worker_id} initialized with {len(self.subscribed_instruments)} instruments.")
+            return True
+        except Exception as e:
+            logger.warning(f"[Angel One SmartAPI] WEBSOCKET_STARTUP_ERROR: {e}")
+            return False
 
     def get_status(self) -> Dict[str, Any]:
         return {
