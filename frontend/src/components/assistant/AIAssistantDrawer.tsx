@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
-import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
+import { buildGroundedContext, generateGroundedOfflineResponse, parseAssistantApiResponse } from '../../services/vestiqGrounding';
 import { VestiqMark } from '../common/VestiqLogo';
 
 interface CalculationData {
@@ -142,37 +142,57 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
     try {
       const clientCtx = buildUserContext(user, expenses, goals, strategy);
+      const chatHistory = messages.slice(-6).map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
       const apiPayload = {
+        question: query,
         message: query,
+        requestId: `req_${Date.now()}`,
         user_context: clientCtx,
+        history: chatHistory,
         conversation_id: `drawer_${user?.id || 'default'}`
       };
 
       const response = await authApi.askAssistant(apiPayload);
-      const assistantText = response?.reply || response?.response || response?.message || 'I have analyzed your request based on your portfolio parameters.';
+      const parsed = parseAssistantApiResponse(response, query);
 
       const assistantMsg: Message = {
         id: `ai_${Date.now()}`,
         sender: 'assistant',
-        text: assistantText,
+        text: parsed.text,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        calculations: response?.calculations || null,
-        followUps: response?.follow_up_suggestions || response?.suggested_questions || []
+        calculations: parsed.calculations || null,
+        followUps: parsed.followUps || []
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-      const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
-      const fallbackMsg: Message = {
-        id: `ai_${Date.now()}`,
-        sender: 'assistant',
-        text: offlineRes.text,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        calculations: offlineRes.calculations || null,
-        followUps: offlineRes.followUps || []
-      };
-      setMessages((prev) => [...prev, fallbackMsg]);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_${Date.now()}`,
+            sender: 'assistant',
+            text: '⚠️ **Authentication Required:** Please sign in to access personalized advisory.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      } else {
+        const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
+        const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
+        const fallbackMsg: Message = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: offlineRes.text,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          calculations: offlineRes.calculations || null,
+          followUps: offlineRes.followUps || []
+        };
+        setMessages((prev) => [...prev, fallbackMsg]);
+      }
     } finally {
       setLoading(false);
     }

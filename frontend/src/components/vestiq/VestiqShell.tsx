@@ -3,7 +3,7 @@ import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { auditLogger } from '../../services/auditLogger';
 import { buildUserContext } from '../../services/userProfileRepository';
-import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
+import { buildGroundedContext, generateGroundedOfflineResponse, parseAssistantApiResponse } from '../../services/vestiqGrounding';
 import { VestiqHeader } from './VestiqHeader';
 import { VestiqSidebar, type VestiqSession } from './VestiqSidebar';
 import { VestiqContextPanel } from './VestiqContextPanel';
@@ -87,10 +87,10 @@ export const VestiqShell: React.FC = () => {
         updateUrlForConversation(data.id);
         
         const mappedMessages: VestiqChatMessage[] = (data.messages || []).map((m: any) => {
-          let calcData = undefined;
-          let followUps = undefined;
-          let intent = undefined;
-          let entities = undefined;
+          let calcData = m.calculations || m.metadata?.calculations || undefined;
+          let followUps = m.followUps || m.follow_ups || m.metadata?.followUps || undefined;
+          let intent = m.intent || m.metadata?.intent || undefined;
+          let entities = m.entities || m.metadata?.entities || undefined;
 
           // Attempt to parse structured AI metadata if present in content
           return {
@@ -301,19 +301,17 @@ export const VestiqShell: React.FC = () => {
         requestId: reqId,
         user_context: userContext,
         history: chatHistory,
+        conversation_id: validConvId || undefined,
       });
 
       if (res?.requestId && res.requestId !== latestRequestIdRef.current) {
         return;
       }
 
-      let answerText = res?.answer || res?.response || '';
-      let calcData = res?.calculations || null;
-      let followUps = res?.followUps || [];
-
-      if (!answerText) {
-        answerText = `I have analyzed your query regarding "${trimmedText}". Let me know if you would like me to simulate additional wealth scenarios.`;
-      }
+      const parsed = parseAssistantApiResponse(res, trimmedText);
+      const answerText = parsed.text;
+      const calcData = parsed.calculations;
+      const followUps = parsed.followUps;
 
       const tempAiMsgId = `ai_${Date.now()}`;
       const assistantMsg: VestiqChatMessage = {
@@ -322,9 +320,9 @@ export const VestiqShell: React.FC = () => {
         text: answerText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         calculations: calcData,
-        followUps: followUps.length > 0 ? followUps : undefined,
-        intent: res?.intent,
-        entities: res?.entities,
+        followUps: followUps && followUps.length > 0 ? followUps : undefined,
+        intent: parsed.intent || res?.intent,
+        entities: parsed.entities || res?.entities,
       };
 
       // 4. Persist assistant message to backend
@@ -346,15 +344,22 @@ export const VestiqShell: React.FC = () => {
       console.error('[VestIQ] Error during message exchange:', err);
       auditLogger.ai('VESTIQ_REQUEST_FAILED', 'warning', { requestId: reqId, status: err?.response?.status || 'OFFLINE' });
       const status = err?.response?.status;
-      const detail = err?.response?.data?.detail;
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || err?.message;
       
       if (status === 401 || status === 403) {
         setError("Session expired or authentication required. Please sign in.");
+        const authMsg: VestiqChatMessage = {
+          id: `ai_auth_${Date.now()}`,
+          sender: 'assistant',
+          text: "⚠️ **Authentication Required:** Your session has expired or authentication is required. Please sign in to access personalized advisory and saved conversation history.",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, authMsg]);
       } else {
         if (status === 429) {
           setError("Rate limit reached. Operating under local grounded advisory.");
         } else if (status === 500) {
-          setError(detail || "Backend processing notice: Using local verified portfolio context.");
+          setError(typeof detail === 'string' ? detail : "Backend processing notice: Using local verified portfolio context.");
         }
         
         // Grounded offline reasoning fallback using authoritative profile

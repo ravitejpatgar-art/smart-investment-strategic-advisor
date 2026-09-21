@@ -129,12 +129,36 @@ export const authApi = {
   getSectorHeatmap: async () => {
     return (await apiClient.get('/market/heatmap')).data;
   },
-  askAssistant: async (payload: string | { question?: string; message?: string; requestId?: string; user_context?: any; history?: any }) => {
-    const data = typeof payload === 'string' ? { question: payload, message: payload, requestId: `req_${Date.now()}` } : payload;
+  askAssistant: async (payload: string | { question?: string; message?: string; requestId?: string; user_context?: any; history?: any; [key: string]: any }) => {
+    let data: any;
+    if (typeof payload === 'string') {
+      const q = payload.trim();
+      data = {
+        question: q,
+        message: q,
+        requestId: `req_${Date.now()}`
+      };
+    } else {
+      const q = (payload.question || payload.message || '').trim();
+      data = {
+        ...payload,
+        question: payload.question || q,
+        message: payload.message || q,
+        requestId: payload.requestId || `req_${Date.now()}`
+      };
+    }
+
     try {
       return (await apiClient.post('/ai/chat', data)).data;
-    } catch {
-      return (await apiClient.post('/assistant/chat', data)).data;
+    } catch (primaryErr: any) {
+      try {
+        return (await apiClient.post('/assistant/chat', data)).data;
+      } catch (secondaryErr: any) {
+        if (primaryErr?.response?.status && primaryErr.response.status !== 404) {
+          throw primaryErr;
+        }
+        throw secondaryErr;
+      }
     }
   },
   getAssistantSuggestions: async () => {

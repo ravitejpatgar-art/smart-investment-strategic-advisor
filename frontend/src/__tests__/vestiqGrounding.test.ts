@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildGroundedContext,
-  generateGroundedOfflineResponse
+  generateGroundedOfflineResponse,
+  parseAssistantApiResponse
 } from '../services/vestiqGrounding';
 import { calculateInvestmentStrategy } from '../services/strategyEngine';
 import type { UserProfile, ExpenseItem, GoalItem } from '../types';
@@ -159,5 +160,65 @@ describe('VestIQ Financial Grounding Engine (P1.1)', () => {
     expect(res.text).toContain('Strategic Multi-Asset Allocation');
     expect(res.text).toContain('Expected Return:');
     expect(res.intent).toBe('ALLOCATION_ADVICE');
+  });
+
+  it('11. does not fabricate live stock prices or PE ratios when offline', () => {
+    const ctx = buildGroundedContext(mockProfile, mockExpenses, mockGoals, mockStrategy);
+    const res = generateGroundedOfflineResponse('What is the stock price and PE ratio of NVDA?', ctx);
+
+    expect(res.text).toContain('Live Market Data Notice');
+    expect(res.text).toContain('does not fabricate or estimate real-time market statistics');
+    expect(res.intent).toBe('MARKET_DATA_UNAVAILABLE');
+  });
+
+  it('12. parseAssistantApiResponse extracts reply, calculations, and follow_up_suggestions losslessly', () => {
+    // Schema with reply, calculations, and snake_case follow_up_suggestions
+    const apiResponse1 = {
+      reply: 'Based on your ₹1,10,000 monthly surplus, allocating 60% to Index Mutual Funds optimizes compounding.',
+      calculations: {
+        type: 'surplus',
+        monthlyIncome: 180000,
+        monthlyExpenses: 70000,
+        investableSurplus: 110000,
+        savingsRate: 61
+      },
+      follow_up_suggestions: ['How do I automate this SIP?', 'What is my emergency runway?'],
+      intent: 'SURPLUS_ADVICE'
+    };
+
+    const parsed1 = parseAssistantApiResponse(apiResponse1, 'How should I invest?');
+    expect(parsed1.text).toBe(apiResponse1.reply);
+    expect(parsed1.calculations?.investableSurplus).toBe(110000);
+    expect(parsed1.calculations?.savingsRate).toBe(61);
+    expect(parsed1.followUps).toEqual(['How do I automate this SIP?', 'What is my emergency runway?']);
+    expect(parsed1.intent).toBe('SURPLUS_ADVICE');
+
+    // Schema with response or message
+    const apiResponse2 = {
+      response: 'Your emergency fund covers 6.0 months of living expenses.',
+      suggested_questions: ['Where should I park my emergency fund?']
+    };
+    const parsed2 = parseAssistantApiResponse(apiResponse2, 'Emergency fund?');
+    expect(parsed2.text).toBe(apiResponse2.response);
+    expect(parsed2.followUps).toEqual(['Where should I park my emergency fund?']);
+
+    // Plain string response
+    const parsed3 = parseAssistantApiResponse('Direct stock investing carries higher volatility than index funds.');
+    expect(parsed3.text).toBe('Direct stock investing carries higher volatility than index funds.');
+
+    // OpenAI choices envelope
+    const apiResponse4 = {
+      choices: [{ message: { role: 'assistant', content: 'Here is your fiduciary analysis.' } }]
+    };
+    const parsed4 = parseAssistantApiResponse(apiResponse4);
+    expect(parsed4.text).toBe('Here is your fiduciary analysis.');
+
+    // Honest reporting when provider returns unavailable status
+    const apiResponse5 = {
+      status: 'unavailable',
+      message: 'Market data provider connection timeout.'
+    };
+    const parsed5 = parseAssistantApiResponse(apiResponse5);
+    expect(parsed5.text).toBe('Market data provider connection timeout.');
   });
 });

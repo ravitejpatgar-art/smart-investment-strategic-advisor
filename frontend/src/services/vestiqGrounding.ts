@@ -332,7 +332,27 @@ export function generateGroundedOfflineResponse(
     };
   }
 
-  // 6. Missing / Unconfigured Information (Anti-Hallucination Safe Guard)
+  // 6. Market Data & Stock Inquiries (Anti-Fabrication Fiduciary Rule)
+  if (
+    q.includes('price') ||
+    q.includes('pe ratio') ||
+    q.includes('p/e') ||
+    q.includes('quote') ||
+    q.includes('market mover') ||
+    q.includes('earnings') ||
+    q.includes('dividend yield') ||
+    q.includes('valuation') ||
+    q.includes('share price') ||
+    q.includes('stock price')
+  ) {
+    return {
+      text: `### Live Market Data Notice\n\nReal-time market quotes, current valuations, P/E ratios, and stock price analytics require an active live feed connection to the market data engine.\n\n* **Live Data Status:** Live market feeds are temporarily offline or unreachable.\n* **Fiduciary Policy:** To ensure strict compliance and data integrity, VestIQ does not fabricate or estimate real-time market statistics when live feeds are unavailable.\n\nPlease verify live quotes in the **Market Universe** tab or retry once live market connectivity is restored.`,
+      intent: 'MARKET_DATA_UNAVAILABLE',
+      followUps: ['Review my portfolio asset allocation', 'How much can I invest each month?', 'Check emergency fund runway']
+    };
+  }
+
+  // 7. Missing / Unconfigured Information (Anti-Hallucination Safe Guard)
   if (q.includes('crypto') || q.includes('bitcoin') || q.includes('real estate property') || q.includes('loan account') || q.includes('tax filing')) {
     return {
       text: `I do not see any records for **${query}** in your verified SmartVest profile or connected portfolio holdings. SmartVest focuses on fiduciary multi-asset allocation across Direct Mutual Funds, Equity Index ETFs, Fixed Income Bonds, and Sovereign Gold.`,
@@ -340,7 +360,7 @@ export function generateGroundedOfflineResponse(
     };
   }
 
-  // 7. General Financial Concepts (Education)
+  // 8. General Financial Concepts (Education)
   if (q.includes('etf')) {
     return {
       text: `### Exchange Traded Fund (ETF)\n\nAn ETF is a pooled investment security that tracks an underlying benchmark index, commodity, or asset basket, trading continuously on stock exchanges (NSE, BSE, NASDAQ) with low expense ratios and high liquidity.`,
@@ -367,5 +387,128 @@ export function generateGroundedOfflineResponse(
       'What is my current risk mandate?',
       'What is my active goal roadmap?'
     ]
+  };
+}
+
+export interface ParsedAssistantResponse {
+  text: string;
+  calculations?: any;
+  followUps?: string[];
+  intent?: string;
+  entities?: string[];
+}
+
+/**
+ * Universal, lossless parser for backend AI assistant responses.
+ * Accurately extracts text, calculations, and follow-ups from various backend schemas
+ * (FastAPI, OpenAI, LangChain, or custom response envelopes) without altering numbers or facts.
+ */
+export function parseAssistantApiResponse(res: any, fallbackQuery?: string): ParsedAssistantResponse {
+  if (!res) {
+    return {
+      text: fallbackQuery
+        ? `The advisory engine returned an empty response for your query.`
+        : "The advisory service returned an empty response."
+    };
+  }
+
+  // 1. Plain string response
+  if (typeof res === 'string') {
+    const trimmed = res.trim();
+    return {
+      text: trimmed || "The advisory service returned an empty response."
+    };
+  }
+
+  // 2. Unpack if response is wrapped e.g. { data: ... }
+  const root = (res.data && typeof res.data === 'object' && !Array.isArray(res.data) &&
+    (res.data.reply || res.data.response || res.data.message || res.data.answer || res.data.content || res.data.text || res.data.output || res.data.result))
+    ? res.data
+    : res;
+
+  // 3. Extract text from all potential API fields without altering any content
+  let text = '';
+  if (typeof root.reply === 'string' && root.reply.trim()) {
+    text = root.reply.trim();
+  } else if (typeof root.response === 'string' && root.response.trim()) {
+    text = root.response.trim();
+  } else if (typeof root.answer === 'string' && root.answer.trim()) {
+    text = root.answer.trim();
+  } else if (typeof root.message === 'string' && root.message.trim()) {
+    text = root.message.trim();
+  } else if (typeof root.content === 'string' && root.content.trim()) {
+    text = root.content.trim();
+  } else if (typeof root.text === 'string' && root.text.trim()) {
+    text = root.text.trim();
+  } else if (typeof root.output === 'string' && root.output.trim()) {
+    text = root.output.trim();
+  } else if (typeof root.result === 'string' && root.result.trim()) {
+    text = root.result.trim();
+  } else if (root.message && typeof root.message === 'object' && typeof root.message.content === 'string' && root.message.content.trim()) {
+    text = root.message.content.trim();
+  } else if (Array.isArray(root.choices) && root.choices.length > 0) {
+    const choice = root.choices[0];
+    if (choice.message && typeof choice.message.content === 'string' && choice.message.content.trim()) {
+      text = choice.message.content.trim();
+    } else if (typeof choice.text === 'string' && choice.text.trim()) {
+      text = choice.text.trim();
+    }
+  } else if (typeof res.data === 'string' && res.data.trim()) {
+    text = res.data.trim();
+  }
+
+  // 4. If text is still empty, check error/detail/status fields honestly
+  if (!text) {
+    if (typeof root.detail === 'string' && root.detail.trim()) {
+      text = root.detail.trim();
+    } else if (typeof root.error === 'string' && root.error.trim()) {
+      text = root.error.trim();
+    } else if (typeof root.status === 'string' && root.status.toLowerCase() === 'unavailable') {
+      text = root.message || 'Market data and advisory analysis are temporarily unavailable from the backend provider.';
+    } else if (fallbackQuery) {
+      text = `I have received your query regarding "${fallbackQuery}", but the response payload could not be parsed.`;
+    } else {
+      text = "Unable to parse assistant response payload.";
+    }
+  }
+
+  // 5. Extract follow-up suggestions (check all common conventions)
+  let followUps: string[] = [];
+  const rawFollowUps = root.followUps ||
+    root.follow_ups ||
+    root.follow_up_suggestions ||
+    root.suggested_questions ||
+    root.suggestions ||
+    res.follow_up_suggestions ||
+    res.suggested_questions ||
+    res.followUps;
+  if (Array.isArray(rawFollowUps)) {
+    followUps = rawFollowUps
+      .map((f: any) => typeof f === 'string' ? f.trim() : (f?.text || f?.question || String(f)).trim())
+      .filter(Boolean);
+  }
+
+  // 6. Extract calculations / structured financial cards (preserve numbers exactly)
+  let calculations = root.calculations ?? root.calculation ?? root.structured_data ?? root.analysis_data ?? res.calculations ?? null;
+  if (typeof calculations === 'string') {
+    try {
+      calculations = JSON.parse(calculations);
+    } catch {
+      // Keep as string if not valid JSON
+    }
+  }
+
+  // 7. Extract intent & entities
+  const intent = root.intent || res.intent;
+  const entities = Array.isArray(root.entities)
+    ? root.entities
+    : (Array.isArray(res.entities) ? res.entities : undefined);
+
+  return {
+    text,
+    calculations,
+    followUps: followUps.length > 0 ? followUps : undefined,
+    intent,
+    entities
   };
 }

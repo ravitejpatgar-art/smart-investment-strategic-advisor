@@ -10,7 +10,7 @@ import {
 import { VestiqMark } from '../common/VestiqLogo';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
-import { buildGroundedContext, generateGroundedOfflineResponse } from '../../services/vestiqGrounding';
+import { buildGroundedContext, generateGroundedOfflineResponse, parseAssistantApiResponse } from '../../services/vestiqGrounding';
 
 interface Message {
   id: string;
@@ -119,33 +119,41 @@ How can I help guide your financial and investment decisions today?`,
         return;
       }
 
-      let answerText = res?.answer || res?.response || '';
-      let followUps = res?.followUps || [];
-
-      if (!answerText) {
-        answerText = `I have received your query regarding "${userText}". How else can I assist with your financial strategy?`;
-      }
+      const parsed = parseAssistantApiResponse(res, userText);
 
       const assistantMsg: Message = {
         id: `ai_${Date.now()}`,
         sender: 'assistant',
-        text: answerText,
+        text: parsed.text,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        followUps: followUps.length > 0 ? followUps : undefined
+        followUps: parsed.followUps
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-      const offlineRes = generateGroundedOfflineResponse(userText, groundedCtx);
-      const fallbackMsg: Message = {
-        id: `ai_${Date.now()}`,
-        sender: 'assistant',
-        text: offlineRes.text,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        followUps: offlineRes.followUps || []
-      };
-      setMessages((prev) => [...prev, fallbackMsg]);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_${Date.now()}`,
+            sender: 'assistant',
+            text: '⚠️ **Authentication Required:** Please sign in to access personalized strategic advisory.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      } else {
+        const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
+        const offlineRes = generateGroundedOfflineResponse(userText, groundedCtx);
+        const fallbackMsg: Message = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: offlineRes.text,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          followUps: offlineRes.followUps && offlineRes.followUps.length > 0 ? offlineRes.followUps : undefined
+        };
+        setMessages((prev) => [...prev, fallbackMsg]);
+      }
     } finally {
       setLoading(false);
     }
