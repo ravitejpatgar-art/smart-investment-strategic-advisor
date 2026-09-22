@@ -68,6 +68,7 @@ How can I help guide your financial and investment decisions today?`,
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const latestRequestIdRef = useRef<string>('');
   const isRequestInProgressRef = useRef<boolean>(false);
+  const lastSymbolRef = useRef<string | undefined>(undefined);
 
   const promptChips = [
     'Where should I invest my monthly surplus?',
@@ -113,7 +114,12 @@ How can I help guide your financial and investment decisions today?`,
     try {
       const userContext = buildUserContext(user, expenses, goals, strategy);
 
-      const parsedQuery = parseFinanceQuery(trimmed);
+      const lastSymbol = lastSymbolRef.current;
+      const parsedQuery = parseFinanceQuery(trimmed, { lastSymbol });
+
+      if (parsedQuery.symbols.length > 0) {
+        lastSymbolRef.current = parsedQuery.symbols[0];
+      }
 
       let answerText = '';
       let followUps: string[] | undefined = undefined;

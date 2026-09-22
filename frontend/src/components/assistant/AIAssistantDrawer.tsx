@@ -111,6 +111,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isRequestInProgressRef = useRef<boolean>(false);
   const latestRequestIdRef = useRef<string>('');
+  const lastSymbolRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     try {
@@ -125,6 +126,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
   }, [messages, loading]);
 
   const handleClearChat = () => {
+    lastSymbolRef.current = undefined;
     setMessages(defaultMessages);
     localStorage.removeItem(storageKey);
   };
@@ -157,7 +159,12 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
     try {
       const clientCtx = buildUserContext(user, expenses, goals, strategy);
 
-      const parsedQuery = parseFinanceQuery(query);
+      const lastSymbol = lastSymbolRef.current;
+      const parsedQuery = parseFinanceQuery(query, { lastSymbol });
+
+      if (parsedQuery.symbols.length > 0) {
+        lastSymbolRef.current = parsedQuery.symbols[0];
+      }
 
       let answerText = '';
       let calcData: any = null;
