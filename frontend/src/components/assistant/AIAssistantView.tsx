@@ -59,6 +59,7 @@ How can I help guide your financial and investment decisions today?`,
   const [messages, setMessages] = useState<Message[]>([defaultWelcomeMessage]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const latestRequestIdRef = useRef<string>('');
+  const isRequestInProgressRef = useRef<boolean>(false);
 
   const promptChips = [
     'Where should I invest my monthly surplus?',
@@ -83,7 +84,9 @@ How can I help guide your financial and investment decisions today?`,
   };
 
   const handleSendMessage = async (userText: string) => {
-    if (!userText.trim() || loading) return;
+    const trimmed = userText.trim();
+    if (!trimmed || loading || isRequestInProgressRef.current) return;
+    isRequestInProgressRef.current = true;
 
     const reqId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     latestRequestIdRef.current = reqId;
@@ -91,7 +94,7 @@ How can I help guide your financial and investment decisions today?`,
     const userMsg: Message = {
       id: `usr_${Date.now()}`,
       sender: 'user',
-      text: userText,
+      text: trimmed,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -107,8 +110,8 @@ How can I help guide your financial and investment decisions today?`,
       }));
 
       const res = await authApi.askAssistant({
-        question: userText,
-        message: userText,
+        question: trimmed,
+        message: trimmed,
         requestId: reqId,
         user_context: userContext,
         history: chatHistory
@@ -119,7 +122,7 @@ How can I help guide your financial and investment decisions today?`,
         return;
       }
 
-      const parsed = parseAssistantApiResponse(res, userText);
+      const parsed = parseAssistantApiResponse(res, trimmed);
 
       const assistantMsg: Message = {
         id: `ai_${Date.now()}`,
@@ -132,6 +135,26 @@ How can I help guide your financial and investment decisions today?`,
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: any) {
       const status = err?.response?.status;
+
+      // Timeout detection (Step 4 & Step 8)
+      const isTimeout =
+        err?.code === 'ECONNABORTED' ||
+        err?.code === 'ETIMEDOUT' ||
+        (typeof err?.message === 'string' && err.message.toLowerCase().includes('timeout'));
+
+      if (isTimeout) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_timeout_${Date.now()}`,
+            sender: 'assistant',
+            text: "VestIQ couldn't receive a response in time. Please try again.",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+        return;
+      }
+
       if (status === 401 || status === 403) {
         setMessages((prev) => [
           ...prev,
@@ -144,7 +167,7 @@ How can I help guide your financial and investment decisions today?`,
         ]);
       } else {
         const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-        const offlineRes = generateGroundedOfflineResponse(userText, groundedCtx);
+        const offlineRes = generateGroundedOfflineResponse(trimmed, groundedCtx);
         const fallbackMsg: Message = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
@@ -155,6 +178,7 @@ How can I help guide your financial and investment decisions today?`,
         setMessages((prev) => [...prev, fallbackMsg]);
       }
     } finally {
+      isRequestInProgressRef.current = false;
       setLoading(false);
     }
   };

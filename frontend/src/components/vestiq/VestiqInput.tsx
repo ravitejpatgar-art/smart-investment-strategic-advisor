@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, CornerDownLeft, MessageSquare } from 'lucide-react';
 
 interface VestiqInputProps {
@@ -19,6 +19,13 @@ export const VestiqInput: React.FC<VestiqInputProps> = ({
   const [speechError, setSpeechError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isSubmittingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!loading) {
+      isSubmittingRef.current = false;
+    }
+  }, [loading]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -28,8 +35,10 @@ export const VestiqInput: React.FC<VestiqInputProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!query.trim() || loading) return;
-    onSend(query.trim());
+    const trimmed = query.trim();
+    if (!trimmed || loading || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    onSend(trimmed);
     setQuery('');
   };
 
@@ -62,9 +71,14 @@ export const VestiqInput: React.FC<VestiqInputProps> = ({
 
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setQuery(transcript);
-          onSend(transcript);
+        if (transcript && !loading && !isSubmittingRef.current) {
+          const trimmed = transcript.trim();
+          if (trimmed) {
+            isSubmittingRef.current = true;
+            setQuery(trimmed);
+            onSend(trimmed);
+            setQuery('');
+          }
         }
       };
 

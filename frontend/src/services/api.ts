@@ -149,16 +149,14 @@ export const authApi = {
     }
 
     try {
-      return (await apiClient.post('/ai/chat', data)).data;
+      return (await apiClient.post('/ai/chat', data, { timeout: 30000 })).data;
     } catch (primaryErr: any) {
-      try {
-        return (await apiClient.post('/assistant/chat', data)).data;
-      } catch (secondaryErr: any) {
-        if (primaryErr?.response?.status && primaryErr.response.status !== 404) {
-          throw primaryErr;
-        }
-        throw secondaryErr;
+      // Fall back to /assistant/chat ONLY when primary endpoint returns HTTP 404
+      if (primaryErr?.response?.status === 404) {
+        return (await apiClient.post('/assistant/chat', data, { timeout: 30000 })).data;
       }
+      // For 400, 401, 403, 422, 429, 500, 502, 503, timeout, or network failure, surface primary error immediately
+      throw primaryErr;
     }
   },
   getAssistantSuggestions: async () => {

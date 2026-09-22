@@ -108,7 +108,7 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
           {SMART_INVESTOR_QUESTIONS.map((q, idx) => (
             <button
               key={idx}
-              onClick={() => onSend(q.title)}
+              onClick={() => !loading && onSend(q.title)}
               className="py-3 px-2 w-full text-left transition-colors hover:bg-[var(--color-surface-soft)]/50 flex items-center justify-between gap-4 group cursor-pointer focus:outline-none"
             >
               <div className="space-y-0.5 min-w-0 flex-1">
@@ -127,7 +127,7 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
 
       {/* 4. Live Market Intelligence Strip */}
       <div className="pt-1">
-        <VestiqMarketStrip onSelectSymbol={(sym) => onSend(`What is ${sym} doing today and what is the market outlook?`)} />
+        <VestiqMarketStrip onSelectSymbol={(sym) => !loading && onSend(`What is ${sym} doing today and what is the market outlook?`)} />
       </div>
 
       {/* 5. Advisory Capabilities - Open Grid */}
@@ -161,7 +161,7 @@ export const VestiqEmptyState: React.FC<VestiqEmptyStateProps> = ({ onSend, load
                     {cat.samplePrompts.map((p, pIdx) => (
                       <button
                         key={pIdx}
-                        onClick={() => onSend(p)}
+                        onClick={() => !loading && onSend(p)}
                         className="text-left text-xs text-[var(--color-accent)] hover:underline flex items-center justify-between font-medium cursor-pointer py-0.5 group"
                       >
                         <span className="truncate">"{p}"</span>

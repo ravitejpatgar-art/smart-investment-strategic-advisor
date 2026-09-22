@@ -64,7 +64,7 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
           <VestiqMessage
             key={msg.id}
             message={msg}
-            onSelectFollowUp={(prompt) => onSend(prompt)}
+            onSelectFollowUp={(prompt) => !loading && onSend(prompt)}
             onEdit={onEditMessage}
             onDelete={onDeleteMessage}
             loading={loading}

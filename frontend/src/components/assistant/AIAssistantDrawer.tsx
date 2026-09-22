@@ -101,6 +101,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isRequestInProgressRef = useRef<boolean>(false);
 
   useEffect(() => {
     try {
@@ -127,7 +128,8 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
-    if (!query || loading) return;
+    if (!query || loading || isRequestInProgressRef.current) return;
+    isRequestInProgressRef.current = true;
 
     const userMsg: Message = {
       id: `usr_${Date.now()}`,
@@ -170,6 +172,28 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: any) {
       const status = err?.response?.status;
+
+      // Timeout detection (Step 4 & Step 8)
+      const isTimeout =
+        err?.code === 'ECONNABORTED' ||
+        err?.code === 'ETIMEDOUT' ||
+        (typeof err?.message === 'string' && err.message.toLowerCase().includes('timeout'));
+
+      if (isTimeout) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_timeout_${Date.now()}`,
+            sender: 'assistant',
+            text: "VestIQ couldn't receive a response in time. Please try again.",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            calculations: null,
+            followUps: []
+          },
+        ]);
+        return;
+      }
+
       if (status === 401 || status === 403) {
         setMessages((prev) => [
           ...prev,
@@ -194,6 +218,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
         setMessages((prev) => [...prev, fallbackMsg]);
       }
     } finally {
+      isRequestInProgressRef.current = false;
       setLoading(false);
     }
   };

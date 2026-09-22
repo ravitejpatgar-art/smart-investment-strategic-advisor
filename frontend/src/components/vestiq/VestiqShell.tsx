@@ -37,6 +37,7 @@ export const VestiqShell: React.FC = () => {
 
   const latestRequestIdRef = useRef<string>('');
   const isCreatingRef = useRef<boolean>(false);
+  const isRequestInProgressRef = useRef<boolean>(false);
 
   // Helper to sync conversation ID to URL
   const updateUrlForConversation = (id: string | null) => {
@@ -230,7 +231,8 @@ export const VestiqShell: React.FC = () => {
     baseMessages?: VestiqChatMessage[]
   ) => {
     const trimmedText = userText.trim();
-    if (!trimmedText || loading || isCreatingRef.current) return;
+    if (!trimmedText || loading || isRequestInProgressRef.current) return;
+    isRequestInProgressRef.current = true;
 
     setError(null);
     setLastQuery(trimmedText);
@@ -259,36 +261,33 @@ export const VestiqShell: React.FC = () => {
     }
     setLoading(true);
 
-    let currentConvId = activeSessionId;
+    const currentConvId = activeSessionId;
 
-    try {
-      isCreatingRef.current = true;
-
-      // 1. If no active conversation, create one on backend
-      let validConvId: string = currentConvId || '';
-      if (!validConvId) {
-        try {
+    // Background persistence task: create conversation & persist user message asynchronously
+    // MUST NOT block the AI assistant request
+    const convPersistencePromise = (async (): Promise<string | null> => {
+      let validConvId = currentConvId || '';
+      try {
+        if (!validConvId) {
           const newConv = await authApi.createConversation();
           if (newConv && newConv.id) {
             validConvId = newConv.id;
             setActiveSessionId(validConvId);
             updateUrlForConversation(validConvId);
           }
-        } catch (convErr) {
-          console.warn('[VestIQ] Conversation create notice:', convErr);
         }
-      }
-
-      // 2. Persist user message to backend
-      if (validConvId && !isRetry) {
-        try {
+        if (validConvId && !isRetry) {
           await authApi.addConversationMessage(validConvId, 'user', trimmedText, tempUserMsgId);
-        } catch (msgErr) {
-          console.warn('[VestIQ] User message persist notice:', msgErr);
         }
+        return validConvId;
+      } catch (convErr) {
+        console.warn('[VestIQ] Background conversation/user message persist notice:', convErr);
+        return validConvId || null;
       }
+    })();
 
-      // 3. Build context & call existing AI Reasoning Engine
+    try {
+      // Build context & dispatch existing AI Reasoning Engine IMMEDIATELY
       const userContext = buildUserContext(user, expenses, goals, strategy);
       const chatHistory = updatedMessages.slice(-8).map((m) => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
@@ -301,13 +300,14 @@ export const VestiqShell: React.FC = () => {
         requestId: reqId,
         user_context: userContext,
         history: chatHistory,
-        conversation_id: validConvId || undefined,
+        conversation_id: currentConvId || undefined,
       });
 
       if (res?.requestId && res.requestId !== latestRequestIdRef.current) {
         return;
       }
 
+      // Step 6 & 7: Parse once, display real response immediately, stop loading immediately
       const parsed = parseAssistantApiResponse(res, trimmedText);
       const answerText = parsed.text;
       const calcData = parsed.calculations;
@@ -325,26 +325,54 @@ export const VestiqShell: React.FC = () => {
         entities: parsed.entities || res?.entities,
       };
 
-      // 4. Persist assistant message to backend
-      if (validConvId) {
-        try {
-          await authApi.addConversationMessage(validConvId, 'assistant', answerText, tempAiMsgId);
-        } catch (aiMsgErr) {
-          console.warn('[VestIQ] Assistant message persist notice:', aiMsgErr);
-        }
-      }
+      // IMMEDIATELY render assistant message and unblock UI
+      setMessages((prev) => [...prev, assistantMsg]);
+      setLoading(false);
 
       auditLogger.ai('VESTIQ_REQUEST_COMPLETED', 'success', { requestId: reqId, hasCalculations: !!calcData });
 
-      // 5. Update messages and refresh conversation list
-      setMessages((prev) => [...prev, assistantMsg]);
-      await fetchConversations();
+      // Background persistence: persist assistant response and refresh sessions without blocking UI
+      convPersistencePromise.then(async (validConvId) => {
+        if (validConvId) {
+          try {
+            await authApi.addConversationMessage(validConvId, 'assistant', answerText, tempAiMsgId);
+          } catch (aiMsgErr) {
+            console.warn('[VestIQ] Background assistant message persist notice:', aiMsgErr);
+          }
+        }
+        try {
+          await fetchConversations();
+        } catch (fetchErr) {
+          console.warn('[VestIQ] Background fetch conversations notice:', fetchErr);
+        }
+      }).catch((bgErr) => {
+        console.warn('[VestIQ] Background persistence notice:', bgErr);
+      });
 
     } catch (err: any) {
       console.error('[VestIQ] Error during message exchange:', err);
       auditLogger.ai('VESTIQ_REQUEST_FAILED', 'warning', { requestId: reqId, status: err?.response?.status || 'OFFLINE' });
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail || err?.response?.data?.message || err?.message;
+
+      // Timeout detection (Step 4 & Step 8): Must display honest message without fake fallback
+      const isTimeout =
+        err?.code === 'ECONNABORTED' ||
+        err?.code === 'ETIMEDOUT' ||
+        (typeof err?.message === 'string' && err.message.toLowerCase().includes('timeout'));
+
+      if (isTimeout) {
+        const timeoutNotice = "VestIQ couldn't receive a response in time. Please try again.";
+        setError(timeoutNotice);
+        const timeoutMsg: VestiqChatMessage = {
+          id: `ai_timeout_${Date.now()}`,
+          sender: 'assistant',
+          text: timeoutNotice,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, timeoutMsg]);
+        return;
+      }
       
       if (status === 401 || status === 403) {
         setError("Session expired or authentication required. Please sign in.");
@@ -378,6 +406,7 @@ export const VestiqShell: React.FC = () => {
         setMessages((prev) => [...prev, assistantMsg]);
       }
     } finally {
+      isRequestInProgressRef.current = false;
       isCreatingRef.current = false;
       setLoading(false);
     }
