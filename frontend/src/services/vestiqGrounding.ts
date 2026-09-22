@@ -223,10 +223,31 @@ export function generateGroundedOfflineResponse(
   context: GroundedFinancialContext
 ): { text: string; intent?: string; calculations?: any; followUps?: string[] } {
   const q = query.trim().toLowerCase();
-  const cf = context.cashFlow;
-  const prof = context.profile;
-  const risk = context.risk;
-  const strat = context.strategy;
+  const cf = context?.cashFlow || {
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    investableSurplus: (context as any)?.monthlySurplus || 0,
+    savingsRate: 0,
+    emergencyFund: 0,
+    emergencyTarget: 0,
+    emergencyFundMonths: (context as any)?.emergencyRunwayMonths || 0,
+    emergencyFundStatus: 'Unknown'
+  };
+  const prof = context?.profile || {
+    name: (context as any)?.userName || 'Guest',
+    onboardingCompleted: false,
+    email: ''
+  };
+  const risk = context?.risk || {
+    effectiveRiskCategory: (context as any)?.riskProfile || 'Moderate',
+    riskTolerance: 'Moderate'
+  };
+  const strat = context?.strategy || {
+    strategyName: 'Custom Strategy',
+    riskProfile: 'Moderate',
+    expectedReturnRange: '10-12%',
+    allocations: []
+  };
 
   const formatMoney = (amt: number, curr = '₹') => `${curr}${amt.toLocaleString('en-IN')}`;
 
@@ -377,17 +398,80 @@ export function generateGroundedOfflineResponse(
     };
   }
 
-  // Default Grounded Welcome / Assistant Overview
-  const nameGreeting = prof.name && prof.name !== 'Guest' ? `Hello ${prof.name}` : 'Hello';
+  // Default Grounded Welcome / Assistant Overview - ONLY returned when user explicitly asks for greeting/overview
+  const isGreetingOrHelp =
+    !q ||
+    q === 'hi' ||
+    q === 'hello' ||
+    q === 'hey' ||
+    q === 'greetings' ||
+    q.startsWith('hello ') ||
+    q.startsWith('hi ') ||
+    q.includes('who are you') ||
+    q.includes('what can you do') ||
+    q.includes('help me get started') ||
+    q.includes('start onboarding') ||
+    q.includes('overview of vestiq');
+
+  if (isGreetingOrHelp) {
+    const nameGreeting = prof.name && prof.name !== 'Guest' ? `Hello ${prof.name}` : 'Hello';
+    return {
+      text: `${nameGreeting}, I am **VestIQ**, your fiduciary portfolio advisor. I am calibrated with your **${risk.effectiveRiskCategory || 'Moderate'}** risk mandate and **${formatMoney(cf.investableSurplus)}/month** investable surplus.\n\nAsk me about cash flow optimization, emergency runway targets, goal SIP requirements, or asset class suitability.`,
+      intent: 'GREETING',
+      followUps: [
+        'How much can I invest each month?',
+        'How much emergency runway do I have?',
+        'What is my current risk mandate?',
+        'What is my active goal roadmap?'
+      ]
+    };
+  }
+
+  // For specific finance/market questions where verified offline data is unavailable,
+  // return an honest message and NEVER invent conclusions or return unrelated onboarding text.
   return {
-    text: `${nameGreeting}, I am **VestIQ**, your fiduciary portfolio advisor. I am calibrated with your **${risk.effectiveRiskCategory || 'Moderate'}** risk mandate and **${formatMoney(cf.investableSurplus)}/month** investable surplus.\n\nAsk me about cash flow optimization, emergency runway targets, goal SIP requirements, or asset class suitability.`,
+    text: "I can't verify the current market information needed to answer this question right now.",
+    intent: 'MARKET_DATA_UNAVAILABLE',
     followUps: [
+      'Review my portfolio asset allocation',
       'How much can I invest each month?',
-      'How much emergency runway do I have?',
-      'What is my current risk mandate?',
-      'What is my active goal roadmap?'
+      'How much emergency runway do I have?'
     ]
   };
+}
+
+/**
+ * Checks whether text matches a generic onboarding or welcome overview.
+ */
+export function isGenericOnboardingText(text: string): boolean {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  return (
+    lower.includes('your fiduciary portfolio advisor') ||
+    (lower.includes('i am vestiq') && lower.includes('calibrated with your')) ||
+    (lower.includes('cash flow optimization') && lower.includes('emergency runway targets'))
+  );
+}
+
+/**
+ * Checks whether a user query is a greeting or introductory help inquiry.
+ */
+export function isGreetingOrHelpQuery(query: string): boolean {
+  const q = (query || '').trim().toLowerCase();
+  return (
+    !q ||
+    q === 'hi' ||
+    q === 'hello' ||
+    q === 'hey' ||
+    q === 'greetings' ||
+    q.startsWith('hello ') ||
+    q.startsWith('hi ') ||
+    q.includes('who are you') ||
+    q.includes('what can you do') ||
+    q.includes('help me get started') ||
+    q.includes('start onboarding') ||
+    q.includes('overview of vestiq')
+  );
 }
 
 export interface ParsedAssistantResponse {

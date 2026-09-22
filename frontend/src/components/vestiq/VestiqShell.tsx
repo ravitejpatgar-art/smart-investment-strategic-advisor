@@ -3,7 +3,13 @@ import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { auditLogger } from '../../services/auditLogger';
 import { buildUserContext } from '../../services/userProfileRepository';
-import { buildGroundedContext, generateGroundedOfflineResponse, parseAssistantApiResponse } from '../../services/vestiqGrounding';
+import {
+  buildGroundedContext,
+  generateGroundedOfflineResponse,
+  parseAssistantApiResponse,
+  isGenericOnboardingText,
+  isGreetingOrHelpQuery
+} from '../../services/vestiqGrounding';
 import { VestiqHeader } from './VestiqHeader';
 import { VestiqSidebar, type VestiqSession } from './VestiqSidebar';
 import { VestiqContextPanel } from './VestiqContextPanel';
@@ -297,19 +303,30 @@ export const VestiqShell: React.FC = () => {
       const res = await authApi.askAssistant({
         question: trimmedText,
         message: trimmedText,
+        query: trimmedText,
         requestId: reqId,
         user_context: userContext,
         history: chatHistory,
         conversation_id: currentConvId || undefined,
       });
 
-      if (res?.requestId && res.requestId !== latestRequestIdRef.current) {
+      // Reject stale responses: if a newer request was dispatched, drop this older response
+      if (latestRequestIdRef.current !== reqId) {
+        return;
+      }
+      if (res?.requestId && res.requestId !== reqId) {
         return;
       }
 
       // Step 6 & 7: Parse once, display real response immediately, stop loading immediately
       const parsed = parseAssistantApiResponse(res, trimmedText);
-      const answerText = parsed.text;
+      let answerText = parsed.text;
+
+      // Step 8: Validate displayed response is not an unrelated generic onboarding message unless user explicitly asked for onboarding/help
+      if (isGenericOnboardingText(answerText) && !isGreetingOrHelpQuery(trimmedText)) {
+        answerText = "I can't verify the current market information needed to answer this question right now.";
+      }
+
       const calcData = parsed.calculations;
       const followUps = parsed.followUps;
 
@@ -355,6 +372,11 @@ export const VestiqShell: React.FC = () => {
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail || err?.response?.data?.message || err?.message;
 
+      // Stale check in catch block: if a newer request was dispatched, ignore older failure
+      if (latestRequestIdRef.current !== reqId) {
+        return;
+      }
+
       // Timeout detection (Step 4 & Step 8): Must display honest message without fake fallback
       const isTimeout =
         err?.code === 'ECONNABORTED' ||
@@ -383,21 +405,38 @@ export const VestiqShell: React.FC = () => {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, authMsg]);
+      } else if (status && status >= 500) {
+        const errorText = typeof detail === 'string' && detail.trim()
+          ? detail
+          : "The advisory service encountered an error and could not process this request right now. Please try again.";
+        setError(errorText);
+        const errorMsg: VestiqChatMessage = {
+          id: `ai_err_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ **Advisory Service Notice:** ${errorText}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
       } else {
         if (status === 429) {
           setError("Rate limit reached. Operating under local grounded advisory.");
-        } else if (status === 500) {
-          setError(typeof detail === 'string' ? detail : "Backend processing notice: Using local verified portfolio context.");
         }
         
         // Grounded offline reasoning fallback using authoritative profile
         const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
         const offlineRes = generateGroundedOfflineResponse(trimmedText, groundedCtx);
+        let offlineText = offlineRes.text;
+
+        // Step 8: Never show generic onboarding text for a specific question
+        if (isGenericOnboardingText(offlineText) && !isGreetingOrHelpQuery(trimmedText)) {
+          offlineText = "I can't verify the current market information needed to answer this question right now.";
+        }
+
         const tempAiMsgId = `ai_offline_${Date.now()}`;
         const assistantMsg: VestiqChatMessage = {
           id: tempAiMsgId,
           sender: 'assistant',
-          text: offlineRes.text,
+          text: offlineText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           calculations: offlineRes.calculations || null,
           followUps: offlineRes.followUps && offlineRes.followUps.length > 0 ? offlineRes.followUps : undefined,

@@ -134,16 +134,18 @@ export const authApi = {
     if (typeof payload === 'string') {
       const q = payload.trim();
       data = {
+        query: q,
         question: q,
         message: q,
         requestId: `req_${Date.now()}`
       };
     } else {
-      const q = (payload.question || payload.message || '').trim();
+      const q = (payload.question || payload.message || payload.query || '').trim();
       data = {
         ...payload,
-        question: payload.question || q,
-        message: payload.message || q,
+        query: q,
+        question: q,
+        message: q,
         requestId: payload.requestId || `req_${Date.now()}`
       };
     }

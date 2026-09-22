@@ -14,7 +14,13 @@ import {
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
-import { buildGroundedContext, generateGroundedOfflineResponse, parseAssistantApiResponse } from '../../services/vestiqGrounding';
+import {
+  buildGroundedContext,
+  generateGroundedOfflineResponse,
+  parseAssistantApiResponse,
+  isGenericOnboardingText,
+  isGreetingOrHelpQuery
+} from '../../services/vestiqGrounding';
 import { VestiqMark } from '../common/VestiqLogo';
 
 interface CalculationData {
@@ -102,6 +108,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isRequestInProgressRef = useRef<boolean>(false);
+  const latestRequestIdRef = useRef<string>('');
 
   useEffect(() => {
     try {
@@ -131,6 +138,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
     if (!query || loading || isRequestInProgressRef.current) return;
     isRequestInProgressRef.current = true;
 
+    const reqId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    latestRequestIdRef.current = reqId;
+
     const userMsg: Message = {
       id: `usr_${Date.now()}`,
       sender: 'user',
@@ -149,21 +159,34 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
         content: m.text,
       }));
       const apiPayload = {
+        query: query,
         question: query,
         message: query,
-        requestId: `req_${Date.now()}`,
+        requestId: reqId,
         user_context: clientCtx,
         history: chatHistory,
         conversation_id: `drawer_${user?.id || 'default'}`
       };
 
       const response = await authApi.askAssistant(apiPayload);
+
+      // Stale response protection (Step 2)
+      if (latestRequestIdRef.current !== reqId || (response?.requestId && response.requestId !== reqId)) {
+        return;
+      }
+
       const parsed = parseAssistantApiResponse(response, query);
+      let answerText = parsed.text;
+
+      // STEP 8 — DISPLAY VALIDATION
+      if (isGenericOnboardingText(answerText) && !isGreetingOrHelpQuery(query)) {
+        answerText = "I can't verify the current market information needed to answer this question right now.";
+      }
 
       const assistantMsg: Message = {
         id: `ai_${Date.now()}`,
         sender: 'assistant',
-        text: parsed.text,
+        text: answerText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         calculations: parsed.calculations || null,
         followUps: parsed.followUps || []
@@ -171,6 +194,10 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: any) {
+      if (latestRequestIdRef.current !== reqId) {
+        return;
+      }
+
       const status = err?.response?.status;
 
       // Timeout detection (Step 4 & Step 8)
@@ -198,28 +225,50 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
         setMessages((prev) => [
           ...prev,
           {
-            id: `ai_${Date.now()}`,
+            id: `ai_auth_${Date.now()}`,
             sender: 'assistant',
             text: '⚠️ **Authentication Required:** Please sign in to access personalized advisory.',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
-      } else {
-        const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-        const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
-        const fallbackMsg: Message = {
-          id: `ai_${Date.now()}`,
-          sender: 'assistant',
-          text: offlineRes.text,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          calculations: offlineRes.calculations || null,
-          followUps: offlineRes.followUps || []
-        };
-        setMessages((prev) => [...prev, fallbackMsg]);
+        return;
       }
+
+      // Explicit 5xx server error
+      if (status && status >= 500) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_err_${Date.now()}`,
+            sender: 'assistant',
+            text: "I'm experiencing an advisory service issue right now. Please try again in a few moments.",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+        return;
+      }
+
+      const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
+      const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
+      let fallbackText = offlineRes.text;
+      if (isGenericOnboardingText(fallbackText) && !isGreetingOrHelpQuery(query)) {
+        fallbackText = "I can't verify the current market information needed to answer this question right now.";
+      }
+
+      const fallbackMsg: Message = {
+        id: `ai_offline_${Date.now()}`,
+        sender: 'assistant',
+        text: fallbackText,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        calculations: offlineRes.calculations || null,
+        followUps: offlineRes.followUps || []
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
-      isRequestInProgressRef.current = false;
-      setLoading(false);
+      if (latestRequestIdRef.current === reqId) {
+        isRequestInProgressRef.current = false;
+        setLoading(false);
+      }
     }
   };
 
