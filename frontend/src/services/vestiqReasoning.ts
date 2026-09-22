@@ -233,6 +233,10 @@ export function planDataRequirements(query: ParsedFinanceQuery): DataRequirement
 
   // 1. Static Educational & Pure Concept Intents
   if (
+    query.conceptId ||
+    query.comparisonId ||
+    (query.macroRelationshipId && !isCurrentEvent) ||
+    query.isPartialFinance ||
     intent === 'OUT_OF_DOMAIN' ||
     intent === 'AMBIGUOUS' ||
     intent === 'UNSUPPORTED' ||

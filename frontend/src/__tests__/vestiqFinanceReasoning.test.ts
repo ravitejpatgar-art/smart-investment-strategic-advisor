@@ -600,4 +600,176 @@ describe('VestIQ Finance Reasoning Engine — Phase 2', () => {
     const q3 = parseFinanceQuery('Tell me about Costco');
     expect(q3.symbols).toContain('COST');
   });
+
+  // ==========================================
+  // 19. Broad Deterministic Finance Knowledge Engine (Section 11 Suite)
+  // ==========================================
+
+  describe('Broad Deterministic Finance Knowledge Engine', () => {
+    it('37. answers concept questions deterministically without calling APIs', () => {
+      const concepts = [
+        { q: 'What is an IPO?', id: 'IPO', aspect: 'definition' },
+        { q: 'Explain IPO', id: 'IPO' },
+        { q: 'IPO meaning', id: 'IPO' },
+        { q: 'How does an IPO work?', id: 'IPO', aspect: 'howItWorks' },
+        { q: 'What is EPS?', id: 'EPS' },
+        { q: 'What is P/E ratio?', id: 'PE_RATIO' },
+        { q: 'What is an ETF?', id: 'ETF' },
+        { q: 'What is NAV?', id: 'NAV' },
+        { q: 'What is a demat account?', id: 'DEMAT_ACCOUNT' },
+        { q: 'What is compounding?', id: 'COMPOUNDING' },
+        { q: 'What is market capitalization?', id: 'MARKET_CAP' },
+        { q: 'What is a bull market?', id: 'BULL_MARKET' },
+        { q: 'What is a bear market?', id: 'BEAR_MARKET' },
+        { q: 'What is inflation?', id: 'INFLATION' },
+        { q: 'What is a bond?', id: 'BOND' },
+        { q: 'What is coupon rate?', id: 'COUPON' },
+        { q: 'What is dividend yield?', id: 'DIVIDEND_YIELD' },
+        { q: 'What is diversification?', id: 'DIVERSIFICATION' },
+        { q: 'What is asset allocation?', id: 'ASSET_ALLOCATION' },
+      ];
+
+      for (const item of concepts) {
+        const parsed = parseFinanceQuery(item.q);
+        expect(parsed.intent).toBe('EDUCATION');
+        expect(parsed.conceptId).toBe(item.id);
+        if (item.aspect) {
+          expect(parsed.conceptAspect).toBe(item.aspect);
+        }
+        expect(parsed.symbols).toHaveLength(0);
+
+        const plan = planDataRequirements(parsed);
+        expect(plan.noApi).toBe(true);
+
+        const answer = composeAnswer(parsed, { quotes: {}, research: {}, candles: {}, portfolio: null });
+        expect(answer.title).toBeDefined();
+        expect(answer.directAnswer).toBeDefined();
+        expect(answer.sections.length).toBeGreaterThan(0);
+        expect(answer.freshness).toBe('STATIC_KNOWLEDGE');
+      }
+    });
+
+    it('38. answers macroeconomic and corporate relationship questions deterministically without calling APIs', () => {
+      const relQuestions = [
+        { q: 'Why do bond prices fall when interest rates rise?', expectedIntent: 'FIXED_INCOME' },
+        { q: 'How does inflation affect investments?', expectedIntent: 'MARKET_RELATIONSHIP' },
+        { q: 'How does crude oil affect OMCs?', expectedIntent: 'MARKET_RELATIONSHIP' },
+        { q: 'How does USD/INR affect Indian investors?', expectedIntent: 'MARKET_RELATIONSHIP' },
+      ];
+
+      for (const item of relQuestions) {
+        const parsed = parseFinanceQuery(item.q);
+        expect(parsed.intent).toBe(item.expectedIntent);
+        expect(parsed.symbols).toHaveLength(0);
+
+        const plan = planDataRequirements(parsed);
+        expect(plan.noApi).toBe(true);
+
+        const answer = composeAnswer(parsed, { quotes: {}, research: {}, candles: {}, portfolio: null });
+        expect(answer.directAnswer).toBeDefined();
+        expect(answer.sections.length).toBeGreaterThan(0);
+        expect(answer.freshness).toBe('STATIC_KNOWLEDGE');
+      }
+    });
+
+    it('39. answers concept-vs-concept comparison questions deterministically without calling APIs', () => {
+      const comparisons = [
+        { q: 'ETF vs mutual fund', id: 'ETF_VS_MUTUAL_FUND' },
+        { q: 'SIP vs lumpsum', id: 'SIP_VS_LUMPSUM' },
+        { q: 'FD vs bond', id: 'FD_VS_BOND' },
+        { q: 'Stock vs bond', id: 'STOCK_VS_BOND' },
+      ];
+
+      for (const item of comparisons) {
+        const parsed = parseFinanceQuery(item.q);
+        expect(parsed.intent).toBe('COMPARISON');
+        expect(parsed.comparisonId).toBe(item.id);
+        expect(parsed.symbols).toHaveLength(0);
+
+        const plan = planDataRequirements(parsed);
+        expect(plan.noApi).toBe(true);
+
+        const answer = composeAnswer(parsed, { quotes: {}, research: {}, candles: {}, portfolio: null });
+        expect(answer.title).toContain('vs');
+        expect(answer.sections.some((s) => s.heading.includes('Matrix'))).toBe(true);
+        expect(answer.freshness).toBe('STATIC_KNOWLEDGE');
+      }
+    });
+
+    it('40. handles multi-turn conversation context for follow-up questions', () => {
+      // Turn 1: "What is an IPO?"
+      const t1 = parseFinanceQuery('What is an IPO?');
+      expect(t1.conceptId).toBe('IPO');
+      const ans1 = composeAnswer(t1, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans1.title).toContain('Initial Public Offering');
+
+      // Turn 2: "How does it work?" with lastConcept = 'IPO'
+      const t2 = parseFinanceQuery('How does it work?', { lastConcept: 'IPO' });
+      expect(t2.conceptId).toBe('IPO');
+      expect(t2.conceptAspect).toBe('howItWorks');
+      const ans2 = composeAnswer(t2, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans2.title).toContain('How It Works');
+      expect(ans2.sections.some((s) => s.heading === 'How It Works')).toBe(true);
+
+      // Turn 3: "What are the risks?" with lastConcept = 'IPO'
+      const t3 = parseFinanceQuery('What are the risks?', { lastConcept: 'IPO' });
+      expect(t3.conceptId).toBe('IPO');
+      expect(t3.conceptAspect).toBe('risks');
+      const ans3 = composeAnswer(t3, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans3.title).toContain('Risks');
+      expect(ans3.sections.some((s) => s.heading.includes('Risks'))).toBe(true);
+    });
+
+    it('41. handles unknown finance concepts and partial finance questions safely without fabrication', () => {
+      // 1. Partial/Unknown finance concept
+      const q1 = parseFinanceQuery("Explain a financial concept I don't know");
+      expect(q1.isPartialFinance).toBe(true);
+      const plan1 = planDataRequirements(q1);
+      expect(plan1.noApi).toBe(true);
+      const ans1 = composeAnswer(q1, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans1.sections.some((s) => s.heading.includes('Verified Knowledge Coverage'))).toBe(true);
+      expect(ans1.sections.some((s) => s.heading.includes('Unverified / Missing Concept'))).toBe(true);
+      expect(ans1.warnings?.length).toBeGreaterThan(0);
+
+      // 2. Earnings and profits macro relationship
+      const q2 = parseFinanceQuery('Why do company profits matter for stock prices?');
+      const plan2 = planDataRequirements(q2);
+      expect(plan2.noApi).toBe(true);
+      const ans2 = composeAnswer(q2, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans2.title).toContain('Corporate Profits vs Long-Term Stock Prices');
+      expect(ans2.freshness).toBe('STATIC_KNOWLEDGE');
+    });
+
+    it('42. rejects out-of-domain questions with standard out-of-domain response', () => {
+      const q1 = parseFinanceQuery('What is the weather?');
+      expect(q1.intent).toBe('OUT_OF_DOMAIN');
+      const ans1 = composeAnswer(q1, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans1.title).toBe('Topic Outside Financial Domain');
+
+      const q2 = parseFinanceQuery('How do I cook rice?');
+      expect(q2.intent).toBe('OUT_OF_DOMAIN');
+      const ans2 = composeAnswer(q2, { quotes: {}, research: {}, candles: {}, portfolio: null });
+      expect(ans2.title).toBe('Topic Outside Financial Domain');
+    });
+
+    it('43. ensures market questions still use APIs and live data while educational questions do not', () => {
+      // Live market quotes MUST require APIs
+      const qMarket1 = parseFinanceQuery('What is AAPL price?');
+      const planMarket1 = planDataRequirements(qMarket1);
+      expect(planMarket1.quotes).toContain('AAPL');
+      expect(planMarket1.noApi).toBe(false);
+
+      const qMarket2 = parseFinanceQuery('How is Reliance doing today?');
+      const planMarket2 = planDataRequirements(qMarket2);
+      expect(planMarket2.quotes).toContain('RELIANCE');
+      expect(planMarket2.noApi).toBe(false);
+
+      // Educational questions MUST NOT require APIs
+      const qEdu = parseFinanceQuery('What is an ETF?');
+      const planEdu = planDataRequirements(qEdu);
+      expect(planEdu.noApi).toBe(true);
+      expect(planEdu.quotes).toHaveLength(0);
+      expect(planEdu.candles).toHaveLength(0);
+    });
+  });
 });

@@ -14,6 +14,12 @@ import {
   FINANCIAL_RELATIONSHIPS,
 } from './vestiqKnowledgeBase';
 import type { FinancialRelationship } from './vestiqKnowledgeBase';
+import {
+  FINANCE_CONCEPTS,
+  findFinanceConcept,
+  findConceptComparison,
+  findMacroRelationship,
+} from './vestiqFinanceKnowledge';
 
 export type FinanceIntent =
   | 'QUOTE'
@@ -53,6 +59,7 @@ export type FinanceDomain =
   | 'FUNDAMENTAL_ANALYSIS'
   | 'COMMODITIES'
   | 'GLOBAL_MARKETS'
+  | 'MACRO'
   | 'FINANCIAL_CALCULATIONS'
   | 'FINANCIAL_EDUCATION'
   | 'SMARTVEST'
@@ -65,6 +72,7 @@ export interface ConversationContext {
   lastIntent?: FinanceIntent;
   recentSymbols?: string[];
   lastQuery?: string;
+  lastConcept?: string;
 }
 
 export interface SubQuestionGoal {
@@ -79,6 +87,13 @@ export interface ParsedFinanceQuery {
   intent: FinanceIntent;
   symbols: string[];
   metric?: string;
+  conceptId?: string;
+  conceptAspect?: 'definition' | 'howItWorks' | 'whyItMatters' | 'example' | 'risks' | 'keyPoints';
+  comparisonId?: string;
+  macroRelationshipId?: string;
+  isPartialFinance?: boolean;
+  partialFinanceTerms?: string[];
+  unverifiedQueryPart?: string;
   years?: number;
   months?: number;
   amount?: number;
@@ -793,6 +808,47 @@ export function decomposeQuestion(
 }
 
 // ==========================================
+// 8b. Concept Aspect Detection
+// ==========================================
+
+export function detectConceptAspect(
+  query: string
+): 'definition' | 'howItWorks' | 'whyItMatters' | 'example' | 'risks' | 'keyPoints' {
+  const lower = query.toLowerCase();
+  if (
+    /\b(how does .* work|how it works|how do they work|how does this work|how work|mechanism|workings?)\b/i.test(lower) ||
+    /^(how does it work\??|how it works\??)$/i.test(lower.trim())
+  ) {
+    return 'howItWorks';
+  }
+  if (
+    /\b(risks?|drawbacks?|dangers?|disadvantages?|downside|limitations?)\b/i.test(lower) ||
+    /^(what are the risks\??|what are its risks\??|risks\??)$/i.test(lower.trim())
+  ) {
+    return 'risks';
+  }
+  if (
+    /\b(why does .* matter|why is .* important|importance|significance|why matter)\b/i.test(lower) ||
+    /^(why does it matter\??|why is it important\??)$/i.test(lower.trim())
+  ) {
+    return 'whyItMatters';
+  }
+  if (
+    /\b(example|illustration|sample|instance)\b/i.test(lower) ||
+    /^(give me an example\??|example\??)$/i.test(lower.trim())
+  ) {
+    return 'example';
+  }
+  if (
+    /\b(key points?|features?|key takeaways?|highlights?)\b/i.test(lower) ||
+    /^(key points\??|key takeaways\??)$/i.test(lower.trim())
+  ) {
+    return 'keyPoints';
+  }
+  return 'definition';
+}
+
+// ==========================================
 // 9. Main Parser Pipeline
 // ==========================================
 
@@ -801,8 +857,9 @@ export function parseFinanceQuery(
   context?: ConversationContext
 ): ParsedFinanceQuery {
   const normalizedQuery = normalizeQuestion(rawQuery);
+  const lower = normalizedQuery.toLowerCase();
 
-  // Out of domain check first
+  // 1. Out of domain check first
   if (detectOutOfDomain(normalizedQuery)) {
     return {
       intent: 'OUT_OF_DOMAIN',
@@ -813,7 +870,7 @@ export function parseFinanceQuery(
     };
   }
 
-  // Ambiguity check
+  // 2. Ambiguity check
   const ambiguity = detectAmbiguity(normalizedQuery);
   if (ambiguity.isAmbiguous) {
     return {
@@ -827,31 +884,143 @@ export function parseFinanceQuery(
     };
   }
 
-  // Extract Symbols with Pronoun Context
   const { symbols } = extractSymbols(normalizedQuery, context);
-
-  // Extract Numeric & Temporal Details
   const numeric = extractNumericAndTemporal(normalizedQuery);
-
-  // Detect Macro/Economic Relationships
   const relationship = detectRelationship(normalizedQuery);
-
-  // Detect Core Intent & Domain
-  const { intent, domain, metric, isCurrentEvent } = detectIntent(
+  const { intent: baseIntent, domain: baseDomain, metric: baseMetric, isCurrentEvent } = detectIntent(
     normalizedQuery,
     symbols,
     relationship,
     numeric
   );
 
+  // If no symbols are detected, check the educational finance engine:
+  if (symbols.length === 0) {
+    // 1. Concept Comparisons (e.g. "ETF vs mutual fund", "SIP vs lumpsum", "FD vs bond", "Stock vs bond")
+    const conceptComparison = findConceptComparison(normalizedQuery);
+    if (conceptComparison) {
+      return {
+        intent: 'COMPARISON',
+        domain: 'INVESTING',
+        comparisonId: conceptComparison.id,
+        symbols: [],
+        originalQuery: rawQuery,
+        normalizedQuery,
+        isCurrentEvent: false,
+      };
+    }
+
+    // 2. Follow-Up context for previous concept (e.g. "How does it work?", "What are the risks?")
+    if (context?.lastConcept) {
+      const isPronounFollowup =
+        /\b(it|its|this|that)\b/i.test(lower) ||
+        /\b(how does it work|how it works|what are the risks|what are its risks|risks|example|why does it matter|key points)\b/i.test(lower) ||
+        /^(how does it work\??|what are the risks\??|how it works\??|risks\??|example\??)$/i.test(lower.trim());
+
+      const explicitConcept = findFinanceConcept(normalizedQuery);
+      if (isPronounFollowup && !explicitConcept) {
+        const prevConcept = FINANCE_CONCEPTS.find((c) => c.id === context.lastConcept);
+        if (prevConcept) {
+          const aspect = detectConceptAspect(normalizedQuery);
+          return {
+            intent: 'EDUCATION',
+            domain: prevConcept.domain,
+            conceptId: prevConcept.id,
+            metric: prevConcept.id === 'PE_RATIO' ? 'PE' : prevConcept.id,
+            conceptAspect: aspect,
+            symbols: [],
+            originalQuery: rawQuery,
+            normalizedQuery,
+            isCurrentEvent: false,
+          };
+        }
+      }
+    }
+
+    // 3. Macroeconomic Relationship Detection (e.g. "How does inflation affect investments?", "How does USD/INR affect Indian investors?")
+    // Only if not already handled by a more specific intent/relationship (like PE explanation, Fixed Income bond mechanics, or CRUDE_OIL_TO_OMC)
+    if (
+      !relationship &&
+      (baseIntent === 'UNSUPPORTED' ||
+        baseIntent === 'MARKET_RELATIONSHIP' ||
+        (baseIntent === 'EXPLANATION' && baseMetric === 'EXPLANATION'))
+    ) {
+      const macroRelationship = findMacroRelationship(normalizedQuery);
+      if (macroRelationship) {
+        return {
+          intent: 'MARKET_RELATIONSHIP',
+          domain: 'MARKETS',
+          macroRelationshipId: macroRelationship.id,
+          symbols: [],
+          originalQuery: rawQuery,
+          normalizedQuery,
+          isCurrentEvent: false,
+        };
+      }
+    }
+
+    // 4. Direct Educational Finance Concept (e.g. "What is an IPO?", "IPO meaning", "Explain IPO", "What is EPS?", "What is compounding?")
+    // Only apply if not already handled by a specific structured handler (e.g. EXPLANATION with PE, or explicit return calculation with amounts)
+    const financeConcept = findFinanceConcept(normalizedQuery);
+    const isExplicitEducationalInquiry =
+      /\b(what is|what are|define|meaning of|what do you mean by|tell me about)\b/i.test(lower) ||
+      /^(explain|tell me about)\b/i.test(lower);
+
+    if (
+      financeConcept &&
+      numeric.amount === undefined &&
+      (baseIntent === 'UNSUPPORTED' ||
+        baseIntent === 'EDUCATION' ||
+        baseDomain === 'UNKNOWN' ||
+        (baseIntent === 'EXPLANATION' && baseMetric === 'EXPLANATION') ||
+        (baseIntent === 'FIXED_INCOME' && isExplicitEducationalInquiry) ||
+        ((baseIntent === 'PORTFOLIO' || baseIntent === 'RISK_ANALYSIS') &&
+          isExplicitEducationalInquiry &&
+          !/\b(my|our|current)\b/i.test(lower)))
+    ) {
+      const aspect = detectConceptAspect(normalizedQuery);
+      const metricName = financeConcept.id === 'PE_RATIO' ? 'PE' : financeConcept.id;
+      return {
+        intent: 'EDUCATION',
+        domain: financeConcept.domain,
+        conceptId: financeConcept.id,
+        metric: metricName,
+        conceptAspect: aspect,
+        symbols: [],
+        originalQuery: rawQuery,
+        normalizedQuery,
+        isCurrentEvent: false,
+      };
+    }
+
+    // 5. Safe Fallback: Check if query is finance-related when intent is UNSUPPORTED
+    if (baseIntent === 'UNSUPPORTED') {
+      if (
+        /\b(financial concept|company profits|moat|economic moat|capital allocation framework|finance|investing|market|stocks?)\b/i.test(lower)
+      ) {
+        return {
+          intent: 'EXPLANATION',
+          domain: 'FINANCIAL_EDUCATION',
+          symbols: [],
+          originalQuery: rawQuery,
+          normalizedQuery,
+          isPartialFinance: true,
+          partialFinanceTerms: ['Financial Fundamentals'],
+          unverifiedQueryPart: rawQuery,
+          isCurrentEvent: false,
+        };
+      }
+    }
+  }
+
   // Decompose compound questions
-  const subGoals = decomposeQuestion(normalizedQuery, symbols, intent, numeric);
+  const subGoals = decomposeQuestion(normalizedQuery, symbols, baseIntent, numeric);
 
   return {
-    intent,
-    domain,
+    intent: baseIntent,
+    domain: baseDomain,
     symbols,
-    metric,
+    metric: baseMetric,
     years: numeric.years,
     months: numeric.months,
     amount: numeric.amount,

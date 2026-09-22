@@ -15,6 +15,19 @@ import {
   calculateVolatility,
   isUsSymbol,
 } from './vestiqReasoning';
+import {
+  FINANCE_CONCEPTS,
+  CONCEPT_COMPARISONS,
+  MACRO_RELATIONSHIPS,
+  findFinanceConcept,
+  findConceptComparison,
+  findMacroRelationship,
+} from './vestiqFinanceKnowledge';
+import type {
+  FinanceConcept,
+  ConceptComparison,
+  MacroRelationship,
+} from './vestiqFinanceKnowledge';
 
 export const OUT_OF_DOMAIN_RESPONSE =
   "I'm VestIQ, a finance and investing assistant. I can help with stocks, ETFs, mutual funds, markets, portfolios, returns, risk, and financial concepts. Please ask a finance-related question.";
@@ -81,7 +94,45 @@ export function composeAnswer(
     };
   }
 
-  // 3. Macro / Economic Relationship
+  // 3. Concept Comparisons (e.g. "ETF vs Mutual Fund", "SIP vs Lumpsum", "FD vs Bond", "Stock vs Bond")
+  if (parsed.comparisonId || (intent === 'COMPARISON' && symbols.length === 0)) {
+    const comp =
+      CONCEPT_COMPARISONS.find((c) => c.id === parsed.comparisonId) ||
+      findConceptComparison(parsed.originalQuery);
+
+    if (comp) {
+      return composeConceptComparisonAnswer(parsed, comp);
+    }
+  }
+
+  // 4. Macroeconomic Relationships (e.g. "Why do bond prices fall when interest rates rise?")
+  if ((parsed.macroRelationshipId && !relationship) || (intent === 'MARKET_RELATIONSHIP' && !relationship)) {
+    const rel =
+      MACRO_RELATIONSHIPS.find((r) => r.id === parsed.macroRelationshipId) ||
+      findMacroRelationship(parsed.originalQuery);
+
+    if (rel) {
+      return composeMacroRelationshipAnswer(parsed, rel);
+    }
+  }
+
+  // 5. Concept Education (Single concept, e.g. "What is an IPO?", "What is EPS?", or context follow-up)
+  if (parsed.conceptId || (intent === 'EDUCATION' && symbols.length === 0)) {
+    const concept =
+      FINANCE_CONCEPTS.find((c) => c.id === parsed.conceptId) ||
+      findFinanceConcept(parsed.originalQuery);
+
+    if (concept) {
+      return composeFinanceConceptAnswer(parsed, concept);
+    }
+  }
+
+  // 6. Safe Fallback for Partial / Unknown Finance Queries
+  if (parsed.isPartialFinance) {
+    return composePartialFinanceAnswer(parsed);
+  }
+
+  // 7. Macro / Economic Relationship
   if (intent === 'MARKET_RELATIONSHIP' && relationship) {
     if (isCurrentEvent) {
       return {
@@ -1100,6 +1151,268 @@ function makeUnavailableNotice(parsed: ParsedFinanceQuery, detail?: string): Rea
       'What is CAGR?',
       'Calculate SIP of ₹5000 for 5 years at 12%',
     ],
+  };
+}
+
+function composeConceptComparisonAnswer(
+  parsed: ParsedFinanceQuery,
+  comp: ConceptComparison
+): ReasoningResult {
+  const c1 = FINANCE_CONCEPTS.find((c) => c.id === comp.concept1Id);
+  const c2 = FINANCE_CONCEPTS.find((c) => c.id === comp.concept2Id);
+  const name1 = c1?.name.split(' (')[0] || comp.concept1Id;
+  const name2 = c2?.name.split(' (')[0] || comp.concept2Id;
+
+  const tableHeader = `| Evaluation Factor | ${name1} | ${name2} |`;
+  const tableDivider = '| :--- | :--- | :--- |';
+  const tableRows = comp.differences.map(
+    (d) => `| **${d.aspect}** | ${d.concept1Value} | ${d.concept2Value} |`
+  );
+
+  return {
+    query: parsed,
+    title: `${comp.name}: Comparative Analysis`,
+    directAnswer: comp.summary,
+    summary: comp.summary,
+    sections: [
+      {
+        heading: 'Comparative Difference Matrix',
+        items: [tableHeader, tableDivider, ...tableRows],
+      },
+      {
+        heading: 'Deterministic Strategic Takeaway',
+        items: [`• **Fiduciary Perspective:** ${comp.verdict}`],
+      },
+    ],
+    source: 'VestIQ Deterministic Finance Knowledge Engine',
+    timestamp: 'Authoritative Curriculum',
+    freshness: 'STATIC_KNOWLEDGE',
+    followUps: [
+      `What is ${name1}?`,
+      `What is ${name2}?`,
+      'What is asset allocation?',
+    ],
+  };
+}
+
+function composeMacroRelationshipAnswer(
+  parsed: ParsedFinanceQuery,
+  rel: MacroRelationship
+): ReasoningResult {
+  return {
+    query: parsed,
+    title: rel.name,
+    directAnswer: `Underlying transmission: changes in ${rel.driver} directly alter ${rel.target} through established financial channels.`,
+    summary: `Economic transmission dynamics between ${rel.driver} and ${rel.target}.`,
+    sections: [
+      {
+        heading: 'Economic Transmission Mechanics',
+        items: rel.transmissionMechanics.map((m) => `• ${m}`),
+      },
+      {
+        heading: 'Practical Market Example',
+        items: [`• ${rel.example}`],
+      },
+      {
+        heading: 'Market Nuance & Analytical Limitations',
+        items: [`• ${rel.realWorldLimitation}`],
+      },
+    ],
+    source: 'VestIQ Macroeconomic Transmission Engine',
+    timestamp: 'Verified Economic Mechanism',
+    freshness: 'STATIC_KNOWLEDGE',
+    followUps: [
+      `What is ${rel.driver}?`,
+      `What is ${rel.target}?`,
+      'How does inflation affect investments?',
+    ],
+  };
+}
+
+function composeFinanceConceptAnswer(
+  parsed: ParsedFinanceQuery,
+  concept: FinanceConcept
+): ReasoningResult {
+  const aspect = parsed.conceptAspect || 'definition';
+
+  let title = concept.name;
+  let directAnswer = concept.definition;
+
+  if (aspect === 'howItWorks') {
+    title = `${concept.name} — How It Works`;
+    directAnswer =
+      concept.howItWorks && concept.howItWorks.length > 0
+        ? `${concept.name} operates through specific mechanics: ${concept.howItWorks[0]}`
+        : concept.definition;
+  } else if (aspect === 'risks') {
+    title = `${concept.name} — Key Risks & Limitations`;
+    directAnswer =
+      concept.risks && concept.risks.length > 0
+        ? `Primary risks of ${concept.name}: ${concept.risks[0]}`
+        : `Primary risks for ${concept.name} include market exposure, liquidity constraints, and economic volatility.`;
+  } else if (aspect === 'whyItMatters') {
+    title = `${concept.name} — Why It Matters`;
+    directAnswer =
+      concept.whyItMatters && concept.whyItMatters.length > 0
+        ? `Strategic importance of ${concept.name}: ${concept.whyItMatters[0]}`
+        : concept.definition;
+  } else if (aspect === 'example') {
+    title = `${concept.name} — Practical Example`;
+    directAnswer = concept.example
+      ? `Practical example: ${concept.example}`
+      : `Example for ${concept.name}: Illustrative financial application.`;
+  }
+
+  const sections: { heading: string; items: string[] }[] = [];
+
+  // 1. Definition
+  sections.push({
+    heading: 'Core Definition',
+    items: [`• **Definition:** ${concept.definition}`],
+  });
+
+  // 2. How it works
+  if (concept.howItWorks && concept.howItWorks.length > 0) {
+    sections.push({
+      heading: 'How It Works',
+      items: concept.howItWorks.map((h) => `• ${h}`),
+    });
+  }
+
+  // 3. Why it matters
+  if (concept.whyItMatters && concept.whyItMatters.length > 0) {
+    sections.push({
+      heading: 'Why It Matters',
+      items: concept.whyItMatters.map((w) => `• ${w}`),
+    });
+  }
+
+  // 4. Practical Example
+  if (concept.example) {
+    sections.push({
+      heading: 'Practical Example',
+      items: [`• **Illustrative Scenario:** ${concept.example}`],
+    });
+  }
+
+  // 5. Key Points & Risks
+  const pointsAndRisks: string[] = [];
+  if (concept.keyPoints && concept.keyPoints.length > 0) {
+    pointsAndRisks.push(...concept.keyPoints.map((k) => `• ${k}`));
+  }
+  if (concept.risks && concept.risks.length > 0) {
+    pointsAndRisks.push(...concept.risks.map((r) => `• ⚠️ **Risk:** ${r}`));
+  }
+  if (pointsAndRisks.length > 0) {
+    sections.push({
+      heading: 'Key Considerations & Risks',
+      items: pointsAndRisks,
+    });
+  }
+
+  // 6. Related Concepts
+  if (concept.relatedConcepts && concept.relatedConcepts.length > 0) {
+    const formattedRelated = concept.relatedConcepts
+      .map((rc) => {
+        const found = FINANCE_CONCEPTS.find((c) => c.id === rc);
+        return found ? found.name.split(' (')[0] : rc;
+      })
+      .join(', ');
+    sections.push({
+      heading: 'Related Financial Concepts',
+      items: [`• **Connected Topics:** ${formattedRelated}`],
+    });
+  }
+
+  // Follow-ups
+  const followUps: string[] = [];
+  if (aspect !== 'howItWorks' && concept.howItWorks) {
+    followUps.push(`How does ${concept.name.split(' (')[0]} work?`);
+  }
+  if (aspect !== 'risks' && concept.risks) {
+    followUps.push(`What are the risks of ${concept.name.split(' (')[0]}?`);
+  }
+  if (concept.commonQuestions && concept.commonQuestions.length > 0) {
+    for (const q of concept.commonQuestions) {
+      if (!followUps.includes(q) && followUps.length < 3) {
+        followUps.push(q);
+      }
+    }
+  }
+  if (followUps.length < 3) {
+    followUps.push('What is compounding?');
+    followUps.push('What is asset allocation?');
+  }
+
+  return {
+    query: parsed,
+    title,
+    directAnswer,
+    summary: concept.definition,
+    sections,
+    source: 'VestIQ Deterministic Finance Knowledge Library',
+    timestamp: 'Authoritative Financial Curriculum',
+    freshness: 'STATIC_KNOWLEDGE',
+    followUps: followUps.slice(0, 3),
+  };
+}
+
+function composePartialFinanceAnswer(parsed: ParsedFinanceQuery): ReasoningResult {
+  const recognizedItems: string[] = [];
+  const recognizedFollowups: string[] = [];
+
+  if (Array.isArray(parsed.partialFinanceTerms)) {
+    for (const term of parsed.partialFinanceTerms) {
+      const c =
+        FINANCE_CONCEPTS.find(
+          (concept) =>
+            concept.name.toLowerCase() === term.toLowerCase() ||
+            concept.aliases.some((a) => a.toLowerCase() === term.toLowerCase())
+        ) || findFinanceConcept(term);
+
+      if (c) {
+        recognizedItems.push(`• **${c.name}:** ${c.definition}`);
+        recognizedFollowups.push(`What is ${c.name.split(' (')[0]}?`);
+      }
+    }
+  }
+
+  if (recognizedItems.length === 0) {
+    recognizedItems.push(
+      '• **Financial Context:** Financial decisions are evaluated through structured metrics: Valuation (P/E), Profitability (EPS, Revenue), Risk-Adjusted Returns (CAGR), and Portfolio Diversification.'
+    );
+  }
+
+  return {
+    query: parsed,
+    title: 'Financial Knowledge & Analysis',
+    directAnswer: 'Analysis based on verified deterministic financial principles.',
+    summary: `We identified relevant financial concepts in your inquiry. Below is the verified deterministic knowledge available for these concepts.`,
+    sections: [
+      {
+        heading: 'Verified Knowledge Coverage',
+        items: recognizedItems,
+      },
+      {
+        heading: 'Unverified / Missing Concept',
+        items: [
+          `• **Custom Inquiry Notice:** "${parsed.originalQuery}" involves qualitative or unverified elements that cannot be confirmed from static financial rules alone.`,
+          `• **Fiduciary Principle:** VestIQ strictly avoids fabricating non-standard financial ratios or unverified market narratives.`,
+        ],
+      },
+    ],
+    warnings: [
+      `Certain qualitative aspects of your inquiry ("${parsed.originalQuery}") cannot be verified from deterministic financial rules alone. Only verified concepts are detailed above.`
+    ],
+    source: 'VestIQ Deterministic Finance Knowledge Engine',
+    timestamp: 'Authoritative Curriculum',
+    freshness: 'STATIC_KNOWLEDGE',
+    followUps: [
+      ...recognizedFollowups.slice(0, 2),
+      'What is an IPO?',
+      'What is CAGR?',
+      'What is P/E ratio?',
+    ].slice(0, 3),
   };
 }
 

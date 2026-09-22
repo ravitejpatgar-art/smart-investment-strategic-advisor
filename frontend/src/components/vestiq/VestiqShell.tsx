@@ -48,6 +48,7 @@ export const VestiqShell: React.FC = () => {
   const isCreatingRef = useRef<boolean>(false);
   const isRequestInProgressRef = useRef<boolean>(false);
   const lastSymbolRef = useRef<string | undefined>(undefined);
+  const lastConceptRef = useRef<string | undefined>(undefined);
 
   // Helper to sync conversation ID to URL
   const updateUrlForConversation = (id: string | null) => {
@@ -303,11 +304,15 @@ export const VestiqShell: React.FC = () => {
 
       // Deterministic Query Parsing with Active Conversation Context
       const lastSymbol = lastSymbolRef.current;
-      const parsedQuery = parseFinanceQuery(trimmedText, { lastSymbol });
+      const lastConcept = lastConceptRef.current;
+      const parsedQuery = parseFinanceQuery(trimmedText, { lastSymbol, lastConcept });
 
-      // Remember latest symbol for conversational follow-ups
+      // Remember latest symbol or concept for conversational follow-ups
       if (parsedQuery.symbols.length > 0) {
         lastSymbolRef.current = parsedQuery.symbols[0];
+      }
+      if (parsedQuery.conceptId) {
+        lastConceptRef.current = parsedQuery.conceptId;
       }
 
       let answerText = '';

@@ -16,6 +16,9 @@ export * from './vestiqReasoning';
 // Re-export Answer Composer & Markdown Formatter
 export * from './vestiqAnswerComposer';
 
+// Re-export Finance Knowledge Library
+export * from './vestiqFinanceKnowledge';
+
 import type { ParsedFinanceQuery } from './vestiqQuestionParser';
 import {
   planDataRequirements,
