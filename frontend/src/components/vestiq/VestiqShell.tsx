@@ -6,10 +6,13 @@ import { buildUserContext } from '../../services/userProfileRepository';
 import {
   buildGroundedContext,
   generateGroundedOfflineResponse,
-  parseAssistantApiResponse,
-  isGenericOnboardingText,
   isGreetingOrHelpQuery
 } from '../../services/vestiqGrounding';
+import {
+  parseFinanceQuery,
+  executeDeterministicAdvisor,
+  formatRuleResultToMarkdown
+} from '../../services/vestiqRuleEngine';
 import { VestiqHeader } from './VestiqHeader';
 import { VestiqSidebar, type VestiqSession } from './VestiqSidebar';
 import { VestiqContextPanel } from './VestiqContextPanel';
@@ -293,42 +296,47 @@ export const VestiqShell: React.FC = () => {
     })();
 
     try {
-      // Build context & dispatch existing AI Reasoning Engine IMMEDIATELY
+      // Build user context
       const userContext = buildUserContext(user, expenses, goals, strategy);
-      const chatHistory = updatedMessages.slice(-8).map((m) => ({
-        role: m.sender === 'user' ? 'user' : 'assistant',
-        content: m.text,
-      }));
 
-      const res = await authApi.askAssistant({
-        question: trimmedText,
-        message: trimmedText,
-        query: trimmedText,
-        requestId: reqId,
-        user_context: userContext,
-        history: chatHistory,
-        conversation_id: currentConvId || undefined,
-      });
+      // Deterministic Query Parsing
+      const parsedQuery = parseFinanceQuery(trimmedText);
+
+      let answerText = '';
+      let calcData: any = null;
+      let followUps: string[] | undefined = undefined;
+      const intent: string | undefined = parsedQuery.intent;
+      const entities: string[] | undefined = parsedQuery.symbols.length > 0 ? parsedQuery.symbols : undefined;
+
+      if (parsedQuery.intent !== 'UNSUPPORTED') {
+        const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
+        if (latestRequestIdRef.current !== reqId) return;
+
+        answerText = formatRuleResultToMarkdown(ruleResult);
+        calcData = ruleResult.calculations || null;
+        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
+      } else if (isGreetingOrHelpQuery(trimmedText)) {
+        answerText = "Hello! I am VestIQ, your deterministic fiduciary portfolio advisor. I can help you analyze Indian & US stocks, ETFs, mutual funds, portfolio asset allocations, SIP returns, and fundamental or technical indicators. What financial question can I help you with today?";
+        followUps = [
+          'What is RELIANCE price?',
+          'What is AAPL price?',
+          'What is CAGR?',
+          'How diversified is my portfolio?',
+        ];
+      } else {
+        answerText = "I don't have enough verified data to answer this question reliably.";
+        followUps = [
+          'What is RELIANCE price?',
+          'What is AAPL price?',
+          'What is CAGR?',
+          'Calculate SIP of ₹5000 for 5 years at 12%',
+        ];
+      }
 
       // Reject stale responses: if a newer request was dispatched, drop this older response
       if (latestRequestIdRef.current !== reqId) {
         return;
       }
-      if (res?.requestId && res.requestId !== reqId) {
-        return;
-      }
-
-      // Step 6 & 7: Parse once, display real response immediately, stop loading immediately
-      const parsed = parseAssistantApiResponse(res, trimmedText);
-      let answerText = parsed.text;
-
-      // Step 8: Validate displayed response is not an unrelated generic onboarding message unless user explicitly asked for onboarding/help
-      if (isGenericOnboardingText(answerText) && !isGreetingOrHelpQuery(trimmedText)) {
-        answerText = "I can't verify the current market information needed to answer this question right now.";
-      }
-
-      const calcData = parsed.calculations;
-      const followUps = parsed.followUps;
 
       const tempAiMsgId = `ai_${Date.now()}`;
       const assistantMsg: VestiqChatMessage = {
@@ -337,9 +345,9 @@ export const VestiqShell: React.FC = () => {
         text: answerText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         calculations: calcData,
-        followUps: followUps && followUps.length > 0 ? followUps : undefined,
-        intent: parsed.intent || res?.intent,
-        entities: parsed.entities || res?.entities,
+        followUps: followUps,
+        intent: intent,
+        entities: entities,
       };
 
       // IMMEDIATELY render assistant message and unblock UI
@@ -417,6 +425,28 @@ export const VestiqShell: React.FC = () => {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, errorMsg]);
+      } else if (status === 404) {
+        const errorText = "The AI advisory service endpoint is currently unavailable.";
+        setError(errorText);
+        const errorMsg: VestiqChatMessage = {
+          id: `ai_err_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ **Advisory Notice:** ${errorText}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      } else if (status === 400 || status === 422) {
+        const errorText = typeof detail === 'string' && detail.trim()
+          ? detail
+          : "Unable to process advisory request due to invalid format.";
+        setError(errorText);
+        const errorMsg: VestiqChatMessage = {
+          id: `ai_err_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ **Advisory Notice:** ${errorText}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
       } else {
         if (status === 429) {
           setError("Rate limit reached. Operating under local grounded advisory.");
@@ -425,12 +455,7 @@ export const VestiqShell: React.FC = () => {
         // Grounded offline reasoning fallback using authoritative profile
         const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
         const offlineRes = generateGroundedOfflineResponse(trimmedText, groundedCtx);
-        let offlineText = offlineRes.text;
-
-        // Step 8: Never show generic onboarding text for a specific question
-        if (isGenericOnboardingText(offlineText) && !isGreetingOrHelpQuery(trimmedText)) {
-          offlineText = "I can't verify the current market information needed to answer this question right now.";
-        }
+        const offlineText = offlineRes.text;
 
         const tempAiMsgId = `ai_offline_${Date.now()}`;
         const assistantMsg: VestiqChatMessage = {

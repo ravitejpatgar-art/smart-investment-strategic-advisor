@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
-import { authApi } from '../../services/api';
 import { 
   Send, 
   ShieldCheck, 
@@ -17,10 +16,13 @@ import { buildUserContext } from '../../services/userProfileRepository';
 import {
   buildGroundedContext,
   generateGroundedOfflineResponse,
-  parseAssistantApiResponse,
-  isGenericOnboardingText,
   isGreetingOrHelpQuery
 } from '../../services/vestiqGrounding';
+import {
+  parseFinanceQuery,
+  executeDeterministicAdvisor,
+  formatRuleResultToMarkdown
+} from '../../services/vestiqRuleEngine';
 import { VestiqMark } from '../common/VestiqLogo';
 
 interface CalculationData {
@@ -154,33 +156,41 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
     try {
       const clientCtx = buildUserContext(user, expenses, goals, strategy);
-      const chatHistory = messages.slice(-6).map((m) => ({
-        role: m.sender === 'user' ? 'user' : 'assistant',
-        content: m.text,
-      }));
-      const apiPayload = {
-        query: query,
-        question: query,
-        message: query,
-        requestId: reqId,
-        user_context: clientCtx,
-        history: chatHistory,
-        conversation_id: `drawer_${user?.id || 'default'}`
-      };
 
-      const response = await authApi.askAssistant(apiPayload);
+      const parsedQuery = parseFinanceQuery(query);
 
-      // Stale response protection (Step 2)
-      if (latestRequestIdRef.current !== reqId || (response?.requestId && response.requestId !== reqId)) {
-        return;
+      let answerText = '';
+      let calcData: any = null;
+      let followUps: string[] | undefined = undefined;
+
+      if (parsedQuery.intent !== 'UNSUPPORTED') {
+        const ruleResult = await executeDeterministicAdvisor(parsedQuery, clientCtx);
+        if (latestRequestIdRef.current !== reqId) return;
+
+        answerText = formatRuleResultToMarkdown(ruleResult);
+        calcData = ruleResult.calculations || null;
+        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
+      } else if (isGreetingOrHelpQuery(query)) {
+        answerText = "Hello! I am VestIQ, your deterministic fiduciary portfolio advisor. I can help you analyze Indian & US stocks, ETFs, mutual funds, portfolio asset allocations, SIP returns, and fundamental or technical indicators. What financial question can I help you with today?";
+        followUps = [
+          'What is RELIANCE price?',
+          'What is AAPL price?',
+          'What is CAGR?',
+          'How diversified is my portfolio?',
+        ];
+      } else {
+        answerText = "I don't have enough verified data to answer this question reliably.";
+        followUps = [
+          'What is RELIANCE price?',
+          'What is AAPL price?',
+          'What is CAGR?',
+          'Calculate SIP of ₹5000 for 5 years at 12%',
+        ];
       }
 
-      const parsed = parseAssistantApiResponse(response, query);
-      let answerText = parsed.text;
-
-      // STEP 8 — DISPLAY VALIDATION
-      if (isGenericOnboardingText(answerText) && !isGreetingOrHelpQuery(query)) {
-        answerText = "I can't verify the current market information needed to answer this question right now.";
+      // Stale response protection
+      if (latestRequestIdRef.current !== reqId) {
+        return;
       }
 
       const assistantMsg: Message = {
@@ -188,8 +198,8 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
         sender: 'assistant',
         text: answerText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        calculations: parsed.calculations || null,
-        followUps: parsed.followUps || []
+        calculations: calcData,
+        followUps: followUps,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -199,6 +209,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
       }
 
       const status = err?.response?.status;
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || err?.message;
 
       // Timeout detection (Step 4 & Step 8)
       const isTimeout =
@@ -236,12 +247,44 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
       // Explicit 5xx server error
       if (status && status >= 500) {
+        const errorText = typeof detail === 'string' && detail.trim()
+          ? detail
+          : "I'm experiencing an advisory service issue right now. Please try again in a few moments.";
         setMessages((prev) => [
           ...prev,
           {
             id: `ai_err_${Date.now()}`,
             sender: 'assistant',
-            text: "I'm experiencing an advisory service issue right now. Please try again in a few moments.",
+            text: `⚠️ **Advisory Notice:** ${errorText}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+        return;
+      }
+
+      if (status === 404) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_err_${Date.now()}`,
+            sender: 'assistant',
+            text: "⚠️ **Advisory Notice:** The AI advisory service endpoint is currently unavailable.",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+        return;
+      }
+
+      if (status === 400 || status === 422) {
+        const errorText = typeof detail === 'string' && detail.trim()
+          ? detail
+          : "Unable to process advisory request due to invalid format.";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_err_${Date.now()}`,
+            sender: 'assistant',
+            text: `⚠️ **Advisory Notice:** ${errorText}`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
@@ -250,10 +293,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
 
       const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
       const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
-      let fallbackText = offlineRes.text;
-      if (isGenericOnboardingText(fallbackText) && !isGreetingOrHelpQuery(query)) {
-        fallbackText = "I can't verify the current market information needed to answer this question right now.";
-      }
+      const fallbackText = offlineRes.text;
 
       const fallbackMsg: Message = {
         id: `ai_offline_${Date.now()}`,

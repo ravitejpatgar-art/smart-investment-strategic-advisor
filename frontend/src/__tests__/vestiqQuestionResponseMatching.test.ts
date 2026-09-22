@@ -218,4 +218,43 @@ describe('VestIQ Question/Response Matching & Disambiguation', () => {
     expect(greetingResult.text).toContain('fiduciary portfolio advisor');
     expect(greetingResult.text).toContain('suresh r');
   });
+
+  // 9. Valid assistant response is displayed even if backend generates a different UUID requestId
+  it('9. accepts and displays valid assistant response even if backend generates a UUID requestId', () => {
+    const backendUuidResponse = {
+      requestId: '729dbf3f-fda3-4a70-b643-c457dd2c2290', // Backend-generated UUID differing from frontend req_123
+      question: sampleMarketQuery,
+      answer: 'High Brent crude ($95/bbl) squeezes gross refining margins (GRMs) for OMCs.',
+      calculations: {},
+      followUps: ['Compare upstream vs downstream']
+    };
+
+    const parsed = parseAssistantApiResponse(backendUuidResponse, sampleMarketQuery);
+
+    expect(parsed.text).toBe(backendUuidResponse.answer);
+    // Calculations was empty object {}, normalized to null
+    expect(parsed.calculations).toBeNull();
+    expect(parsed.followUps).toEqual(['Compare upstream vs downstream']);
+  });
+
+  // 10. Normalizes empty calculations object to null while preserving real calculations
+  it('10. normalizes empty calculations {} to null while preserving real calculations losslessly', () => {
+    const emptyCalcRes = { answer: 'General advice', calculations: {} };
+    const parsedEmpty = parseAssistantApiResponse(emptyCalcRes);
+    expect(parsedEmpty.calculations).toBeNull();
+
+    const realCalcRes = {
+      answer: 'SIP calculation',
+      calculations: { type: 'sip', monthlyInvestment: 5000, totalValue: 120000 }
+    };
+    const parsedReal = parseAssistantApiResponse(realCalcRes);
+    expect(parsedReal.calculations).toEqual({ type: 'sip', monthlyInvestment: 5000, totalValue: 120000 });
+  });
+
+  // 11. Handles alternative valid response schemas (output, result, text) without falling back
+  it('11. parses alternative response schemas (output, result, text) correctly', () => {
+    expect(parseAssistantApiResponse({ output: 'Result via output field' }).text).toBe('Result via output field');
+    expect(parseAssistantApiResponse({ result: 'Result via result field' }).text).toBe('Result via result field');
+    expect(parseAssistantApiResponse({ text: 'Result via text field' }).text).toBe('Result via text field');
+  });
 });

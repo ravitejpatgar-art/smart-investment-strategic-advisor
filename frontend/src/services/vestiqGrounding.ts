@@ -581,6 +581,9 @@ export function parseAssistantApiResponse(res: any, fallbackQuery?: string): Par
       // Keep as string if not valid JSON
     }
   }
+  if (calculations && typeof calculations === 'object' && !Array.isArray(calculations) && Object.keys(calculations).length === 0) {
+    calculations = null;
+  }
 
   // 7. Extract intent & entities
   const intent = root.intent || res.intent;

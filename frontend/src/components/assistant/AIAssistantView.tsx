@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
-import { authApi } from '../../services/api';
 import { 
   Send, 
   ShieldCheck, 
@@ -13,10 +12,13 @@ import { buildUserContext } from '../../services/userProfileRepository';
 import {
   buildGroundedContext,
   generateGroundedOfflineResponse,
-  parseAssistantApiResponse,
-  isGenericOnboardingText,
   isGreetingOrHelpQuery
 } from '../../services/vestiqGrounding';
+import {
+  parseFinanceQuery,
+  executeDeterministicAdvisor,
+  formatRuleResultToMarkdown
+} from '../../services/vestiqRuleEngine';
 
 interface Message {
   id: string;
@@ -110,34 +112,39 @@ How can I help guide your financial and investment decisions today?`,
 
     try {
       const userContext = buildUserContext(user, expenses, goals, strategy);
-      const chatHistory = messages.slice(-6).map((m) => ({
-        role: m.sender === 'user' ? 'user' : 'assistant',
-        content: m.text
-      }));
 
-      const res = await authApi.askAssistant({
-        question: trimmed,
-        message: trimmed,
-        query: trimmed,
-        requestId: reqId,
-        user_context: userContext,
-        history: chatHistory
-      });
+      const parsedQuery = parseFinanceQuery(trimmed);
+
+      let answerText = '';
+      let followUps: string[] | undefined = undefined;
+
+      if (parsedQuery.intent !== 'UNSUPPORTED') {
+        const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
+        if (latestRequestIdRef.current !== reqId) return;
+
+        answerText = formatRuleResultToMarkdown(ruleResult);
+        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
+      } else if (isGreetingOrHelpQuery(trimmed)) {
+        answerText = "Hello! I am VestIQ, your deterministic fiduciary portfolio advisor. I can help you analyze Indian & US stocks, ETFs, mutual funds, portfolio asset allocations, SIP returns, and fundamental or technical indicators. What financial question can I help you with today?";
+        followUps = [
+          'What is RELIANCE price?',
+          'What is AAPL price?',
+          'What is CAGR?',
+          'How diversified is my portfolio?',
+        ];
+      } else {
+        answerText = "I don't have enough verified data to answer this question reliably.";
+        followUps = [
+          'What is RELIANCE price?',
+          'What is AAPL price?',
+          'What is CAGR?',
+          'Calculate SIP of ₹5000 for 5 years at 12%',
+        ];
+      }
 
       // Ignore stale responses from out-of-order race conditions
       if (latestRequestIdRef.current !== reqId) {
         return;
-      }
-      if (res?.requestId && res.requestId !== reqId) {
-        return;
-      }
-
-      const parsed = parseAssistantApiResponse(res, trimmed);
-      let answerText = parsed.text;
-
-      // Step 8: Validate displayed response is not an unrelated generic onboarding message unless user explicitly asked for greeting/help
-      if (isGenericOnboardingText(answerText) && !isGreetingOrHelpQuery(trimmed)) {
-        answerText = "I can't verify the current market information needed to answer this question right now.";
       }
 
       const assistantMsg: Message = {
@@ -145,7 +152,7 @@ How can I help guide your financial and investment decisions today?`,
         sender: 'assistant',
         text: answerText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        followUps: parsed.followUps
+        followUps: followUps
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -200,15 +207,34 @@ How can I help guide your financial and investment decisions today?`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
+      } else if (status === 404) {
+        const errorText = "The AI advisory service endpoint is currently unavailable.";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_err_${Date.now()}`,
+            sender: 'assistant',
+            text: `⚠️ **Advisory Notice:** ${errorText}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      } else if (status === 400 || status === 422) {
+        const errorText = typeof detail === 'string' && detail.trim()
+          ? detail
+          : "Unable to process advisory request due to invalid format.";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_err_${Date.now()}`,
+            sender: 'assistant',
+            text: `⚠️ **Advisory Notice:** ${errorText}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
       } else {
         const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
         const offlineRes = generateGroundedOfflineResponse(trimmed, groundedCtx);
-        let offlineText = offlineRes.text;
-
-        // Step 8: Never show generic onboarding text for a specific question
-        if (isGenericOnboardingText(offlineText) && !isGreetingOrHelpQuery(trimmed)) {
-          offlineText = "I can't verify the current market information needed to answer this question right now.";
-        }
+        const offlineText = offlineRes.text;
 
         const fallbackMsg: Message = {
           id: `ai_${Date.now()}`,
