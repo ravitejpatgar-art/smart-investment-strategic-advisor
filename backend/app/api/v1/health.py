@@ -105,8 +105,11 @@ def get_system_health(db: Session = Depends(get_db)):
     else:
         overall = "HEALTHY"
 
+    from app.services.ai.openai_service import is_openai_configured
+
     return {
         "status": overall,
+        "openai_configured": is_openai_configured(),
         "environment": "development",
         "timestamp": "2026-08-27T15:26:00Z",
         "subsystems": services_status

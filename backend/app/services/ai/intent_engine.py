@@ -314,9 +314,9 @@ def classify_intent(query: str, history: Optional[List[Dict[str, Any]]] = None) 
 
     # 20. SIP FUTURE VALUE / COMPOUNDING
     if any(k in q_low for k in [
-        "what will", "become in", "grow to in", "future value", "step up sip", "sip returns", "what if i invest",
+        "calculate sip", "sip of", "what will", "become in", "grow to in", "future value", "step up sip", "sip returns", "what if i invest",
         "monthly 20000", "20000 invest karna hai", "want to invest", "invest karna hai"
-    ]) or ("monthly" in raw_low and ("invest" in raw_low or "karna" in raw_low)):
+    ]) or ("calculate" in q_low and "sip" in q_low) or ("sip" in q_low and any(k in q_low for k in ["for 10", "for 5", "for 15", "for 20", "years", "year", "cagr", "at 12%", "at 10%"])) or ("monthly" in raw_low and ("invest" in raw_low or "karna" in raw_low)):
         return ConversationalIntent.SIP_CALCULATION, meta
 
     # 21. RETIREMENT PLANNING

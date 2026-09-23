@@ -14,14 +14,16 @@ class ChatPayload(BaseModel):
     userContext: Optional[Dict[str, Any]] = None
     user_context: Optional[Dict[str, Any]] = None
     history: Optional[List[Dict[str, Any]]] = None
+    marketFacts: Optional[Dict[str, Any]] = None
+    market_facts: Optional[Dict[str, Any]] = None
 
 @router.post("/chat")
 def chat_with_ai(payload: ChatPayload):
     """
     Primary SmartVest AI Advisory Chat Endpoint:
     POST /api/v1/ai/chat
-    Payload: { query / question / message, history, userContext / user_context, requestId }
-    Response: { answer, calculations, followUps, requestId, intent, entities }
+    Payload: { query / question / message, history, userContext / user_context, requestId, marketFacts }
+    Response: { provider, answer, data_available, confidence, citations, disclaimer, calculations, followUps, requestId, intent, entities }
     """
     query_text = (payload.query or payload.question or payload.message or "").strip()
     if not query_text:
@@ -29,12 +31,14 @@ def chat_with_ai(payload: ChatPayload):
 
     ctx = payload.userContext if payload.userContext is not None else payload.user_context
     req_id = payload.requestId or payload.request_id
+    mkt = payload.marketFacts if payload.marketFacts is not None else payload.market_facts
 
     return process_conversational_query(
         query=query_text,
         user_context=ctx,
         history=payload.history,
-        request_id=req_id
+        request_id=req_id,
+        market_facts=mkt
     )
 
 @router.get("/suggestions")

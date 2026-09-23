@@ -204,3 +204,12 @@ export const authApi = {
   },
 };
 
+export const aiApi = {
+  chat: async (data: any) => {
+    return authApi.askAssistant(data);
+  },
+  getSuggestions: async () => {
+    return authApi.getAssistantSuggestions();
+  },
+};
+

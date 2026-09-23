@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useFintechStore } from '../../store/useFintechStore';
-import { authApi } from '../../services/api';
+import { authApi, aiApi } from '../../services/api';
 import { auditLogger } from '../../services/auditLogger';
 import { buildUserContext } from '../../services/userProfileRepository';
 import { isGreetingOrHelpQuery } from '../../services/vestiqGrounding';
@@ -330,9 +330,34 @@ export const VestiqShell: React.FC = () => {
         const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
         if (latestRequestIdRef.current !== reqId) return;
 
-        answerText = formatRuleResultToMarkdown(ruleResult);
-        calcData = ruleResult.calculations || null;
-        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
+        if (ruleResult.canAnswerCompletely !== false) {
+          answerText = formatRuleResultToMarkdown(ruleResult);
+          calcData = ruleResult.calculations || null;
+          followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
+        } else {
+          // Complex or open-ended synthesis: route to backend hybrid endpoint
+          try {
+            const backendRes = await aiApi.chat({
+              query: trimmedText,
+              userContext,
+              history: messages.slice(-4).map((m) => ({ role: m.sender, content: m.text })),
+            });
+            if (latestRequestIdRef.current !== reqId) return;
+            if (backendRes && backendRes.answer) {
+              answerText = backendRes.answer;
+              calcData = backendRes.calculations || null;
+              followUps = backendRes.followUps || ruleResult.followUps;
+            } else {
+              answerText = formatRuleResultToMarkdown(ruleResult);
+            }
+          } catch (backendErr) {
+            // Gracefully fall back to deterministic response when backend is offline
+            if (latestRequestIdRef.current !== reqId) return;
+            answerText = formatRuleResultToMarkdown(ruleResult);
+            calcData = ruleResult.calculations || null;
+            followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
+          }
+        }
       }
 
       // Reject stale responses: if a newer request was dispatched, drop this older response

@@ -9,6 +9,11 @@ from .context_engine import get_context_for_intent, extract_user_profile_context
 from .tool_router import screen_stocks, get_market_quote_data
 from .response_planner import format_stock_screening_response, format_single_stock_analysis
 from .evidence_builder import build_evidence, EvidenceObject
+from .openai_service import (
+    is_openai_configured,
+    generate_openai_advisory,
+    validate_openai_response,
+)
 
 __all__ = [
     "process_conversational_query",
@@ -26,5 +31,8 @@ __all__ = [
     "format_single_stock_analysis",
     "validate_conversational_response",
     "build_evidence",
-    "EvidenceObject"
+    "EvidenceObject",
+    "is_openai_configured",
+    "generate_openai_advisory",
+    "validate_openai_response",
 ]

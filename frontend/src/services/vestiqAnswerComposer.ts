@@ -275,6 +275,7 @@ export function composeAnswer(
       source: q.source || 'Authorized Market Feed',
       timestamp: q.asOf || 'Today',
       freshness: q.freshness,
+      canAnswerCompletely: true,
       followUps: [
         `How expensive is ${sym} based on earnings?`,
         `Does ${sym} look overbought?`,
@@ -593,6 +594,7 @@ export function composeAnswer(
           wealthGain: gain,
           roiPct: roi,
         },
+        canAnswerCompletely: true,
         followUps: [
           'What is CAGR?',
           'Calculate SIP of ₹5000 for 5 years at 12%',
@@ -691,6 +693,7 @@ export function composeAnswer(
           rate: !hasRate,
         },
       },
+      canAnswerCompletely: true,
       followUps: [
         `Calculate SIP of ${curr}${p} for ${y} years at 10%`,
         `Calculate SIP of ${curr}${p} for ${y + 5} years at 12%`,
@@ -1196,6 +1199,7 @@ function makeUnavailableNotice(parsed: ParsedFinanceQuery, detail?: string): Rea
         ],
       },
     ],
+    canAnswerCompletely: true,
     followUps: [
       'What is RELIANCE price?',
       'What is AAPL price?',
@@ -1238,6 +1242,7 @@ function composeConceptComparisonAnswer(
     source: 'VestIQ Deterministic Finance Knowledge Engine',
     timestamp: 'Authoritative Curriculum',
     freshness: 'STATIC_KNOWLEDGE',
+    canAnswerCompletely: true,
     followUps: [
       `What is ${name1}?`,
       `What is ${name2}?`,
@@ -1272,6 +1277,7 @@ function composeMacroRelationshipAnswer(
     source: 'VestIQ Macroeconomic Transmission Engine',
     timestamp: 'Verified Economic Mechanism',
     freshness: 'STATIC_KNOWLEDGE',
+    canAnswerCompletely: true,
     followUps: [
       `What is ${rel.driver}?`,
       `What is ${rel.target}?`,
@@ -1404,6 +1410,7 @@ function composeFinanceConceptAnswer(
     source: 'VestIQ Deterministic Finance Knowledge Library',
     timestamp: 'Authoritative Financial Curriculum',
     freshness: 'STATIC_KNOWLEDGE',
+    canAnswerCompletely: true,
     followUps: followUps.slice(0, 3),
   };
 }
@@ -1458,6 +1465,7 @@ function composePartialFinanceAnswer(parsed: ParsedFinanceQuery): ReasoningResul
     source: 'VestIQ Deterministic Finance Knowledge Engine',
     timestamp: 'Authoritative Curriculum',
     freshness: 'STATIC_KNOWLEDGE',
+    canAnswerCompletely: false,
     followUps: [
       ...recognizedFollowups.slice(0, 2),
       'What is an IPO?',

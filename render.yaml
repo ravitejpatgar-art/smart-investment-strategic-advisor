@@ -32,6 +32,11 @@ services:
         sync: false
       - key: ANGEL_FEED_TOKEN
         sync: false
+      # OpenAI Configuration for VestIQ Hybrid Engine (populated securely in Render Dashboard)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: "gpt-5.5"
 
 databases:
   - name: smartvest-db

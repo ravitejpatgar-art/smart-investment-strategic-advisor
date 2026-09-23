@@ -32,7 +32,7 @@ backend/smartvest.db
 *.env.local
 frontend/.env.local
 backend/.env
-backend/.env.*
+backend/.env*
 backend/.env.local
 
 # Logs & Temp

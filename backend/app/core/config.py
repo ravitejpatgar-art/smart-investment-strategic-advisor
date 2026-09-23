@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # AI Keys (Optional - has fallback intelligent engine)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_API_KEY_BACKUP: str = os.getenv("OPENAI_API_KEY_BACKUP", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-5.5")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GEMINI_API_KEY_BACKUP: str = os.getenv("GEMINI_API_KEY_BACKUP", "")
 

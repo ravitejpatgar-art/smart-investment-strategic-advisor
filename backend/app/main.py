@@ -131,8 +131,10 @@ def root():
 
 @app.get("/api/health")
 def health_check():
+    from app.services.ai.openai_service import is_openai_configured
     return {
         "status": "healthy",
+        "openai_configured": is_openai_configured(),
         "services": {
             "database": "connected",
             "market_feed": "active",

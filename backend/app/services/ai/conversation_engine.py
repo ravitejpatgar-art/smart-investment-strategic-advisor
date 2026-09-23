@@ -52,15 +52,66 @@ from .response_planner import (
     format_educational_response
 )
 from .response_validator import validate_conversational_response
+from .openai_service import (
+    is_openai_configured,
+    generate_openai_advisory,
+    VESTIQ_DISCLAIMER,
+)
 
 # Shared in-memory conversation memory store keyed by session/request
 _CONVERSATION_MEMORY = ConversationalMemory()
+
+
+def is_complex_finance_synthesis(query: str) -> bool:
+    """
+    Identifies whether a query requires open-ended macroeconomic/portfolio synthesis
+    or can be answered by a deterministic glossary definition or calculator.
+    """
+    q_low = query.lower().strip()
+
+    # Check if this directly matches a known glossary concept title/id
+    from app.services.financial_knowledge.glossary import search_glossary
+    direct_concepts = search_glossary(query)
+    if direct_concepts:
+        top_c = direct_concepts[0]
+        top_title = top_c.title.lower()
+        top_id = top_c.id.lower()
+        # Direct definition queries bypass complex synthesis
+        if q_low in [top_title, top_id] or q_low in [
+            f"what is {top_title}", f"what is an {top_title}", f"what is a {top_title}",
+            f"explain {top_title}", f"explain {top_title}.", f"what is {top_title}?",
+            f"meaning of {top_title}", f"define {top_title}"
+        ]:
+            return False
+        if len(query.split()) <= 6 and not any(w in q_low for w in ["interact", "affect", "impact", "interplay", "relationship between", "how do"]):
+            return False
+
+    # Multi-factor, open-ended, or interaction phrases require synthesis
+    complex_triggers = [
+        "interact", "interplay", "affect a long-term", "affect my portfolio",
+        "macroeconomic", "multiple factors", "trade-off", "tradeoffs",
+        "inflation, interest rates", "interest rates, currency",
+        "stagflation", "monetary policy", "can you guarantee", "guarantee that",
+        "how do inflation", "interact to affect", "deep dive into", "scenario analysis"
+    ]
+    if any(trigger in q_low for trigger in complex_triggers):
+        return True
+
+    # 2+ macroeconomic forces mentioned in open inquiry
+    macro_terms = ["inflation", "interest rate", "currency", "gdp", "economic growth", "recession", "unemployment"]
+    macro_count = sum(1 for m in macro_terms if m in q_low)
+    if macro_count >= 2:
+        return True
+
+    return False
+
 
 def process_conversational_query(
     query: str,
     user_context: Optional[Dict[str, Any]] = None,
     history: Optional[List[Dict[str, Any]]] = None,
-    request_id: Optional[str] = None
+    request_id: Optional[str] = None,
+    market_facts: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Master entrypoint for SmartVest Conversational Financial AI.
@@ -300,7 +351,11 @@ What would you like to explore today?"""
     # --- HANDLER 9: SIP / COMPOUNDING CALCULATION ---
     elif intent in [ConversationalIntent.SIP_CALCULATION, ConversationalIntent.COMPOUNDING_CALCULATION]:
         from app.services.ai_assistant import sipHandler
-        response_payload = sipHandler(query, {}, user_prof, req_id)
+        from app.services.intent_detector import extract_rupee_amount, extract_time_horizons
+        amt = extract_rupee_amount(query, default=10000.0)
+        years_list = extract_time_horizons(query)
+        years = years_list[0]["years"] if years_list and "years" in years_list[0] else 10
+        response_payload = sipHandler(query, {"monthly_sip": amt, "years": years}, user_prof, req_id)
 
     # --- HANDLER 10: AFFORDABILITY ---
     elif intent == ConversationalIntent.AFFORDABILITY:
@@ -324,6 +379,29 @@ What would you like to explore today?"""
 
     # --- HANDLER 14: EDUCATION & FALLBACK ---
     else:
+        # Check if query is complex/open-ended finance synthesis eligible for OpenAI
+        if is_complex_finance_synthesis(query) and is_openai_configured():
+            openai_res = generate_openai_advisory(
+                query=query,
+                user_context=user_prof,
+                history=history,
+                market_facts=market_facts
+            )
+            if openai_res.get("success"):
+                response_payload["answer"] = openai_res["answer"]
+                response_payload["provider"] = "openai"
+                response_payload["model"] = openai_res.get("model")
+                response_payload["citations"] = openai_res.get("citations", ["SmartVest Fiduciary Reasoning"])
+                response_payload["disclaimer"] = openai_res.get("disclaimer", VESTIQ_DISCLAIMER)
+                response_payload["data_available"] = True
+                response_payload["confidence"] = "HIGH"
+                response_payload["followUps"] = [
+                    "How does inflation affect bond yields?",
+                    "What asset allocation protects against stagflation?",
+                    "Calculate SIP for long term wealth"
+                ]
+                return response_payload
+
         from app.services.ai_assistant import educationalHandler
         response_payload = educationalHandler(query, {}, user_prof, req_id)
 
@@ -339,10 +417,33 @@ What would you like to explore today?"""
     if not validation.is_valid:
         for issue in validation.issues:
             if "Forbidden robotic concept definition pattern" in issue:
-                candidates = screen_stocks(MarketRegion.US, user_prof)
-                res = format_stock_screening_response(candidates, user_prof, MarketRegion.US, query, depth=depth)
-                response_payload["answer"] = res["answer"]
-                response_payload["followUps"] = res["followUps"]
+                if any(k in q_low for k in ["guarantee", "risk-free", "certain", "sure shot", "100% return"]):
+                    response_payload["answer"] = (
+                        "### No Investment Returns Are Ever Guaranteed\n\n"
+                        "**Under SEBI and global financial fiduciary regulations, no equity or market-linked investment can ever promise, predict, or guarantee returns.**\n\n"
+                        "#### Key Realities of Market Investments:\n"
+                        "- **Capital Risk**: All equity securities carry the risk of loss of principal. Share prices fluctuate continuously with earnings, macro headwinds, and market sentiment.\n"
+                        "- **Past vs Future**: A stock or mutual fund that delivered 20% CAGR historically has zero obligation or guarantee to repeat that return in the future.\n"
+                        "- **Risk vs Reward**: Higher potential returns always require accepting higher volatility and drawdown risk. Only sovereign fixed-income instruments provide contractual capital safety, but with lower returns.\n\n"
+                        "*Fiduciary Principle: Any entity or advisor promising guaranteed stock market returns violates basic fiduciary standards.*"
+                    )
+                    response_payload["followUps"] = [
+                        "What is risk tolerance?",
+                        "How does diversification reduce risk?",
+                        "Calculate SIP of ₹5000 for 10 years at 12%"
+                    ]
+                else:
+                    candidates = screen_stocks(MarketRegion.US, user_prof)
+                    res = format_stock_screening_response(candidates, user_prof, MarketRegion.US, query, depth=depth)
+                    response_payload["answer"] = res["answer"]
+                    response_payload["followUps"] = res["followUps"]
                 break
+
+    # Standardize provider & compliance metadata
+    response_payload.setdefault("provider", "deterministic")
+    response_payload.setdefault("data_available", True)
+    response_payload.setdefault("confidence", "HIGH")
+    response_payload.setdefault("citations", ["SmartVest Deterministic Fiduciary Engine"])
+    response_payload.setdefault("disclaimer", VESTIQ_DISCLAIMER)
 
     return response_payload

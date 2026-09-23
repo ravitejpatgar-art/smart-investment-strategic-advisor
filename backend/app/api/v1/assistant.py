@@ -20,6 +20,8 @@ class ChatPayload(BaseModel):
     userContext: Optional[Dict[str, Any]] = None
     user_context: Optional[Dict[str, Any]] = None
     history: Optional[List[Dict[str, Any]]] = None
+    marketFacts: Optional[Dict[str, Any]] = None
+    market_facts: Optional[Dict[str, Any]] = None
 
 @router.post("/chat")
 def chat_with_assistant(
@@ -49,12 +51,15 @@ def chat_with_assistant(
     if not query_text:
         query_text = "What is an ETF?"
 
+    mkt = payload.marketFacts if payload.marketFacts is not None else payload.market_facts
+
     from app.services.ai import process_conversational_query
     res = process_conversational_query(
         query=query_text,
         user_context=ctx,
         history=payload.history,
-        request_id=payload.requestId
+        request_id=payload.requestId,
+        market_facts=mkt
     )
     ans = res.get("answer") or res.get("response") or ""
     res["answer"] = ans

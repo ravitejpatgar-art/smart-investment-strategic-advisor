@@ -245,4 +245,57 @@ describe('VestIQ Assistant Routing & Deployment Behavior', () => {
       expect(md.toLowerCase()).not.toContain('monthly surplus');
     });
   });
+
+  describe('6. Hybrid VestIQ canAnswerCompletely Routing Contract', () => {
+    it('deterministic concept sets canAnswerCompletely = true', async () => {
+      const parsed = parseFinanceQuery('What is an IPO?');
+      const result = await executeDeterministicAdvisor(parsed);
+      expect(result.canAnswerCompletely).toBe(true);
+      expect(result.directAnswer).toContain('Initial Public Offering');
+    });
+
+    it('deterministic calculation sets canAnswerCompletely = true', async () => {
+      const parsed = parseFinanceQuery('Calculate SIP of ₹5000 for 10 years at 12%');
+      const result = await executeDeterministicAdvisor(parsed);
+      expect(result.canAnswerCompletely).toBe(true);
+      expect(result.calculations).toBeDefined();
+    });
+
+    it('live-data query with verified market data sets canAnswerCompletely = true', async () => {
+      vi.spyOn(marketApi, 'getQuote').mockResolvedValueOnce({
+        symbol: 'RELIANCE.NS',
+        name: 'Reliance Industries Limited',
+        price: 2950.5,
+        change: 15.2,
+        changePct: 0.52,
+        source: 'NSE Realtime Feed',
+        freshness: 'REALTIME',
+        assetType: 'EQUITY',
+        status: 'LIVE',
+      } as any);
+
+      const parsed = parseFinanceQuery('What is RELIANCE price?');
+      const result = await executeDeterministicAdvisor(parsed);
+      expect(result.canAnswerCompletely).toBe(true);
+      expect(result.metrics?.price).toBe(2950.5);
+    });
+
+    it('open-ended / unrecognized synthesis sets canAnswerCompletely = false for backend delegation', async () => {
+      const parsed = parseFinanceQuery('How does a debt-service coverage ratio impact mezzanine financing and leverage?');
+      const result = await executeDeterministicAdvisor(parsed);
+      expect(result.canAnswerCompletely).toBe(false);
+    });
+
+    it('static finance question works immediately without backend connection', async () => {
+      // Both authApi and marketApi fail
+      vi.spyOn(authApi, 'getConversations').mockRejectedValue(new Error('Network offline'));
+      vi.spyOn(marketApi, 'getQuote').mockRejectedValue(new Error('Network offline'));
+
+      const parsed = parseFinanceQuery('What is P/E ratio?');
+      const result = await executeDeterministicAdvisor(parsed);
+      expect(result.canAnswerCompletely).toBe(true);
+      const md = formatRuleResultToMarkdown(result);
+      expect(md.toLowerCase()).toContain('price-to-earnings');
+    });
+  });
 });

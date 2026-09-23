@@ -62,6 +62,7 @@ export interface ReasoningResult {
   timestamp?: string;
   freshness?: string;
   followUps?: string[];
+  canAnswerCompletely?: boolean;
 }
 
 export function isUsSymbol(rawSymbol: string): boolean {
