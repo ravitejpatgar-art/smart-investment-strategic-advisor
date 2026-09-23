@@ -1008,6 +1008,57 @@ export function composeAnswer(
     const comm = metric || (symbols.length > 0 ? symbols[0] : 'Commodity');
     const q = symbols.length > 0 ? evidence.quotes[symbols[0]] : null;
 
+    if (q && typeof q.price === 'number') {
+      const curr = q.currency === 'USD' ? '$' : '₹';
+      const hasPct = typeof q.changePct === 'number' && !isNaN(q.changePct);
+      const pctStr = hasPct ? `${q.changePct! >= 0 ? '+' : ''}${q.changePct}%` : 'Unavailable';
+      return {
+        query: parsed,
+        title: `${comm} Market Overview`,
+        directAnswer: `${comm} is trading at ${curr}${q.price.toLocaleString()} (${pctStr}).`,
+        summary: `Current market data and structural drivers for ${comm}: ${curr}${q.price.toLocaleString()} (${pctStr}).`,
+        metrics: {
+          price: q.price,
+          change: q.change,
+          changePct: q.changePct,
+        },
+        sections: [
+          {
+            heading: 'Current Snapshot',
+            items: [
+              `**Asset:** ${comm}`,
+              `**Current Price:** ${curr}${q.price.toLocaleString()}`,
+              `**Session Change:** ${pctStr}`,
+              `**Data Status:** ${q.freshness === 'REALTIME' ? 'LIVE' : 'DELAYED'}`,
+            ],
+          },
+          {
+            heading: 'Macro Transmission Factors',
+            items: [
+              'Inflation Hedge: Precious metals and commodities often help preserve purchasing power during prolonged inflationary periods.',
+              'Currency Inverse Correlation: Commodities priced in US Dollars typically display inverse price sensitivity to US Dollar Index (DXY) strength.',
+              'Opportunity Cost: When global real interest rates surge, non-yielding assets face relative yield headwinds.',
+            ],
+          },
+          {
+            heading: 'Analytical Limitations',
+            items: [
+              'Commodities generate zero cash flow, dividends, or coupon payments; returns depend entirely on terminal price appreciation.',
+              'Futures and commodity ETFs can incur contango roll decay over extended holding periods.',
+            ],
+          },
+        ],
+        source: q.source || 'Authorized Commodity Feed',
+        timestamp: q.asOf || 'Today',
+        freshness: q.freshness,
+        followUps: [
+          'How does inflation affect real returns?',
+          'What is RELIANCE price?',
+          'What is CAGR?',
+        ],
+      };
+    }
+
     return {
       query: parsed,
       title: `${comm} Market Overview`,

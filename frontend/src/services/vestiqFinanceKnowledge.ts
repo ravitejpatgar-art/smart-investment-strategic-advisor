@@ -1215,7 +1215,7 @@ export const FINANCE_CONCEPTS: FinanceConcept[] = [
   {
     id: 'INTEREST_RATES',
     name: 'Interest Rates & Repo Rate',
-    aliases: ['interest rates', 'repo rate', 'rbi policy rate', 'monetary policy', 'rate cut', 'rate hike', 'central bank rate'],
+    aliases: ['interest rate', 'interest rates', 'repo rate', 'rbi policy rate', 'monetary policy', 'rate cut', 'rate hike', 'central bank rate'],
     domain: 'MARKETS',
     category: 'MACRO',
     definition: 'The benchmark Interest Rate (specifically the Repo Rate in India) is the rate at which the central bank (Reserve Bank of India - RBI) lends short-term funds to commercial banks, serving as the foundational cost of capital across the financial system.',
@@ -1403,7 +1403,7 @@ export const FINANCE_CONCEPTS: FinanceConcept[] = [
   {
     id: 'DIVERSIFICATION',
     name: 'Diversification',
-    aliases: ['diversification', 'diversify', 'portfolio diversification', 'dont put all eggs in one basket', 'unsystematic risk reduction'],
+    aliases: ['diversification', 'diversify', 'portfolio diversification', 'dont put all eggs in one basket', 'unsystematic risk reduction', 'why is diversification important', 'why diversification matters', 'why does diversification matter', 'importance of diversification', 'benefits of diversification'],
     domain: 'PORTFOLIO',
     category: 'PERSONAL_FINANCE',
     definition: 'Diversification is a risk management technique that blends a wide variety of different investments within a portfolio to eliminate company-specific (unsystematic) risks without sacrificing expected return.',
@@ -2310,6 +2310,10 @@ export const MACRO_RELATIONSHIPS: MacroRelationship[] = [
     aliases: [
       'why do bond prices fall when interest rates rise',
       'why do bond prices fall when rates rise',
+      'what happens when interest rates rise',
+      'what happens when rates rise',
+      'what happens if interest rates rise',
+      'when interest rates rise',
       'relationship between bond prices and interest rates',
       'how do interest rates affect bond prices',
       'bond prices and yields inverse relationship'
@@ -2329,6 +2333,8 @@ export const MACRO_RELATIONSHIPS: MacroRelationship[] = [
     id: 'INFLATION_VS_INVESTMENTS',
     name: 'Inflation vs Investment Returns',
     aliases: [
+      'why does inflation affect investments',
+      'why inflation affects investments',
       'how does inflation affect investments',
       'impact of inflation on stock market',
       'how inflation affects stock prices',
@@ -2411,6 +2417,12 @@ export const MACRO_RELATIONSHIPS: MacroRelationship[] = [
     id: 'PROFITS_VS_STOCK_PRICES',
     name: 'Corporate Profits vs Long-Term Stock Prices',
     aliases: [
+      'why do company profits matter to investors',
+      'why do company profits matter',
+      'why company profits matter to investors',
+      'why company profits matter',
+      'why do profits matter to investors',
+      'why do profits matter',
       'why do company profits matter for stock prices',
       'how do earnings drive stock prices',
       'relationship between profits and stock returns',
@@ -2583,6 +2595,32 @@ export function findMacroRelationship(query: string): MacroRelationship | null {
         return rel;
       }
     }
+  }
+
+  // 2. Keyword & transmission intent matching
+  if (/\b(profits?|earnings)\b/i.test(clean) && /\b(matter|investor|investors|drive|follow|important)\b/i.test(clean)) {
+    const profitRel = MACRO_RELATIONSHIPS.find((r) => r.id === 'PROFITS_VS_STOCK_PRICES');
+    if (profitRel) return profitRel;
+  }
+
+  if (/\b(bond|bonds)\b/i.test(clean) && /\b(interest rates?|rates? rise|rates? hike|yields?)\b/i.test(clean)) {
+    const bondRel = MACRO_RELATIONSHIPS.find((r) => r.id === 'BOND_PRICES_VS_INTEREST_RATES');
+    if (bondRel) return bondRel;
+  }
+
+  if (/\b(inflation)\b/i.test(clean) && /\b(invest|investment|investments|portfolio|stocks?|returns?)\b/i.test(clean)) {
+    const infRel = MACRO_RELATIONSHIPS.find((r) => r.id === 'INFLATION_VS_INVESTMENTS');
+    if (infRel) return infRel;
+  }
+
+  if (/\b(crude|oil|brent)\b/i.test(clean) && /\b(omc|omcs|refin|petrol|diesel)\b/i.test(clean)) {
+    const crudeRel = MACRO_RELATIONSHIPS.find((r) => r.id === 'CRUDE_OIL_VS_OMCS');
+    if (crudeRel) return crudeRel;
+  }
+
+  if (/\b(usd\s*inr|rupee|dollar)\b/i.test(clean) && /\b(market|markets|investor|investors|nifty|stocks?)\b/i.test(clean)) {
+    const usdRel = MACRO_RELATIONSHIPS.find((r) => r.id === 'USD_INR_VS_MARKETS');
+    if (usdRel) return usdRel;
   }
 
   return null;

@@ -3,14 +3,11 @@ import { useFintechStore } from '../../store/useFintechStore';
 import { authApi } from '../../services/api';
 import { auditLogger } from '../../services/auditLogger';
 import { buildUserContext } from '../../services/userProfileRepository';
-import {
-  buildGroundedContext,
-  generateGroundedOfflineResponse,
-  isGreetingOrHelpQuery
-} from '../../services/vestiqGrounding';
+import { isGreetingOrHelpQuery } from '../../services/vestiqGrounding';
 import {
   parseFinanceQuery,
   executeDeterministicAdvisor,
+  composeAnswer,
   formatRuleResultToMarkdown
 } from '../../services/vestiqRuleEngine';
 import { VestiqHeader } from './VestiqHeader';
@@ -298,10 +295,10 @@ export const VestiqShell: React.FC = () => {
       }
     })();
 
-    try {
-      // Build user context
-      const userContext = buildUserContext(user, expenses, goals, strategy);
+    // Build user context
+    const userContext = buildUserContext(user, expenses, goals, strategy);
 
+    try {
       // Deterministic Query Parsing with Active Conversation Context
       const lastSymbol = lastSymbolRef.current;
       const lastConcept = lastConceptRef.current;
@@ -321,14 +318,7 @@ export const VestiqShell: React.FC = () => {
       const intent: string | undefined = parsedQuery.intent;
       const entities: string[] | undefined = parsedQuery.symbols.length > 0 ? parsedQuery.symbols : undefined;
 
-      if (parsedQuery.intent !== 'UNSUPPORTED') {
-        const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
-        if (latestRequestIdRef.current !== reqId) return;
-
-        answerText = formatRuleResultToMarkdown(ruleResult);
-        calcData = ruleResult.calculations || null;
-        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
-      } else if (isGreetingOrHelpQuery(trimmedText)) {
+      if (isGreetingOrHelpQuery(trimmedText)) {
         answerText = "Hello! I am VestIQ, your deterministic fiduciary portfolio advisor. I can help you analyze Indian & US stocks, ETFs, mutual funds, portfolio asset allocations, SIP returns, and fundamental or technical indicators. What financial question can I help you with today?";
         followUps = [
           'What is RELIANCE price?',
@@ -337,13 +327,12 @@ export const VestiqShell: React.FC = () => {
           'How diversified is my portfolio?',
         ];
       } else {
-        answerText = "I don't have enough verified data to answer this question reliably.";
-        followUps = [
-          'What is RELIANCE price?',
-          'What is AAPL price?',
-          'What is CAGR?',
-          'Calculate SIP of ₹5000 for 5 years at 12%',
-        ];
+        const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
+        if (latestRequestIdRef.current !== reqId) return;
+
+        answerText = formatRuleResultToMarkdown(ruleResult);
+        calcData = ruleResult.calculations || null;
+        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
       }
 
       // Reject stale responses: if a newer request was dispatched, drop this older response
@@ -465,20 +454,24 @@ export const VestiqShell: React.FC = () => {
           setError("Rate limit reached. Operating under local grounded advisory.");
         }
         
-        // Grounded offline reasoning fallback using authoritative profile
-        const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-        const offlineRes = generateGroundedOfflineResponse(trimmedText, groundedCtx);
-        const offlineText = offlineRes.text;
+        // Deterministic fallback: never use generic onboarding profile response
+        const fallbackParsed = parseFinanceQuery(trimmedText);
+        const fallbackResult = composeAnswer(
+          fallbackParsed,
+          { quotes: {}, research: {}, candles: {}, portfolio: null },
+          userContext
+        );
+        const fallbackText = formatRuleResultToMarkdown(fallbackResult);
 
-        const tempAiMsgId = `ai_offline_${Date.now()}`;
+        const tempAiMsgId = `ai_deterministic_${Date.now()}`;
         const assistantMsg: VestiqChatMessage = {
           id: tempAiMsgId,
           sender: 'assistant',
-          text: offlineText,
+          text: fallbackText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          calculations: offlineRes.calculations || null,
-          followUps: offlineRes.followUps && offlineRes.followUps.length > 0 ? offlineRes.followUps : undefined,
-          intent: offlineRes.intent
+          calculations: fallbackResult.calculations || null,
+          followUps: fallbackResult.followUps && fallbackResult.followUps.length > 0 ? fallbackResult.followUps : undefined,
+          intent: fallbackParsed.intent
         };
         setMessages((prev) => [...prev, assistantMsg]);
       }

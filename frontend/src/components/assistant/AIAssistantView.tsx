@@ -9,14 +9,11 @@ import {
 import { VestiqMark } from '../common/VestiqLogo';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
-import {
-  buildGroundedContext,
-  generateGroundedOfflineResponse,
-  isGreetingOrHelpQuery
-} from '../../services/vestiqGrounding';
+import { isGreetingOrHelpQuery } from '../../services/vestiqGrounding';
 import {
   parseFinanceQuery,
   executeDeterministicAdvisor,
+  composeAnswer,
   formatRuleResultToMarkdown
 } from '../../services/vestiqRuleEngine';
 
@@ -111,9 +108,9 @@ How can I help guide your financial and investment decisions today?`,
     setInput('');
     setLoading(true);
 
-    try {
-      const userContext = buildUserContext(user, expenses, goals, strategy);
+    const userContext = buildUserContext(user, expenses, goals, strategy);
 
+    try {
       const lastSymbol = lastSymbolRef.current;
       const parsedQuery = parseFinanceQuery(trimmed, { lastSymbol });
 
@@ -124,13 +121,7 @@ How can I help guide your financial and investment decisions today?`,
       let answerText = '';
       let followUps: string[] | undefined = undefined;
 
-      if (parsedQuery.intent !== 'UNSUPPORTED') {
-        const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
-        if (latestRequestIdRef.current !== reqId) return;
-
-        answerText = formatRuleResultToMarkdown(ruleResult);
-        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
-      } else if (isGreetingOrHelpQuery(trimmed)) {
+      if (isGreetingOrHelpQuery(trimmed)) {
         answerText = "Hello! I am VestIQ, your deterministic fiduciary portfolio advisor. I can help you analyze Indian & US stocks, ETFs, mutual funds, portfolio asset allocations, SIP returns, and fundamental or technical indicators. What financial question can I help you with today?";
         followUps = [
           'What is RELIANCE price?',
@@ -139,13 +130,11 @@ How can I help guide your financial and investment decisions today?`,
           'How diversified is my portfolio?',
         ];
       } else {
-        answerText = "I don't have enough verified data to answer this question reliably.";
-        followUps = [
-          'What is RELIANCE price?',
-          'What is AAPL price?',
-          'What is CAGR?',
-          'Calculate SIP of ₹5000 for 5 years at 12%',
-        ];
+        const ruleResult = await executeDeterministicAdvisor(parsedQuery, userContext);
+        if (latestRequestIdRef.current !== reqId) return;
+
+        answerText = formatRuleResultToMarkdown(ruleResult);
+        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
       }
 
       // Ignore stale responses from out-of-order race conditions
@@ -238,16 +227,21 @@ How can I help guide your financial and investment decisions today?`,
           },
         ]);
       } else {
-        const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-        const offlineRes = generateGroundedOfflineResponse(trimmed, groundedCtx);
-        const offlineText = offlineRes.text;
+        // Deterministic fallback: never use generic onboarding profile response
+        const fallbackParsed = parseFinanceQuery(trimmed);
+        const fallbackResult = composeAnswer(
+          fallbackParsed,
+          { quotes: {}, research: {}, candles: {}, portfolio: null },
+          userContext
+        );
+        const fallbackText = formatRuleResultToMarkdown(fallbackResult);
 
         const fallbackMsg: Message = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
-          text: offlineText,
+          text: fallbackText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          followUps: offlineRes.followUps && offlineRes.followUps.length > 0 ? offlineRes.followUps : undefined
+          followUps: fallbackResult.followUps && fallbackResult.followUps.length > 0 ? fallbackResult.followUps : undefined
         };
         setMessages((prev) => [...prev, fallbackMsg]);
       }

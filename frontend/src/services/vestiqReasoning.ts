@@ -111,11 +111,23 @@ export async function resolveDynamicEntities(
     return parsed;
   }
 
+  // Do not attempt dynamic resolution for educational concepts, comparisons, macro relationships, or partial finance
+  if (
+    parsed.conceptId ||
+    parsed.comparisonId ||
+    parsed.macroRelationshipId ||
+    parsed.isPartialFinance
+  ) {
+    return parsed;
+  }
+
   // Do not attempt dynamic resolution for non-instrument queries
   const nonInstrumentIntents: FinanceIntent[] = [
     'OUT_OF_DOMAIN',
     'AMBIGUOUS',
     'EDUCATION',
+    'COMPARISON',
+    'EXPLANATION',
     'FIXED_INCOME',
     'MARKET_RELATIONSHIP',
     'MARKET',

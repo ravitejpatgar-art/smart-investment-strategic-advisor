@@ -471,9 +471,12 @@ export function detectIntent(
   const isCurrentEvent = /\b(today|now|currently|right now|this morning|dropping today|falling today|rising today|down today|up today|latest session|why is it falling|why is it rising|what happened today|what is happening today)\b/i.test(lower);
 
   // 3. Portfolio: Concentration, Diversification, Risk Check
+  const isConceptualDiversification = /\b(what is diversification|explain diversification|why is diversification|why does diversification|importance of diversification|why diversify|meaning of diversification|benefits of diversification)\b/i.test(lower);
+
   if (
-    /\b(portfolio|my holdings|asset allocation|how diversified|diversification|my assets)\b/i.test(lower) ||
-    (/\b(concentrated|concentration|one stock|single stock)\b/i.test(lower) && /\b(portfolio|risk|risky|safe|drawdown|allocation)\b/i.test(lower))
+    !isConceptualDiversification &&
+    (/\b(portfolio|my holdings|asset allocation|how diversified|diversification|my assets)\b/i.test(lower) ||
+      (/\b(concentrated|concentration|one stock|single stock)\b/i.test(lower) && /\b(portfolio|risk|risky|safe|drawdown|allocation)\b/i.test(lower)))
   ) {
     const isRiskCheck = /\b(risk|risky|safe|drawdown|concentrated|concentration)\b/i.test(lower);
     return {
@@ -816,7 +819,7 @@ export function detectConceptAspect(
 ): 'definition' | 'howItWorks' | 'whyItMatters' | 'example' | 'risks' | 'keyPoints' {
   const lower = query.toLowerCase();
   if (
-    /\b(how does .* work|how it works|how do they work|how does this work|how work|mechanism|workings?)\b/i.test(lower) ||
+    /\b(how does .* work|how do .* work|how it works|how do they work|how does this work|how work|mechanism|workings?|how does a .* go public|how to)\b/i.test(lower) ||
     /^(how does it work\??|how it works\??)$/i.test(lower.trim())
   ) {
     return 'howItWorks';
@@ -828,8 +831,8 @@ export function detectConceptAspect(
     return 'risks';
   }
   if (
-    /\b(why does .* matter|why is .* important|importance|significance|why matter)\b/i.test(lower) ||
-    /^(why does it matter\??|why is it important\??)$/i.test(lower.trim())
+    /\b(why does .* matter|why do .* matter|why is .* important|why are .* important|importance|significance|why matter|why choose|why buy|why pick|why would someone choose|why would someone buy|why someone choose|why invest in|benefits?|advantages?|pros?)\b/i.test(lower) ||
+    /^(why does it matter\??|why is it important\??|why choose\??|why invest\??)$/i.test(lower.trim())
   ) {
     return 'whyItMatters';
   }
@@ -846,6 +849,99 @@ export function detectConceptAspect(
     return 'keyPoints';
   }
   return 'definition';
+}
+
+// ==========================================
+// 8c. Financial Term Extraction for Unrecognized Inquiries
+// ==========================================
+
+export function extractRecognizedFinanceTerms(query: string): string[] {
+  const norm = normalizeQuestion(query).toLowerCase();
+  const matchedTerms: string[] = [];
+
+  // Check concepts from library first
+  for (const c of FINANCE_CONCEPTS) {
+    const cleanConceptName = c.name.toLowerCase().split(' (')[0];
+    if (new RegExp(`\\b${cleanConceptName}\\b`, 'i').test(norm)) {
+      if (!matchedTerms.includes(c.name)) matchedTerms.push(c.name);
+    }
+    for (const a of c.aliases) {
+      if (a.length >= 3 && new RegExp(`\\b${a.toLowerCase()}\\b`, 'i').test(norm)) {
+        if (!matchedTerms.includes(c.name)) matchedTerms.push(c.name);
+        break;
+      }
+    }
+  }
+
+  // Broad finance keywords
+  const vocabulary: Record<string, string> = {
+    'debt': 'Debt & Leverage',
+    'leverage': 'Debt & Leverage',
+    'collateral': 'Collateral & Credit',
+    'credit': 'Credit & Fixed Income',
+    'solvency': 'Solvency & Financial Health',
+    'liquidity': 'Market Liquidity',
+    'valuation': 'Valuation Multiples',
+    'profit': 'Corporate Profits',
+    'profits': 'Corporate Profits',
+    'earnings': 'Corporate Earnings',
+    'revenue': 'Corporate Revenue',
+    'cash flow': 'Cash Flow Analysis',
+    'margin': 'Operating Margin',
+    'margins': 'Operating Margin',
+    'capital': 'Cost of Capital',
+    'asset': 'Asset Allocation',
+    'assets': 'Asset Allocation',
+    'equity': 'Equity Capital',
+    'dividend': 'Dividends',
+    'yield': 'Yield & Fixed Income',
+    'inflation': 'Inflation & Purchasing Power',
+    'interest rate': 'Interest Rates & Monetary Policy',
+    'interest rates': 'Interest Rates & Monetary Policy',
+    'risk': 'Risk Management & Diversification',
+    'diversification': 'Diversification',
+    'diversify': 'Diversification',
+    'portfolio': 'Portfolio Strategy',
+    'invest': 'Investing Principles',
+    'investing': 'Investing Principles',
+    'investment': 'Investing Principles',
+    'investor': 'Investor Mandate',
+    'investors': 'Investor Mandate',
+    'stock': 'Equities & Stocks',
+    'stocks': 'Equities & Stocks',
+    'shares': 'Equities & Stocks',
+    'fund': 'Funds & Asset Management',
+    'funds': 'Funds & Asset Management',
+    'etf': 'Exchange Traded Funds (ETFs)',
+    'mutual fund': 'Mutual Funds',
+    'bond': 'Bonds & Fixed Income',
+    'bonds': 'Bonds & Fixed Income',
+    'alpha': 'Alpha & Outperformance',
+    'beta': 'Beta & Market Volatility',
+    'arbitrage': 'Arbitrage & Pricing Efficiency',
+    'derivative': 'Derivatives & Hedging',
+    'derivatives': 'Derivatives & Hedging',
+    'future': 'Futures & Derivatives',
+    'futures': 'Futures & Derivatives',
+    'option': 'Options & Derivatives',
+    'options': 'Options & Derivatives',
+    'mezzanine': 'Mezzanine Financing',
+    'tranche': 'Securitization & Tranches',
+    'underwriting': 'Underwriting & Capital Markets',
+    'financial concept': 'Financial Fundamentals',
+    'financial': 'Financial Fundamentals',
+    'finance': 'Financial Fundamentals',
+  };
+
+  for (const [kw, label] of Object.entries(vocabulary)) {
+    if (new RegExp(`\\b${kw}\\b`, 'i').test(norm)) {
+      if (!matchedTerms.includes(label)) {
+        matchedTerms.push(label);
+      }
+    }
+  }
+
+  return matchedTerms;
 }
 
 // ==========================================
@@ -972,11 +1068,10 @@ export function parseFinanceQuery(
       (baseIntent === 'UNSUPPORTED' ||
         baseIntent === 'EDUCATION' ||
         baseDomain === 'UNKNOWN' ||
-        (baseIntent === 'EXPLANATION' && baseMetric === 'EXPLANATION') ||
+        (baseIntent === 'EXPLANATION' && (baseMetric === 'EXPLANATION' || !baseMetric)) ||
         (baseIntent === 'FIXED_INCOME' && isExplicitEducationalInquiry) ||
         ((baseIntent === 'PORTFOLIO' || baseIntent === 'RISK_ANALYSIS') &&
-          isExplicitEducationalInquiry &&
-          !/\b(my|our|current)\b/i.test(lower)))
+          !/\b(my|our|current holdings)\b/i.test(lower)))
     ) {
       const aspect = detectConceptAspect(normalizedQuery);
       const metricName = financeConcept.id === 'PE_RATIO' ? 'PE' : financeConcept.id;
@@ -993,11 +1088,10 @@ export function parseFinanceQuery(
       };
     }
 
-    // 5. Safe Fallback: Check if query is finance-related when intent is UNSUPPORTED
-    if (baseIntent === 'UNSUPPORTED') {
-      if (
-        /\b(financial concept|company profits|moat|economic moat|capital allocation framework|finance|investing|market|stocks?)\b/i.test(lower)
-      ) {
+    // 5. Safe Fallback: Check if query is finance-related when concept is not explicitly recognized
+    if (baseIntent === 'UNSUPPORTED' || baseIntent === 'EXPLANATION' || baseDomain === 'UNKNOWN') {
+      const recognizedTerms = extractRecognizedFinanceTerms(normalizedQuery);
+      if (recognizedTerms.length > 0) {
         return {
           intent: 'EXPLANATION',
           domain: 'FINANCIAL_EDUCATION',
@@ -1005,7 +1099,7 @@ export function parseFinanceQuery(
           originalQuery: rawQuery,
           normalizedQuery,
           isPartialFinance: true,
-          partialFinanceTerms: ['Financial Fundamentals'],
+          partialFinanceTerms: recognizedTerms.slice(0, 4),
           unverifiedQueryPart: rawQuery,
           isCurrentEvent: false,
         };

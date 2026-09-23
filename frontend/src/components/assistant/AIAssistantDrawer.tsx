@@ -13,14 +13,11 @@ import {
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { buildUserContext } from '../../services/userProfileRepository';
-import {
-  buildGroundedContext,
-  generateGroundedOfflineResponse,
-  isGreetingOrHelpQuery
-} from '../../services/vestiqGrounding';
+import { isGreetingOrHelpQuery } from '../../services/vestiqGrounding';
 import {
   parseFinanceQuery,
   executeDeterministicAdvisor,
+  composeAnswer,
   formatRuleResultToMarkdown
 } from '../../services/vestiqRuleEngine';
 import { VestiqMark } from '../common/VestiqLogo';
@@ -156,9 +153,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
     setInput('');
     setLoading(true);
 
-    try {
-      const clientCtx = buildUserContext(user, expenses, goals, strategy);
+    const clientCtx = buildUserContext(user, expenses, goals, strategy);
 
+    try {
       const lastSymbol = lastSymbolRef.current;
       const parsedQuery = parseFinanceQuery(query, { lastSymbol });
 
@@ -170,14 +167,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
       let calcData: any = null;
       let followUps: string[] | undefined = undefined;
 
-      if (parsedQuery.intent !== 'UNSUPPORTED') {
-        const ruleResult = await executeDeterministicAdvisor(parsedQuery, clientCtx);
-        if (latestRequestIdRef.current !== reqId) return;
-
-        answerText = formatRuleResultToMarkdown(ruleResult);
-        calcData = ruleResult.calculations || null;
-        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
-      } else if (isGreetingOrHelpQuery(query)) {
+      if (isGreetingOrHelpQuery(query)) {
         answerText = "Hello! I am VestIQ, your deterministic fiduciary portfolio advisor. I can help you analyze Indian & US stocks, ETFs, mutual funds, portfolio asset allocations, SIP returns, and fundamental or technical indicators. What financial question can I help you with today?";
         followUps = [
           'What is RELIANCE price?',
@@ -186,13 +176,12 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
           'How diversified is my portfolio?',
         ];
       } else {
-        answerText = "I don't have enough verified data to answer this question reliably.";
-        followUps = [
-          'What is RELIANCE price?',
-          'What is AAPL price?',
-          'What is CAGR?',
-          'Calculate SIP of ₹5000 for 5 years at 12%',
-        ];
+        const ruleResult = await executeDeterministicAdvisor(parsedQuery, clientCtx);
+        if (latestRequestIdRef.current !== reqId) return;
+
+        answerText = formatRuleResultToMarkdown(ruleResult);
+        calcData = ruleResult.calculations || null;
+        followUps = ruleResult.followUps && ruleResult.followUps.length > 0 ? ruleResult.followUps : undefined;
       }
 
       // Stale response protection
@@ -298,17 +287,22 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({ onClose })
         return;
       }
 
-      const groundedCtx = buildGroundedContext(user, expenses, goals, strategy);
-      const offlineRes = generateGroundedOfflineResponse(query, groundedCtx);
-      const fallbackText = offlineRes.text;
+      // Deterministic fallback: never use generic onboarding profile response
+      const fallbackParsed = parseFinanceQuery(query);
+      const fallbackResult = composeAnswer(
+        fallbackParsed,
+        { quotes: {}, research: {}, candles: {}, portfolio: null },
+        clientCtx
+      );
+      const fallbackText = formatRuleResultToMarkdown(fallbackResult);
 
       const fallbackMsg: Message = {
-        id: `ai_offline_${Date.now()}`,
+        id: `ai_deterministic_${Date.now()}`,
         sender: 'assistant',
         text: fallbackText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        calculations: offlineRes.calculations || null,
-        followUps: offlineRes.followUps || []
+        calculations: fallbackResult.calculations || null,
+        followUps: fallbackResult.followUps || []
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
