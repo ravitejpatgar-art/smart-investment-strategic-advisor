@@ -35,6 +35,31 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response interceptor: automatically fall back to relative /api/v1 rewrite proxy
+// if cross-origin backend request fails due to network/CORS on hosted deployment (e.g. Vercel preview)
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error?.config;
+    if (
+      !error.response &&
+      config &&
+      !config._retryProxy &&
+      typeof window !== 'undefined' &&
+      window.location.hostname !== 'localhost' &&
+      window.location.hostname !== '127.0.0.1' &&
+      config.baseURL &&
+      typeof config.baseURL === 'string' &&
+      config.baseURL.startsWith('http')
+    ) {
+      config._retryProxy = true;
+      config.baseURL = '/api/v1';
+      return apiClient(config);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authApi = {
   register: async (data: { email: string; password: string; full_name: string }) => {
     return (await apiClient.post('/auth/register', data)).data;

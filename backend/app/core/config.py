@@ -137,6 +137,7 @@ class Settings(BaseSettings):
             "http://localhost:8000",
             "http://127.0.0.1:8000",
             "https://smart-investment-strategic-advisor.vercel.app",
+            "https://smart-investment-strateg-git-c02f1b-ravitejpatgar-arts-projects.vercel.app",
             "https://smartvest-backend.onrender.com",
         ]
 
