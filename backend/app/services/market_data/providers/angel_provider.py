@@ -8,6 +8,7 @@ import hmac
 import hashlib
 import threading
 import asyncio
+import re
 from typing import Dict, Any, Optional, Set, List, Tuple
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -27,12 +28,31 @@ try:
     from SmartApi.smartWebSocketV2 import SmartWebSocketV2
     from SmartApi.smartConnect import SmartConnect
     SMARTAPI_AVAILABLE = True
+
+    # Patch SmartWebSocketV2._on_close to accept modern websocket-client arguments (*args, **kwargs)
+    # Modern websocket-client passes (wsapp, close_status_code, close_msg)
+    _orig_ws_on_close = getattr(SmartWebSocketV2, "_on_close", None)
+    def _patched_ws_on_close(ws_self, *args, **kwargs):
+        if hasattr(ws_self, "on_close") and callable(ws_self.on_close):
+            try:
+                ws_self.on_close(*args, **kwargs)
+            except Exception as e:
+                pass
+    SmartWebSocketV2._on_close = _patched_ws_on_close
 except ImportError:
     SmartWebSocketV2 = None
     SmartConnect = None
     SMARTAPI_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+def scrub_sensitive_tokens(text: str) -> str:
+    """Scrubs API keys, passwords, and tokens from error strings to prevent log credential leaks."""
+    if not text:
+        return ""
+    cleaned = re.sub(r'([a-zA-Z0-9_-]{20,})', '***', str(text))
+    cleaned = re.sub(r'(api_token|token|key|secret|password|jwt|feedToken)=[^\s&]+', r'\1=***', cleaned, flags=re.IGNORECASE)
+    return cleaned
 
 # Persistent session cache file path to prevent authentication rate limits
 SESSION_CACHE_FILE = os.path.join(os.path.dirname(__file__), ".angel_session.json")
@@ -140,11 +160,11 @@ class SmartStreamWorker:
                     feed_token=feed_tok
                 )
 
-                # Wire callbacks to provider
-                self._ws.on_open = lambda ws: self._on_worker_open(ws)
-                self._ws.on_data = lambda ws, data: self._on_worker_data(ws, data)
-                self._ws.on_error = lambda ws, code, reason: self.provider.on_error(ws, code, reason)
-                self._ws.on_close = lambda ws: self._on_worker_close(ws)
+                # Wire callbacks to provider with flexible signature handling
+                self._ws.on_open = lambda *args, **kwargs: self._on_worker_open(*args, **kwargs)
+                self._ws.on_data = lambda *args, **kwargs: self._on_worker_data(*args, **kwargs)
+                self._ws.on_error = lambda *args, **kwargs: self.provider.on_error(*args, **kwargs)
+                self._ws.on_close = lambda *args, **kwargs: self._on_worker_close(*args, **kwargs)
 
                 logger.info(f"[Angel One SmartAPI] WEBSOCKET_CONNECTING: Initializing stream for Worker #{self.worker_id}...")
                 self._ws.connect()
@@ -155,13 +175,16 @@ class SmartStreamWorker:
         self._thread = threading.Thread(target=_run_ws, daemon=True, name=f"AngelStreamWorker-{self.worker_id}")
         self._thread.start()
 
-    def _on_worker_data(self, wsapp, data):
+    def _on_worker_data(self, *args, **kwargs):
+        wsapp = args[0] if len(args) > 0 else kwargs.get("wsapp")
+        data = args[1] if len(args) > 1 else kwargs.get("data")
         with self._lock:
             self.tick_count += 1
             self.last_tick_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         self.provider.on_data(wsapp, data, worker_id=self.worker_id)
 
-    def _on_worker_open(self, wsapp):
+    def _on_worker_open(self, *args, **kwargs):
+        wsapp = args[0] if len(args) > 0 else kwargs.get("wsapp")
         self.is_connected = True
         self.last_heartbeat_at = time.time()
         logger.info(f"[Angel One SmartAPI] WEBSOCKET_CONNECTED: Worker #{self.worker_id} stream established.")
@@ -187,10 +210,11 @@ class SmartStreamWorker:
                     total_flushed += len(toks)
         logger.info(f"[Angel One SmartAPI] WEBSOCKET_SUBSCRIPTION_FLUSHED: Worker #{self.worker_id} flushed {total_flushed} tokens.")
 
-    def _on_worker_close(self, wsapp):
+    def _on_worker_close(self, *args, **kwargs):
+        wsapp = args[0] if len(args) > 0 else kwargs.get("wsapp")
         self.is_connected = False
-        logger.info(f"[Angel One SmartAPI] WEBSOCKET_DISCONNECTED: Worker #{self.worker_id} stream closed.")
-        self.provider.on_close(wsapp)
+        logger.info(f"[Angel One SmartAPI] WEBSOCKET_DISCONNECTED: Worker #{self.worker_id} stream closed (args={len(args)}).")
+        self.provider.on_close(wsapp, *args, **kwargs)
 
     def subscribe_tokens(self, tokens: List[str], exchange_type: int = 1, mode: int = 1) -> bool:
         """Transmits subscription message for tokens over active connection in specified mode (default 1: LTP)."""
@@ -900,9 +924,10 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
             logger.debug(f"[Angel One SmartAPI] on_data tick parse error: {e}")
 
     def on_error(self, *args, **kwargs):
-        logger.warning(f"[Angel One SmartAPI] WebSocket error: {args} {kwargs}")
+        safe_args = [scrub_sensitive_tokens(str(a))[:120] for a in args]
+        logger.warning(f"[Angel One SmartAPI] WebSocket error: args={safe_args} kwargs={kwargs}")
 
-    def on_close(self, wsapp=None):
+    def on_close(self, wsapp=None, *args, **kwargs):
         self.is_connected = any(w.is_connected for w in self.workers)
         if not self.is_connected:
             self.connection_status = "DISCONNECTED"
@@ -1214,6 +1239,14 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                             exch_time_str=exch_time_str,
                             source="Angel One SmartAPI"
                         )
+            else:
+                err_code = (res.get("errorcode") if isinstance(res, dict) else "") or "NO_DATA"
+                err_msg = (res.get("message") if isinstance(res, dict) else "") or "Empty response"
+                safe_msg = scrub_sensitive_tokens(str(err_msg))[:120]
+                logger.warning(
+                    f"[Angel One SmartAPI] REST quote failed: method='getMarketData' exchange='{exch}' "
+                    f"token='{token}' errorcode='{err_code}' message='{safe_msg}' safeCategory='API_NON_SUCCESS'"
+                )
 
             # Fallback to ltpData
             ltp_res = smart_api.ltpData(exchange=exch, tradingsymbol=tradingsymbol, symboltoken=token)
@@ -1237,16 +1270,28 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
                         exch_time_str=None,
                         source="Angel One SmartAPI"
                     )
+            else:
+                err_code = (ltp_res.get("errorcode") if isinstance(ltp_res, dict) else "") or "NO_DATA"
+                err_msg = (ltp_res.get("message") if isinstance(ltp_res, dict) else "") or "Empty response"
+                safe_msg = scrub_sensitive_tokens(str(err_msg))[:120]
+                logger.warning(
+                    f"[Angel One SmartAPI] REST quote failed: method='ltpData' exchange='{exch}' "
+                    f"token='{token}' errorcode='{err_code}' message='{safe_msg}' safeCategory='API_NON_SUCCESS'"
+                )
         except Exception as e:
-            logger.warning(f"[Angel One SmartAPI] REST quote exception for {symbol} (token {token}): {e}")
+            safe_err = scrub_sensitive_tokens(str(e))[:120]
+            logger.warning(f"[Angel One SmartAPI] REST quote exception for {symbol} (token {token}): {safe_err}")
 
         return None
 
     def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Retrieves authentic quote for an Indian Stock or ETF from Angel One.
-        Zero hardcoded prices.
-        Cross-validates WebSocket tick and REST quote.
+        Priority order:
+        1. Fresh WebSocket tick (<60s during open market session) -> return immediately, bypass REST.
+        2. REST getMarketData -> via get_rest_quote()
+        3. REST ltpData -> via get_rest_quote()
+        4. Return None and let ProviderRouter activate fallback.
         """
         clean = symbol.upper().strip()
         if clean.startswith("AMFI:") or clean.startswith("MF:") or clean.startswith("AMFI_") or clean == "AMFI" or (clean.isdigit() and len(clean) in (5, 6)):
@@ -1280,42 +1325,71 @@ class AngelOneSmartAPIProvider(BaseMarketDataProvider):
         if clean not in self.subscribed_instruments:
             self.subscribe(clean)
 
-        # 1. Check WebSocket tick
+        mkt = get_indian_market_status()
+        is_open = mkt.get("isOpen", False)
+        market_session = mkt.get("status", "CLOSED")
+
+        # ── 1. Priority 1: Check fresh WebSocket tick ──
         with self._lock:
             ws_tick = self._latest_ticks.get(token)
 
-        # 2. Fetch REST quote for validation & fallback
+        if ws_tick and ws_tick.get("price") is not None and float(ws_tick.get("price", 0)) > 0:
+            prov_ts = ws_tick.get("provider_timestamp") or 0
+            ts_sec = prov_ts / 1000.0 if prov_ts > 1e11 else float(prov_ts)
+            age_sec = (time.time() - ts_sec) if ts_sec > 0 else 999999.0
+
+            if is_open:
+                # During open market session: fresh tick (<60s) bypasses REST completely
+                if age_sec < TICK_FRESHNESS_THRESHOLD_SECONDS:
+                    self.success_count += 1
+                    ws_quote = dict(ws_tick)
+                    ws_quote["source"] = "Angel One SmartAPI"
+                    ws_quote["provider"] = "Angel One SmartAPI"
+                    ws_quote["freshness"] = DataFreshness.REALTIME.value
+                    ws_quote["isLive"] = True
+                    ws_quote["marketStatus"] = "OPEN"
+                    return ws_quote
+            else:
+                # During closed market session: preserve closed status without labeling as LIVE
+                self.success_count += 1
+                closed_quote = dict(ws_tick)
+                closed_quote["source"] = "Angel One SmartAPI"
+                closed_quote["provider"] = "Angel One SmartAPI"
+                closed_quote["marketStatus"] = market_session
+                closed_quote["isLive"] = False
+                closed_quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
+                return closed_quote
+
+        # ── 2. Priority 2 & 3: REST getMarketData & ltpData fallback ──
         rest_quote = self.get_rest_quote(clean)
-
-        # Cross-validation: compare REST quote and WebSocket tick if both exist
-        if ws_tick and rest_quote:
-            ws_price = float(ws_tick.get("price") or 0.0)
-            rest_price = float(rest_quote.get("price") or 0.0)
-            if ws_price > 0 and rest_price > 0:
-                diff_pct = abs(ws_price - rest_price) / rest_price * 100.0
-                if diff_pct > 2.0:
-                    # Material discrepancy between REST and WS ticks
-                    rest_quote["dataQuality"] = "CONFLICT"
-                    rest_quote["conflictReason"] = f"REST LTP ({rest_price}) and WS tick ({ws_price}) disagree by {round(diff_pct, 2)}%"
-                else:
-                    rest_quote["dataQuality"] = "CLEAN"
+        if rest_quote and rest_quote.get("price") is not None and float(rest_quote.get("price", 0)) > 0:
             self.success_count += 1
+            rest_quote["source"] = "Angel One SmartAPI"
+            rest_quote["provider"] = "Angel One SmartAPI"
+            if not is_open:
+                rest_quote["marketStatus"] = market_session
+                rest_quote["isLive"] = False
+                rest_quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
             return rest_quote
 
-        if rest_quote:
+        # If REST failed but we have a closed-market cached tick
+        if not is_open and ws_tick and ws_tick.get("price") is not None and float(ws_tick.get("price", 0)) > 0:
             self.success_count += 1
-            return rest_quote
+            closed_quote = dict(ws_tick)
+            closed_quote["source"] = "Angel One SmartAPI"
+            closed_quote["provider"] = "Angel One SmartAPI"
+            closed_quote["marketStatus"] = market_session
+            closed_quote["isLive"] = False
+            closed_quote["freshness"] = DataFreshness.LATEST_AVAILABLE.value
+            return closed_quote
 
-        if ws_tick:
-            self.success_count += 1
-            return ws_tick
-
+        # ── 4. Priority 4: Return None and let ProviderRouter use fallback ──
         self.error_count += 1
         self.fallback_count += 1
         logger.warning(
             f"[Angel One SmartAPI] get_quote failed: NO_DATA | provider='Angel One SmartAPI' "
             f"operation='get_quote' exchange='{exch}' symbol='{clean}' token='{token}' "
-            f"safeError='Empty REST quote response and no WebSocket tick received'"
+            f"safeError='Empty REST quote response and no fresh WebSocket tick available'"
         )
         return None
 
