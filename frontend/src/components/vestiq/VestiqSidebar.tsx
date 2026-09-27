@@ -105,7 +105,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
       {/* Top Header & Actions (StockGro Inspiration) */}
       <div className="p-3.5 space-y-3 border-b border-[var(--color-border-subtle)]">
         
-        {/* Start a New Thread Trigger */}
+        {/* Start a New Chat Trigger */}
         <button
           type="button"
           onClick={() => {
@@ -116,7 +116,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
           className="w-full h-[40px] rounded-xl bg-[var(--color-surface-3)] hover:bg-[var(--color-border-strong)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs disabled:opacity-60"
         >
           <Plus className="w-4 h-4 text-[var(--color-accent-strong)] stroke-[2.5]" />
-          <span>Start a New Thread</span>
+          <span>Start a New Chat</span>
         </button>
 
         {/* Quick Search */}
@@ -143,7 +143,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
 
         {/* Section Header */}
         <div className="flex items-center justify-between px-1 text-[10.5px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
-          <span>Recent Threads</span>
+          <span>Recent Chats</span>
           <span className="font-mono bg-[var(--color-surface-3)] px-1.5 py-0.5 rounded text-[10px] text-[var(--color-text-secondary)]">{filteredSessions.length}</span>
         </div>
       </div>
@@ -153,7 +153,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
         {filteredSessions.length === 0 ? (
           <div className="p-4 rounded-xl bg-slate-50 border border-[#E2E8F0] text-center text-xs text-[#64748B] space-y-2 mt-2">
             <MessageSquare className="w-5 h-5 text-[#94A3B8] mx-auto" />
-            <div className="font-bold text-[#0F172A]">No threads yet</div>
+            <div className="font-bold text-[#0F172A]">No chats yet</div>
             <p className="text-[11px] text-[#64748B] leading-relaxed">
               Ask anything about markets, funds, or wealth strategies.
             </p>
@@ -165,7 +165,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--color-accent-soft)] border border-[var(--color-border-accent)] text-[var(--color-text-accent)] text-xs font-bold cursor-pointer hover:brightness-105"
             >
               <Plus className="w-3 h-3" />
-              <span>+ New Thread</span>
+              <span>+ New Chat</span>
             </button>
           </div>
         ) : (
@@ -183,7 +183,7 @@ export const VestiqSidebar: React.FC<VestiqSidebarProps> = ({
                   >
                     <div className="flex items-center gap-1.5 font-bold">
                       <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                      <span>Delete thread?</span>
+                      <span>Delete chat?</span>
                     </div>
                     <div className="flex items-center justify-end gap-2 pt-1">
                       <button

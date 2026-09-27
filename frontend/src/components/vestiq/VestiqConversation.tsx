@@ -44,17 +44,17 @@ export const VestiqConversation: React.FC<VestiqConversationProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse motion-reduce:animate-none" />
           <span className="font-bold text-[var(--color-text-secondary)] uppercase tracking-wider text-[11px]">
-            Active Advisory Thread
+            Active Advisory Chat
           </span>
         </div>
 
         <button
           onClick={onClear}
           className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-1.5 font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)] rounded px-1.5 py-0.5"
-          title="Clear Conversation Thread"
+          title="Clear Conversation"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset Thread</span>
+          <span>New Chat</span>
         </button>
       </div>
 
