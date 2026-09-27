@@ -611,12 +611,11 @@ export async function hydrateCandidateQuotes(
 
     // Mutual Fund NAV must NEVER be labeled REALTIME
     if (q && c.assetClass === 'MUTUAL_FUND') {
-      if (q.freshness === 'REALTIME' || q.status === 'LIVE' || q.quoteStatus === 'LIVE') {
+      if (q.freshness === 'REALTIME' || q.status === 'LIVE') {
         q = {
           ...q,
           freshness: 'END_OF_DAY',
-          status: 'EOD_NAV',
-          quoteStatus: 'EOD_NAV'
+          status: 'FALLBACK'
         };
       }
     }
@@ -637,7 +636,7 @@ export async function hydrateCandidateQuotes(
       availableFields.push('price');
       if (c.assetClass === 'MUTUAL_FUND') {
         metrics.nav = q!.price;
-        metrics.navDate = q!.asOfDate || q!.navDate || q!.timestamp;
+        metrics.navDate = q!.navDate || q!.asOf || q!.timestamp;
         availableFields.push('nav', 'navDate');
       }
     }
@@ -703,7 +702,7 @@ export async function hydrateCandidateQuotes(
       assetClass: c.assetClass,
       metrics,
       dataSource,
-      dataTimestamp: q?.timestamp || q?.asOfDate || new Date().toISOString(),
+      dataTimestamp: q?.timestamp || q?.asOf || new Date().toISOString(),
       freshness,
       currency: c.currency,
       availableFields,
