@@ -34,7 +34,7 @@ export const ProvenanceMarketBadge: React.FC<{
   const isMF = quote?.assetType === 'MUTUAL_FUND' || quote?.instrumentType === 'MUTUAL_FUND' || (assetType === 'DEBT' && (assetCategory?.includes('Fund') || assetCategory?.includes('Liquid'))) || (assetCategory?.includes('Cap') || assetCategory?.includes('Index Mutual Fund'));
   const isBond = quote?.assetType === 'BOND' || quote?.instrumentType === 'BOND' || assetCategory === 'Corporate Debt' || (assetType === 'DEBT' && !isMF);
 
-  if (!quote || quote.price === null || quote.price === undefined || quote.quoteStatus === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') {
+  if (!quote || quote.price === null || quote.price === undefined || quote.status === 'UNAVAILABLE') {
     const unavailableLabel = isMF
       ? 'Latest NAV unavailable'
       : isBond
@@ -60,43 +60,41 @@ export const ProvenanceMarketBadge: React.FC<{
   }
 
   const isPositive = (quote.changePct ?? 0) >= 0;
-  const quoteStatus = quote.quoteStatus || (
-    isMF ? 'EOD_NAV' : (
-      isBond ? 'LAST_TRADED' : (
-        quote.isLive ? 'LIVE' : (quote.status === 'DELAYED' ? 'DELAYED' : 'LAST_TRADED')
-      )
+  // Derive display status from canonical MarketQuote fields (status, freshness, isLive)
+  const resolvedStatus = quote.status || (
+    isMF ? 'FALLBACK' : (
+      quote.isLive ? 'LIVE' : (quote.freshness === 'DELAYED' ? 'DELAYED' : 'FALLBACK')
     )
   );
 
   const renderBadge = () => {
-    switch (quoteStatus) {
-      case 'LIVE':
-        return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            LIVE
-          </span>
-        );
-      case 'DELAYED':
-        return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/30 text-[var(--color-accent-strong)]">
-            15M DELAY
-          </span>
-        );
-      case 'EOD_NAV':
-        return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-600">
-            LATEST NAV
-          </span>
-        );
-      case 'LAST_TRADED':
-      default:
-        return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600">
-            LAST TRADED
-          </span>
-        );
+    if (resolvedStatus === 'LIVE' || quote.isLive) {
+      return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          LIVE
+        </span>
+      );
     }
+    if (resolvedStatus === 'DELAYED' || quote.freshness === 'DELAYED') {
+      return (
+        <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/30 text-[var(--color-accent-strong)]">
+          15M DELAY
+        </span>
+      );
+    }
+    if (isMF) {
+      return (
+        <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-600">
+          LATEST NAV
+        </span>
+      );
+    }
+    return (
+      <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600">
+        LAST TRADED
+      </span>
+    );
   };
 
   const currencySymbol = quote.currency === 'USD' ? '$' : '₹';

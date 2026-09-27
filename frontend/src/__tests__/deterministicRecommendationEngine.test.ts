@@ -361,7 +361,7 @@ describe('Deterministic Multi-Asset Recommendation Engine', () => {
     expect(res.recommendedInstrument).not.toBeNull();
     expect(res.recommendedInstrument?.freshness).not.toBe('REALTIME');
     expect(['END_OF_DAY', 'LATEST_AVAILABLE']).toContain(res.recommendedInstrument?.freshness);
-    expect(['EOD_NAV', 'DELAYED', 'LAST_TRADED']).toContain(res.recommendedInstrument?.quoteStatus);
+    expect(['LIVE', 'DELAYED', 'FALLBACK', 'DEMO']).toContain(res.recommendedInstrument?.quoteStatus);
   });
 
   // ---------------------------------------------------------------------------

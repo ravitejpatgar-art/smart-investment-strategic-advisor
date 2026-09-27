@@ -5,6 +5,7 @@ import type {
   CandidateInstrumentRecord,
   RecommendationDebugAudit
 } from './types';
+import type { MarketDataStatus } from '../marketApi';
 import { evaluateUserSuitability } from './suitability';
 import { getCandidateUniverseForAssetClass, hydrateCandidateQuotes } from './universe';
 import { checkCandidateEligibility } from './eligibility';
@@ -216,7 +217,7 @@ export class DeterministicRecommendationEngine {
       const quote = cand.quote;
       const freshness = quote?.freshness || (cand.assetClass === 'MUTUAL_FUND' ? 'END_OF_DAY' : 'LATEST_AVAILABLE');
       const freshnessScore = getFreshnessWeight(freshness);
-      const quoteStatus = quote?.quoteStatus || (cand.assetClass === 'MUTUAL_FUND' ? 'EOD_NAV' : (cand.assetClass === 'BOND' ? 'LAST_TRADED' : 'DELAYED'));
+      const quoteStatus: MarketDataStatus = quote?.status || (cand.assetClass === 'MUTUAL_FUND' ? 'FALLBACK' : (cand.assetClass === 'BOND' ? 'FALLBACK' : 'DELAYED'));
 
       return {
         candidate: cand,
@@ -231,8 +232,8 @@ export class DeterministicRecommendationEngine {
         risks: scorerOut.risks,
         quoteStatus,
         dataSource: quote?.source || (cand.assetClass === 'MUTUAL_FUND' ? 'AMFI Published Daily NAV' : (cand.assetClass === 'BOND' ? 'NSE Corporate Bond Reporting Platform (CBRICS)' : 'NSE Market Feed')),
-        dataTimestamp: quote?.timestamp || quote?.asOfDate || new Date().toISOString(),
-        asOfDate: quote?.asOfDate || quote?.navDate || quote?.tradeDate || 'Published'
+        dataTimestamp: quote?.timestamp || new Date().toISOString(),
+        asOfDate: quote?.navDate || quote?.asOf || 'Published'
       };
     });
 

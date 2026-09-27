@@ -1,5 +1,5 @@
-import type { UserProfile, QuoteStatus } from '../../types';
-import type { MarketQuote, InstrumentResearchBundle, FreshnessType } from '../marketApi';
+import type { UserProfile } from '../../types';
+import type { MarketQuote, InstrumentResearchBundle, FreshnessType, MarketDataStatus } from '../marketApi';
 export type { FreshnessType };
 
 export type AssetClassType = 'MUTUAL_FUND' | 'ETF' | 'BOND';
@@ -171,7 +171,7 @@ export interface ScoredCandidate {
   unavailableFactors: string[];
   negativeFactors: string[];
   risks: string[];
-  quoteStatus: QuoteStatus;
+  quoteStatus: MarketDataStatus;
   dataSource: string;
   dataTimestamp: string;
   asOfDate: string;
@@ -186,7 +186,7 @@ export interface RecommendedInstrumentSummary {
   currentPrice: number | null;
   currency: string;
   freshness: FreshnessType;
-  quoteStatus: QuoteStatus;
+  quoteStatus: MarketDataStatus;
   asOfDate: string;
   dataTimestamp: string;
   dataSource: string;

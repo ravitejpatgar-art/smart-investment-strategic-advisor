@@ -89,7 +89,6 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       marketStatus: partial.marketStatus || 'CLOSED',
       freshness: partial.freshness || 'END_OF_DAY',
       source: partial.source || 'Test Feed',
-      quoteStatus: partial.quoteStatus || 'EOD_NAV',
       ...partial
     };
   }
@@ -104,7 +103,7 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       unavailableFactors: [],
       negativeFactors: [],
       risks: [],
-      quoteStatus: 'EOD_NAV',
+      quoteStatus: 'FALLBACK',
       dataSource: 'AMFI Registry',
       dataTimestamp: new Date().toISOString(),
       asOfDate: '2025-05-15',
@@ -122,10 +121,10 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       currency: 'INR',
       assetType: 'MUTUAL_FUND',
       timestamp: '2025-05-15T18:30:00Z',
-      asOfDate: '2025-05-15',
+      asOf: '2025-05-15',
+      navDate: '2025-05-15',
       freshness: 'END_OF_DAY',
-      source: 'AMFI Daily NAV Registry',
-      quoteStatus: 'EOD_NAV'
+      source: 'AMFI Daily NAV Registry'
     }),
     '120717': createMockQuote({
       symbol: '120717',
@@ -136,10 +135,10 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       currency: 'INR',
       assetType: 'MUTUAL_FUND',
       timestamp: '2025-05-15T18:30:00Z',
-      asOfDate: '2025-05-15',
+      asOf: '2025-05-15',
+      navDate: '2025-05-15',
       freshness: 'END_OF_DAY',
-      source: 'AMFI Daily NAV Registry',
-      quoteStatus: 'EOD_NAV'
+      source: 'AMFI Daily NAV Registry'
     }),
     '122639': createMockQuote({
       symbol: '122639',
@@ -150,10 +149,10 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       currency: 'INR',
       assetType: 'MUTUAL_FUND',
       timestamp: '2025-05-15T18:30:00Z',
-      asOfDate: '2025-05-15',
+      asOf: '2025-05-15',
+      navDate: '2025-05-15',
       freshness: 'END_OF_DAY',
-      source: 'AMFI Daily NAV Registry',
-      quoteStatus: 'EOD_NAV'
+      source: 'AMFI Daily NAV Registry'
     }),
     'NIFTYBEES': createMockQuote({
       symbol: 'NIFTYBEES',
@@ -165,8 +164,7 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       assetType: 'ETF',
       timestamp: '2025-05-16T09:45:00Z',
       freshness: 'DELAYED',
-      source: 'NSE Real-Time Market Feed',
-      quoteStatus: 'DELAYED'
+      source: 'NSE Real-Time Market Feed'
     }),
     'JUNIORBEES': createMockQuote({
       symbol: 'JUNIORBEES',
@@ -178,8 +176,7 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
       assetType: 'ETF',
       timestamp: '2025-05-16T09:45:00Z',
       freshness: 'DELAYED',
-      source: 'NSE Real-Time Market Feed',
-      quoteStatus: 'DELAYED'
+      source: 'NSE Real-Time Market Feed'
     })
   };
 
@@ -279,7 +276,7 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
         timestamp: '2025-05-15T18:30:00Z',
         freshness: 'REALTIME', // Upstream incorrectly labeled it REALTIME
         source: 'AMFI NAV Feed',
-        quoteStatus: 'LIVE'
+        status: 'LIVE'
       })
     });
 
@@ -301,8 +298,7 @@ describe('Real-Data Recommendation Engine Integration Tests', () => {
         assetType: 'ETF',
         timestamp: '2025-05-16T09:45:00Z',
         freshness: 'DELAYED',
-        source: 'NSE 15-Minute Delayed Feed',
-        quoteStatus: 'DELAYED'
+        source: 'NSE 15-Minute Delayed Feed'
       })
     });
 
