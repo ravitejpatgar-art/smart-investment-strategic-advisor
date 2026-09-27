@@ -7,9 +7,11 @@ import {
   Edit3, 
   TrendingUp, 
   X, 
-  Receipt
+  Receipt,
+  FileText
 } from 'lucide-react';
 import type { ExpenseItem } from '../../types';
+import { generateExpensePdfReport } from '../../services/pdfReportGenerator';
 
 export const ExpenseTrackerView: React.FC = () => {
   const { 
@@ -18,11 +20,15 @@ export const ExpenseTrackerView: React.FC = () => {
     addExpense, 
     editExpense, 
     deleteExpense, 
-    formatCurrency 
+    formatCurrency,
+    currency,
+    currencySymbol
   } = useFintechStore();
 
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   // Form states
   const [category, setCategory] = useState<ExpenseItem['category']>('Food');
@@ -111,6 +117,41 @@ export const ExpenseTrackerView: React.FC = () => {
     setShowModal(false);
   };
 
+  const handleExportPdf = () => {
+    try {
+      setPdfError(null);
+      setIsExportingPdf(true);
+      const success = generateExpensePdfReport({
+        user,
+        currency,
+        currencySymbol: currencySymbol || (currency === 'USD' ? '$' : '₹'),
+        formatCurrency,
+        totalIncome,
+        totalExpenses,
+        netSavings,
+        savingsRate,
+        burnRate,
+        needsTotal,
+        wantsTotal,
+        fixedTotal,
+        categoryMeta,
+        categoryTotals,
+        expenses,
+        compoundingOpportunity: wantsTotal > 0 ? {
+          potentialMonthlySaved,
+          futureCorpus20Yr
+        } : undefined
+      });
+      if (!success) {
+        setPdfError('Unable to generate the PDF. Please try again.');
+      }
+    } catch {
+      setPdfError('Unable to generate the PDF. Please try again.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-12 font-sans">
       
@@ -127,14 +168,40 @@ export const ExpenseTrackerView: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={handleOpenAddModal}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[var(--color-accent)] hover:brightness-105 text-[var(--color-accent-text)] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Expense</span>
-          </button>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <button
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              title="Export PDF Report"
+              aria-label="Export PDF"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <FileText className="w-4 h-4 text-emerald-600" />
+              <span>{isExportingPdf ? 'Exporting PDF...' : 'Export PDF'}</span>
+            </button>
+
+            <button
+              onClick={handleOpenAddModal}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[var(--color-accent)] hover:brightness-105 text-[var(--color-accent-text)] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Add Expense</span>
+            </button>
+          </div>
         </div>
+
+        {pdfError && (
+          <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs flex items-center justify-between">
+            <span>{pdfError}</span>
+            <button
+              onClick={() => setPdfError(null)}
+              className="p-1 hover:bg-red-500/10 rounded-md cursor-pointer"
+              aria-label="Dismiss error"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* 4 Financial Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
