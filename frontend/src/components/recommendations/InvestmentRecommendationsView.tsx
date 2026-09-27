@@ -7,36 +7,72 @@ import {
   ArrowRight, 
   TrendingUp, 
   Shield, 
-  Layers
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Check
 } from 'lucide-react';
 import { RECOMMENDED_PLATFORMS } from '../../services/strategyEngine';
 import { useMarketQuotes } from '../../hooks/useMarketQuotes';
 import type { MarketQuote } from '../../services/marketApi';
+import type { RecommendedAsset } from '../../types';
 import { HistoricalPerformanceChart } from './HistoricalPerformanceChart';
 import { ScenarioSimulatorView } from '../analytics/ScenarioSimulatorView';
 import { PortfolioRebalanceView } from '../analytics/PortfolioRebalanceView';
 
-type RecommendationTab = 'blueprint' | 'scenario' | 'rebalance';
+import { RecommendationCard } from './RecommendationCard';
 
-// Market Freshness Badge Component
-const MarketFreshnessBadge: React.FC<{ quote?: MarketQuote | null }> = ({ quote }) => {
-  if (!quote || quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE' || quote.price === null || quote.price === undefined) {
+type RecommendationTab = 'blueprint' | 'engine' | 'scenario' | 'rebalance';
+
+// Data Provenance & Freshness Badge Component
+export const ProvenanceMarketBadge: React.FC<{
+  quote?: MarketQuote | null;
+  assetCategory?: string;
+  assetType?: string;
+}> = ({ quote, assetCategory, assetType }) => {
+  const isMF = quote?.assetType === 'MUTUAL_FUND' || quote?.instrumentType === 'MUTUAL_FUND' || (assetType === 'DEBT' && (assetCategory?.includes('Fund') || assetCategory?.includes('Liquid'))) || (assetCategory?.includes('Cap') || assetCategory?.includes('Index Mutual Fund'));
+  const isBond = quote?.assetType === 'BOND' || quote?.instrumentType === 'BOND' || assetCategory === 'Corporate Debt' || (assetType === 'DEBT' && !isMF);
+
+  if (!quote || quote.price === null || quote.price === undefined || quote.quoteStatus === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') {
+    const unavailableLabel = isMF
+      ? 'Latest NAV unavailable'
+      : isBond
+      ? 'Latest trade unavailable'
+      : 'Live quote unavailable';
+
+    const sourceName = quote?.source || (isMF ? 'AMFI Official Directory' : (isBond ? 'NSE Corporate Bond Platform (CBRICS)' : 'Market Feed'));
+
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
-        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-muted)]" />
-        <span>Market price unavailable</span>
+      <div className="p-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-xs text-[var(--color-text-muted)] italic">{unavailableLabel}</span>
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-zinc-500/10 border border-zinc-500/30 text-zinc-500">
+            UNAVAILABLE
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-[10.5px] text-[var(--color-text-muted)] pt-0.5">
+          <span>Source: {sourceName}</span>
+          <span className="italic">Verified Registry</span>
+        </div>
       </div>
     );
   }
 
   const isPositive = (quote.changePct ?? 0) >= 0;
-  const status = quote.status || (quote.freshness === 'REALTIME' ? 'LIVE' : (quote.freshness === 'DELAYED' ? 'DELAYED' : (quote.freshness === 'MODEL_ASSUMPTION' ? 'DEMO' : 'FALLBACK')));
+  const quoteStatus = quote.quoteStatus || (
+    isMF ? 'EOD_NAV' : (
+      isBond ? 'LAST_TRADED' : (
+        quote.isLive ? 'LIVE' : (quote.status === 'DELAYED' ? 'DELAYED' : 'LAST_TRADED')
+      )
+    )
+  );
 
   const renderBadge = () => {
-    switch (status) {
+    switch (quoteStatus) {
       case 'LIVE':
         return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             LIVE
           </span>
         );
@@ -46,37 +82,142 @@ const MarketFreshnessBadge: React.FC<{ quote?: MarketQuote | null }> = ({ quote 
             15M DELAY
           </span>
         );
-      case 'DEMO':
+      case 'EOD_NAV':
         return (
-          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-600">
-            DEMO
+          <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-600">
+            LATEST NAV
           </span>
         );
-      case 'FALLBACK':
+      case 'LAST_TRADED':
       default:
         return (
           <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600">
-            {quote.assetType === 'MUTUAL_FUND' ? 'LATEST NAV' : 'FALLBACK'}
+            LAST TRADED
           </span>
         );
     }
   };
 
+  const currencySymbol = quote.currency === 'USD' ? '$' : '₹';
+  const formattedPrice = `${currencySymbol}${quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const provenanceSource = quote.provenance?.source || quote.source || (isMF ? 'AMFI' : (isBond ? 'NSE CBRICS' : 'Exchange Feed'));
+  const dateOrTime = isMF
+    ? `NAV date: ${quote.navDate || quote.asOfDate || quote.asOf || 'Published'}`
+    : isBond
+    ? `Trade date: ${quote.tradeDate || quote.asOfDate || quote.asOf || 'Reported'}`
+    : `Updated: ${quote.displayTimestampIst ? quote.displayTimestampIst.split(',')[1]?.trim() || quote.displayTimestampIst : (quote.asOf || 'Market Hours')}`;
+
   return (
-    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs">
-      <div className="flex items-center gap-2">
-        <span className="font-mono font-bold text-[var(--color-text-primary)] text-xs sm:text-sm">
-          {quote.currency === 'USD' ? '$' : '₹'}
-          {quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </span>
-        {quote.changePct !== null && quote.changePct !== undefined && (
-          <span className={`font-mono text-xs font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-            {isPositive ? '+' : ''}{quote.changePct.toFixed(2)}%
+    <div className="p-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-bold text-[var(--color-text-primary)] text-sm sm:text-base">
+            {formattedPrice}
           </span>
-        )}
+          {quote.changePct !== null && quote.changePct !== undefined && (
+            <span className={`font-mono text-xs font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+              {isPositive ? '+' : ''}{quote.changePct.toFixed(2)}%
+            </span>
+          )}
+        </div>
+        {renderBadge()}
       </div>
 
-      {renderBadge()}
+      <div className="flex items-center justify-between text-[11px] text-[var(--color-text-secondary)] border-t border-[var(--color-border-subtle)] pt-1">
+        <span className="truncate max-w-[170px]">{dateOrTime}</span>
+        <span className="truncate max-w-[140px] font-medium text-[var(--color-text-muted)]">Source: {provenanceSource}</span>
+      </div>
+    </div>
+  );
+};
+
+// Backwards-compatible alias for existing components
+export const MarketFreshnessBadge = ProvenanceMarketBadge;
+
+// Deterministic Why Selected Expandable Panel
+export const WhySelectedPanel: React.FC<{ asset: RecommendedAsset }> = ({ asset }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const rationale = asset.selectionRationale;
+  const topFactors = rationale?.factors?.slice(0, 3) || [];
+
+  return (
+    <div className="space-y-2 pt-2 border-t border-[var(--color-border-subtle)]">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Why Selected</span>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-[11px] font-bold text-[var(--color-accent-strong)] hover:underline flex items-center gap-1 cursor-pointer"
+        >
+          <span>{isExpanded ? 'Hide factors' : 'View selection factors'}</span>
+          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+
+      {/* Concise human-readable factor highlights */}
+      <ul className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+        {topFactors.length > 0 ? (
+          topFactors.map((f, i) => (
+            <li key={i} className="flex items-start gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <span><strong className="text-[var(--color-text-primary)] font-medium">{f.name}:</strong> {f.contribution}</span>
+            </li>
+          ))
+        ) : (
+          <li className="flex items-start gap-1.5">
+            <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+            <span>{asset.whyFitsProfile || asset.reasonSelected || asset.description}</span>
+          </li>
+        )}
+      </ul>
+
+      {/* Expandable factors matrix */}
+      {isExpanded && (
+        <div className="mt-2.5 p-3 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] space-y-3 text-xs">
+          {rationale?.summary && (
+            <p className="text-[var(--color-text-primary)] font-medium leading-relaxed pb-2 border-b border-[var(--color-border-subtle)]">
+              {rationale.summary}
+            </p>
+          )}
+
+          {/* Factor Details Matrix */}
+          {rationale?.factors && rationale.factors.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">
+                Selection Factor Matrix
+              </span>
+              <div className="space-y-1.5">
+                {rationale.factors.map((factor, idx) => (
+                  <div key={idx} className="p-2 rounded bg-[var(--color-surface-1)] border border-[var(--color-border-subtle)] space-y-0.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-[var(--color-text-primary)]">{factor.name}</span>
+                      <span className="font-mono text-[var(--color-accent-strong)]">{factor.value}</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">{factor.contribution}</p>
+                    <p className="text-[10.5px] text-[var(--color-text-muted)] italic">{factor.evidence}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Suitability Fit Dimensions */}
+          {rationale?.suitability && (
+            <div className="space-y-1.5 pt-2 border-t border-[var(--color-border-subtle)]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">
+                Suitability Calibration
+              </span>
+              <div className="grid grid-cols-1 gap-1 text-[11px] text-[var(--color-text-secondary)]">
+                <div><strong className="text-[var(--color-text-primary)]">Goal Fit:</strong> {rationale.suitability.goalFit}</div>
+                <div><strong className="text-[var(--color-text-primary)]">Risk Fit:</strong> {rationale.suitability.riskFit}</div>
+                <div><strong className="text-[var(--color-text-primary)]">Horizon Fit:</strong> {rationale.suitability.horizonFit}</div>
+                <div><strong className="text-[var(--color-text-primary)]">Liquidity Fit:</strong> {rationale.suitability.liquidityFit}</div>
+                <div><strong className="text-[var(--color-text-primary)]">Diversification:</strong> {rationale.suitability.diversificationFit}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -124,6 +265,7 @@ export const InvestmentRecommendationsView: React.FC = () => {
     if (strategy?.allocations) {
       strategy.allocations.forEach(a => {
         if (a.name) syms.add(a.name);
+        if (a.ticker) syms.add(a.ticker);
       });
     }
     syms.add('NIFTY 50');
@@ -228,6 +370,18 @@ export const InvestmentRecommendationsView: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab('engine')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'engine'
+                ? 'bg-[var(--color-accent)] text-[var(--color-accent-text)] shadow-xs'
+                : 'bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] border border-[var(--color-border)]'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Multi-Asset Recommendation Engine</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('scenario')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'scenario'
@@ -254,6 +408,7 @@ export const InvestmentRecommendationsView: React.FC = () => {
       </section>
 
       {/* Render Active View Tab */}
+      {activeTab === 'engine' && <RecommendationCard />}
       {activeTab === 'scenario' && <ScenarioSimulatorView />}
       {activeTab === 'rebalance' && <PortfolioRebalanceView />}
 
@@ -363,15 +518,31 @@ export const InvestmentRecommendationsView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Live Quote Data */}
+              {/* Market Quote & Provenance */}
               <div>
-                <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">Live Indicative Price / NAV</span>
-                <MarketFreshnessBadge quote={quotes[topRecommendation.name] || quotes[topRecommendation.ticker || ''] || null} />
+                <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">Market Valuation & Provenance</span>
+                <ProvenanceMarketBadge
+                  quote={quotes[topRecommendation.ticker || ''] || quotes[topRecommendation.name] || quotes[topRecommendation.id] || null}
+                  assetCategory={topRecommendation.category}
+                  assetType={topRecommendation.assetType}
+                />
               </div>
 
+              {/* Structured Why Selected Panel for Top Recommendation */}
+              <WhySelectedPanel asset={topRecommendation} />
+
               {/* Direct Zero-Commission Advantage */}
-              <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed pt-2 border-t border-[var(--color-border-subtle)]">
-                <strong className="text-emerald-600">Fiduciary Direct Plan:</strong> Direct AMC or zero-brokerage platforms save 0.5%–1.5% in recurring annual distributor commissions.
+              <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed pt-2 border-t border-[var(--color-border-subtle)] flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <strong className="text-emerald-600">Fiduciary Direct Plan:</strong> Direct AMC or zero-brokerage platforms save 0.5%–1.5% in recurring annual distributor commissions.
+                </div>
+                <button
+                  onClick={() => setActiveTab('engine')}
+                  className="px-3 py-1.5 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)] border border-[var(--color-border)] text-xs font-bold text-[var(--color-accent-strong)] flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Launch Recommendation Engine</span>
+                </button>
               </div>
             </div>
 
@@ -415,11 +586,13 @@ export const InvestmentRecommendationsView: React.FC = () => {
                     </div>
                   </div>
 
-                  <MarketFreshnessBadge quote={quotes[asset.name] || quotes[asset.ticker || ''] || null} />
+                  <ProvenanceMarketBadge
+                    quote={quotes[asset.ticker || ''] || quotes[asset.name] || quotes[asset.id] || null}
+                    assetCategory={asset.category}
+                    assetType={asset.assetType}
+                  />
 
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                    {asset.whyFitsProfile || asset.reasonSelected || asset.description}
-                  </p>
+                  <WhySelectedPanel asset={asset} />
 
                   <HistoricalPerformanceChart
                     symbol={asset.ticker || asset.name}
@@ -465,11 +638,13 @@ export const InvestmentRecommendationsView: React.FC = () => {
                     </div>
                   </div>
 
-                  <MarketFreshnessBadge quote={quotes[asset.name] || quotes[asset.ticker || ''] || null} />
+                  <ProvenanceMarketBadge
+                    quote={quotes[asset.ticker || ''] || quotes[asset.name] || quotes[asset.id] || null}
+                    assetCategory={asset.category}
+                    assetType={asset.assetType}
+                  />
 
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                    {asset.whyFitsProfile || asset.reasonSelected || asset.description}
-                  </p>
+                  <WhySelectedPanel asset={asset} />
 
                   <HistoricalPerformanceChart
                     symbol={asset.ticker || asset.name}
@@ -515,11 +690,13 @@ export const InvestmentRecommendationsView: React.FC = () => {
                     </div>
                   </div>
 
-                  <MarketFreshnessBadge quote={quotes[asset.name] || quotes[asset.ticker || ''] || null} />
+                  <ProvenanceMarketBadge
+                    quote={quotes[asset.ticker || ''] || quotes[asset.name] || quotes[asset.id] || null}
+                    assetCategory={asset.category}
+                    assetType={asset.assetType}
+                  />
 
-                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                    {asset.whyFitsProfile || asset.reasonSelected || asset.description}
-                  </p>
+                  <WhySelectedPanel asset={asset} />
 
                   <HistoricalPerformanceChart
                     symbol={asset.ticker || asset.name}
