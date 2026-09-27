@@ -21,6 +21,7 @@ import { ScenarioSimulatorView } from '../analytics/ScenarioSimulatorView';
 import { PortfolioRebalanceView } from '../analytics/PortfolioRebalanceView';
 
 import { RecommendationCard } from './RecommendationCard';
+import type { WhyChosenFactor } from '../../services/recommendation/types';
 
 type RecommendationTab = 'blueprint' | 'engine' | 'scenario' | 'rebalance';
 
@@ -101,11 +102,11 @@ export const ProvenanceMarketBadge: React.FC<{
   const currencySymbol = quote.currency === 'USD' ? '$' : '₹';
   const formattedPrice = `${currencySymbol}${quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const provenanceSource = quote.provenance?.source || quote.source || (isMF ? 'AMFI' : (isBond ? 'NSE CBRICS' : 'Exchange Feed'));
+  const provenanceSource = quote.source || (isMF ? 'AMFI' : (isBond ? 'NSE CBRICS' : 'Exchange Feed'));
   const dateOrTime = isMF
-    ? `NAV date: ${quote.navDate || quote.asOfDate || quote.asOf || 'Published'}`
+    ? `NAV date: ${quote.navDate || quote.asOf || 'Published'}`
     : isBond
-    ? `Trade date: ${quote.tradeDate || quote.asOfDate || quote.asOf || 'Reported'}`
+    ? `Trade date: ${quote.asOf || quote.timestamp || 'Reported'}`
     : `Updated: ${quote.displayTimestampIst ? quote.displayTimestampIst.split(',')[1]?.trim() || quote.displayTimestampIst : (quote.asOf || 'Market Hours')}`;
 
   return (
@@ -136,10 +137,12 @@ export const ProvenanceMarketBadge: React.FC<{
 export const MarketFreshnessBadge = ProvenanceMarketBadge;
 
 // Deterministic Why Selected Expandable Panel
-export const WhySelectedPanel: React.FC<{ asset: RecommendedAsset }> = ({ asset }) => {
+export const WhySelectedPanel: React.FC<{
+  asset: RecommendedAsset;
+  factors?: WhyChosenFactor[];
+}> = ({ asset, factors = [] }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const rationale = asset.selectionRationale;
-  const topFactors = rationale?.factors?.slice(0, 3) || [];
+  const topFactors: WhyChosenFactor[] = factors.slice(0, 3);
 
   return (
     <div className="space-y-2 pt-2 border-t border-[var(--color-border-subtle)]">
@@ -157,10 +160,12 @@ export const WhySelectedPanel: React.FC<{ asset: RecommendedAsset }> = ({ asset 
       {/* Concise human-readable factor highlights */}
       <ul className="space-y-1 text-xs text-[var(--color-text-secondary)]">
         {topFactors.length > 0 ? (
-          topFactors.map((f, i) => (
+          topFactors.map((f: WhyChosenFactor, i: number) => (
             <li key={i} className="flex items-start gap-1.5">
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span><strong className="text-[var(--color-text-primary)] font-medium">{f.name}:</strong> {f.contribution}</span>
+              <span>
+                <strong className="text-[var(--color-text-primary)] font-medium">{f.factor}:</strong> {f.evidence}
+              </span>
             </li>
           ))
         ) : (
@@ -174,48 +179,46 @@ export const WhySelectedPanel: React.FC<{ asset: RecommendedAsset }> = ({ asset 
       {/* Expandable factors matrix */}
       {isExpanded && (
         <div className="mt-2.5 p-3 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] space-y-3 text-xs">
-          {rationale?.summary && (
-            <p className="text-[var(--color-text-primary)] font-medium leading-relaxed pb-2 border-b border-[var(--color-border-subtle)]">
-              {rationale.summary}
-            </p>
-          )}
+          <p className="text-[var(--color-text-primary)] font-medium leading-relaxed pb-2 border-b border-[var(--color-border-subtle)]">
+            {asset.whyFitsProfile || asset.reasonSelected || asset.description}
+          </p>
 
           {/* Factor Details Matrix */}
-          {rationale?.factors && rationale.factors.length > 0 && (
+          {factors.length > 0 && (
             <div className="space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">
                 Selection Factor Matrix
               </span>
               <div className="space-y-1.5">
-                {rationale.factors.map((factor, idx) => (
+                {factors.map((factor: WhyChosenFactor, idx: number) => (
                   <div key={idx} className="p-2 rounded bg-[var(--color-surface-1)] border border-[var(--color-border-subtle)] space-y-0.5">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-[var(--color-text-primary)]">{factor.name}</span>
-                      <span className="font-mono text-[var(--color-accent-strong)]">{factor.value}</span>
+                      <span className="font-bold text-[var(--color-text-primary)]">{factor.factor}</span>
+                      <span className="font-mono text-emerald-600 font-semibold">+{factor.contribution.toFixed(1)} pts</span>
                     </div>
-                    <p className="text-[11px] text-[var(--color-text-secondary)]">{factor.contribution}</p>
-                    <p className="text-[10.5px] text-[var(--color-text-muted)] italic">{factor.evidence}</p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">{factor.evidence}</p>
+                    {factor.dataSource && (
+                      <p className="text-[10.5px] text-[var(--color-text-muted)] italic">Source: {factor.dataSource}</p>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Suitability Fit Dimensions */}
-          {rationale?.suitability && (
-            <div className="space-y-1.5 pt-2 border-t border-[var(--color-border-subtle)]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">
-                Suitability Calibration
-              </span>
-              <div className="grid grid-cols-1 gap-1 text-[11px] text-[var(--color-text-secondary)]">
-                <div><strong className="text-[var(--color-text-primary)]">Goal Fit:</strong> {rationale.suitability.goalFit}</div>
-                <div><strong className="text-[var(--color-text-primary)]">Risk Fit:</strong> {rationale.suitability.riskFit}</div>
-                <div><strong className="text-[var(--color-text-primary)]">Horizon Fit:</strong> {rationale.suitability.horizonFit}</div>
-                <div><strong className="text-[var(--color-text-primary)]">Liquidity Fit:</strong> {rationale.suitability.liquidityFit}</div>
-                <div><strong className="text-[var(--color-text-primary)]">Diversification:</strong> {rationale.suitability.diversificationFit}</div>
-              </div>
+          {/* Strategic role & characteristics */}
+          <div className="space-y-1.5 pt-2 border-t border-[var(--color-border-subtle)]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">
+              Portfolio Characteristics
+            </span>
+            <div className="grid grid-cols-1 gap-1 text-[11px] text-[var(--color-text-secondary)]">
+              <div><strong className="text-[var(--color-text-primary)]">Strategic Role:</strong> {asset.portfolioRole || 'Core Portfolio Allocation'}</div>
+              <div><strong className="text-[var(--color-text-primary)]">Risk Level:</strong> {asset.riskLevel}</div>
+              <div><strong className="text-[var(--color-text-primary)]">Category:</strong> {asset.category}</div>
+              {asset.benchmark && <div><strong className="text-[var(--color-text-primary)]">Benchmark:</strong> {asset.benchmark}</div>}
+              {asset.expenseRatio && <div><strong className="text-[var(--color-text-primary)]">Expense Ratio:</strong> {asset.expenseRatio}</div>}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
