@@ -90,7 +90,7 @@ describe('SmartVest Academy — Investing for Beginners', () => {
   it('6. provides valid AI educational video and thumbnail assets for lessons', () => {
     INVESTMENT_LESSONS.forEach((lesson) => {
       expect(lesson.videoUrl).toBeDefined();
-      expect(lesson.videoUrl).toMatch(/^(https:\/\/[a-zA-Z0-9_-]+\.public\.blob\.vercel-storage\.com\/academy\/|https:\/\/media\.githubusercontent\.com\/media\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/main\/frontend\/public\/academy\/|\/academy\/)[a-z0-9-]+\.mp4$/);
+      expect(lesson.videoUrl).toMatch(/^(https:\/\/[a-zA-Z0-9_-]+\.public\.blob\.vercel-storage\.com\/academy\/|https:\/\/media\.githubusercontent\.com\/media\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/main\/frontend\/public\/academy\/|https:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/releases\/download\/[a-zA-Z0-9_.-]+\/|\/academy\/)[a-z0-9-]+\.mp4$/);
       expect(lesson.thumbnailUrl).toBeDefined();
       expect(lesson.thumbnailUrl).toMatch(/^\/academy\/[a-z0-9-]+\.webp$/);
       expect(lesson.aiVideoPrompt).toBeDefined();

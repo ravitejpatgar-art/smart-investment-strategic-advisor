@@ -28,8 +28,8 @@ describe('SmartVest Academy — Vercel Blob Production Video Validation', () => 
   });
 
   it('verifies every English lesson has a non-empty videoUrl and uploaded lessons use Vercel Blob or GitHub LFS media storage', () => {
-    // Vercel Blob or GitHub LFS media URLs:
-    const remoteVideoRegex = /^(https:\/\/[a-zA-Z0-9_-]+\.public\.blob\.vercel-storage\.com\/.*\.mp4|https:\/\/media\.githubusercontent\.com\/media\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/main\/frontend\/public\/academy\/.*\.mp4)$/i;
+    // Vercel Blob, GitHub LFS, or GitHub Releases media URLs:
+    const remoteVideoRegex = /^(https:\/\/[a-zA-Z0-9_-]+\.public\.blob\.vercel-storage\.com\/.*\.mp4|https:\/\/media\.githubusercontent\.com\/media\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/main\/frontend\/public\/academy\/.*\.mp4|https:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/releases\/download\/.*\.mp4)$/i;
 
     // Verify key deployed lessons (investment, stock, shares, etf, mutual-fund, long-term)
     const deployedIds = [
