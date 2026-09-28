@@ -8,12 +8,14 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "upload:videos": "node scripts/upload-academy-videos.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "@sentry/react": "^10.73.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@vercel/blob": "^2.8.0",
     "axios": "^1.19.0",
     "clsx": "^2.1.1",
     "firebase": "^12.18.0",

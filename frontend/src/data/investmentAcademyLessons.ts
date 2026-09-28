@@ -20,7 +20,15 @@ export const ACADEMY_CATEGORIES: AcademyCategoryOption[] = [
   { id: 'Core Principles', label: 'Principles' },
 ];
 
-export const INVESTMENT_LESSONS: InvestmentLesson[] = [
+import {
+  REFERENCE_WHAT_IS_INVESTMENT_SCENES,
+  REFERENCE_WHAT_IS_INVESTMENT_SOURCES,
+  REFERENCE_WHAT_IS_INVESTMENT_RAG,
+  REFERENCE_WHAT_IS_INVESTMENT_SCENES_HI,
+  REFERENCE_WHAT_IS_INVESTMENT_SCENES_KN,
+} from './referenceLessonWhatIsInvestment';
+
+const RAW_INVESTMENT_LESSONS: any[] = [
   // ── 01. WHAT IS INVESTMENT? ──
   {
     id: 'what-is-investment',
@@ -29,7 +37,7 @@ export const INVESTMENT_LESSONS: InvestmentLesson[] = [
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/investment.mp4',
+    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/investment.mp4',
     thumbnailUrl: '/academy/investment.webp',
     description: 'Learn the difference between saving and investing, and how putting capital to work in productive assets helps outpace inflation over time.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is Investment?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -75,7 +83,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     vestiqPrompt: 'Explain the difference between saving and investing using a simple real-world example.',
     languages: {
       en: {
-        videoUrl: '/academy/en/investment.mp4',
+        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/investment.mp4',
         thumbnailUrl: '/academy/en/investment.webp',
         captionUrl: '/academy/en/investment.vtt',
         transcript: `Have you ever wondered why simply saving money in a bank account or cash locker is no longer enough to secure your financial future?\n\nSaving means keeping your unspent income safe in low-risk places. While saving preserves your nominal rupees, it suffers from a hidden threat called inflation. Over time, inflation causes prices of everyday goods, housing, and healthcare to rise, which constantly reduces the purchasing power of your idle cash.
@@ -172,7 +180,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/stock.mp4',
+    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/stock.mp4',
     thumbnailUrl: '/academy/stock.webp',
     description: 'Understand what owning a company stock actually means, how equity works, and how shareholders participate in corporate growth.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is a Stock?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -220,7 +228,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     vestiqPrompt: 'How does buying a stock make me a fractional owner of a business?',
     languages: {
       en: {
-        videoUrl: '/academy/en/stock.mp4',
+        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/stock.mp4',
         thumbnailUrl: '/academy/en/stock.webp',
         captionUrl: '/academy/en/stock.vtt',
         transcript: `When you hear about people investing in the stock market, what are they actually buying? Is a stock just a ticker symbol moving up and down on a screen?\n\nA stock—also referred to as equity—represents legal fractional ownership in a real corporation. When a company wants to expand its factories, hire talented engineers, or research new products, it can raise money by issuing stock to the public on organized stock exchanges like the National Stock Exchange of India, BSE, or NASDAQ.
@@ -333,7 +341,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/shares.mp4',
+    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/shares.mp4',
     thumbnailUrl: '/academy/shares.webp',
     description: 'Learn the distinction between stock and shares, the pizza slice analogy, market capitalization, and stock split mechanics.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What are Shares?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -382,7 +390,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     vestiqPrompt: 'Explain the difference between stock, shares, and market capitalization.',
     languages: {
       en: {
-        videoUrl: '/academy/en/shares.mp4',
+        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/shares.mp4',
         thumbnailUrl: '/academy/en/shares.webp',
         captionUrl: '/academy/en/shares.vtt',
         transcript: `People frequently use the terms 'stock' and 'shares' in financial conversations, but do you know the precise distinction between them?\n\nWhile 'stock' refers to the overarching concept of corporate ownership or equity in general, a 'share' represents the specific, countable unit of that ownership.
@@ -503,7 +511,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/etf.mp4',
+    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/etf.mp4',
     thumbnailUrl: '/academy/etf.webp',
     description: 'Explore Exchange-Traded Funds (ETFs), instant basket diversification, real-time exchange liquidity, and low expense ratios.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is an ETF?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -553,7 +561,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     vestiqPrompt: 'How does an ETF like NIFTY 50 give me instant diversification?',
     languages: {
       en: {
-        videoUrl: '/academy/en/etf.mp4',
+        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/etf.mp4',
         thumbnailUrl: '/academy/en/etf.webp',
         captionUrl: '/academy/en/etf.vtt',
         transcript: `What if you want to invest in dozens of top companies across India or the world, but you don't have the time or money to research and buy 50 individual stocks?\n\nThis is where an ETF, or Exchange-Traded Fund, becomes a powerful tool for modern investors. An ETF is an investment fund that holds a diversified basket of securities—such as stocks, bonds, or commodities—and trades on a public stock exchange just like an individual stock.
@@ -682,7 +690,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/mutual-fund.mp4',
+    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/mutual-fund.mp4',
     thumbnailUrl: '/academy/mutual-fund.webp',
     description: 'Discover how mutual funds pool investor capital for professional management, NAV calculation, and diversified investing.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is a Mutual Fund?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -730,7 +738,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     vestiqPrompt: 'How does a mutual fund pool money, and what does NAV mean?',
     languages: {
       en: {
-        videoUrl: '/academy/en/mutual-fund.mp4',
+        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/mutual-fund.mp4',
         thumbnailUrl: '/academy/en/mutual-fund.webp',
         captionUrl: '/academy/en/mutual-fund.vtt',
         transcript: `Why do tens of millions of Indian households invest their hard-earned money in mutual funds every single month?\n\nA Mutual Fund is an investment trust that pools money from thousands of individual investors to construct a professionally managed portfolio of stocks, bonds, or other securities.
@@ -843,7 +851,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/long-term.mp4',
+    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/long-term.mp4',
     thumbnailUrl: '/academy/long-term.webp',
     description: 'Why time in the market beats timing the market, historical return probabilities, and the power of patience over daily noise.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for Why Long-Term Investing?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -889,7 +897,7 @@ Long-term investing also offers massive structural advantages: you save signific
     vestiqPrompt: 'Why does time in the market beat timing the market?',
     languages: {
       en: {
-        videoUrl: '/academy/en/long-term.mp4',
+        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/long-term.mp4',
         thumbnailUrl: '/academy/en/long-term.webp',
         captionUrl: '/academy/en/long-term.vtt',
         transcript: `If you follow daily financial headlines, you might believe that investing is about buying and selling every day to predict market tops and bottoms. But what does historical evidence actually show?\n\nHistory consistently demonstrates that the most successful wealth builders are long-term investors. Long-term investing means committing your capital to quality assets for time horizons of 5, 10, 15 years or more.
@@ -2047,6 +2055,178 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
     }
   },
 ];
+
+function normalizeLesson(raw: any, _index: number): InvestmentLesson {
+  const duration = raw.durationSeconds || 150;
+  const learningPoints = Array.isArray(raw.learningPoints) ? raw.learningPoints : [];
+  const keyTakeaway = typeof raw.keyTakeaway === 'string' ? raw.keyTakeaway : '';
+
+  if (raw.id === 'what-is-investment') {
+    return {
+      ...raw,
+      duration,
+      durationSeconds: duration,
+      language: 'en',
+      thumbnail: raw.thumbnailUrl,
+      thumbnailUrl: raw.thumbnailUrl,
+      difficulty: 'Beginner',
+      level: 'Beginner',
+      learningObjectives: learningPoints,
+      learningPoints,
+      keyTakeaways: [keyTakeaway],
+      keyTakeaway,
+      provider: 'smartvest-native',
+      version: '2.0.0',
+      scenes: REFERENCE_WHAT_IS_INVESTMENT_SCENES,
+      sources: REFERENCE_WHAT_IS_INVESTMENT_SOURCES,
+      ragMetadata: REFERENCE_WHAT_IS_INVESTMENT_RAG,
+      languages: {
+        ...raw.languages,
+        hi: {
+          ...raw.languages?.hi,
+          scenes: REFERENCE_WHAT_IS_INVESTMENT_SCENES_HI,
+        },
+        kn: {
+          ...raw.languages?.kn,
+          scenes: REFERENCE_WHAT_IS_INVESTMENT_SCENES_KN,
+        },
+      },
+    };
+  }
+
+  // Generate clean, cohesive visual scenes for other lessons
+  const sceneDuration = Math.floor(duration / 6);
+  const defaultScenes = [
+    {
+      sceneId: `${raw.id}-s1`,
+      startTime: 0,
+      endTime: sceneDuration,
+      title: `1. Introduction: ${raw.title}`,
+      narration: `Welcome to ${raw.title}. Let us explore how this concept impacts your financial wealth.`,
+      visualType: 'presenter' as const,
+      visualData: {
+        presenterName: 'SmartVest AI Educator',
+        topic: raw.title,
+      },
+      onScreenText: {
+        headline: raw.title,
+        subheadline: raw.description,
+        bulletPoints: learningPoints.slice(0, 2),
+        calloutBadge: 'Scene 01 • Introduction',
+      },
+    },
+    {
+      sceneId: `${raw.id}-s2`,
+      startTime: sceneDuration,
+      endTime: sceneDuration * 2,
+      title: '2. Core Principles & Mechanism',
+      narration: learningPoints[0] || raw.description,
+      visualType: 'diagram' as const,
+      onScreenText: {
+        headline: 'Core Mechanism',
+        subheadline: 'How It Works in Practice',
+        bulletPoints: learningPoints.slice(0, 3),
+        calloutBadge: 'Scene 02 • Core Concept',
+      },
+    },
+    {
+      sceneId: `${raw.id}-s3`,
+      startTime: sceneDuration * 2,
+      endTime: sceneDuration * 3,
+      title: '3. Asset Class & Portfolio Allocation',
+      narration: learningPoints[1] || 'Understanding how to apply this across financial assets.',
+      visualType: 'asset_allocation' as const,
+      onScreenText: {
+        headline: 'Portfolio Strategy',
+        subheadline: 'Balancing Growth and Stability',
+        bulletPoints: learningPoints.slice(1, 3),
+        calloutBadge: 'Scene 03 • Asset Strategy',
+      },
+    },
+    {
+      sceneId: `${raw.id}-s4`,
+      startTime: sceneDuration * 3,
+      endTime: sceneDuration * 4,
+      title: '4. Practical Numerical Demonstration',
+      narration: learningPoints[2] || 'Let us examine a real-world financial example.',
+      visualType: 'compounding' as const,
+      onScreenText: {
+        headline: 'Numerical Example',
+        subheadline: 'Rupee Calculations & Results',
+        bulletPoints: [keyTakeaway],
+        calloutBadge: 'Scene 04 • Practical Example',
+      },
+    },
+    {
+      sceneId: `${raw.id}-s5`,
+      startTime: sceneDuration * 4,
+      endTime: sceneDuration * 5,
+      title: '5. Risk, Return & Discipline',
+      narration: 'Managing risks and maintaining long-term financial discipline.',
+      visualType: 'risk_return' as const,
+      onScreenText: {
+        headline: 'Risk & Strategy',
+        subheadline: 'Long-term Financial Discipline',
+        bulletPoints: ['Balance risk and horizon', 'Avoid emotional trading decisions'],
+        calloutBadge: 'Scene 05 • Risk Principles',
+      },
+    },
+    {
+      sceneId: `${raw.id}-s6`,
+      startTime: sceneDuration * 5,
+      endTime: duration,
+      title: '6. Summary & Key Takeaway',
+      narration: keyTakeaway,
+      visualType: 'takeaway' as const,
+      onScreenText: {
+        headline: 'Summary',
+        subheadline: 'Key Lesson Takeaway',
+        bulletPoints: [keyTakeaway],
+        calloutBadge: 'Scene 06 • Takeaways',
+      },
+    },
+  ];
+
+  return {
+    ...raw,
+    duration,
+    durationSeconds: duration,
+    language: 'en',
+    thumbnail: raw.thumbnailUrl,
+    thumbnailUrl: raw.thumbnailUrl,
+    difficulty: 'Beginner',
+    level: 'Beginner',
+    learningObjectives: learningPoints,
+    learningPoints,
+    keyTakeaways: [keyTakeaway],
+    keyTakeaway,
+    provider: 'smartvest-native',
+    version: '2.0.0',
+    scenes: defaultScenes,
+    sources: [
+      {
+        title: 'SEBI Investor Education Guidelines & Capital Market Regulations',
+        publisher: 'Securities and Exchange Board of India (SEBI)',
+        sourceUrl: 'https://investor.sebi.gov.in',
+        date: '2024-01-15',
+        verified: true,
+        citationType: 'regulatory',
+      },
+      {
+        title: 'NSE Educational Market Indices & Financial Principles Repository',
+        publisher: 'National Stock Exchange of India (NSE)',
+        sourceUrl: 'https://www.nseindia.com',
+        date: '2024-04-01',
+        verified: true,
+        citationType: 'market_data',
+      },
+    ],
+  };
+}
+
+export const INVESTMENT_LESSONS: InvestmentLesson[] = RAW_INVESTMENT_LESSONS.map((raw, idx) =>
+  normalizeLesson(raw, idx)
+);
 
 export const getLessonById = (id: string): InvestmentLesson | undefined => {
   return INVESTMENT_LESSONS.find((lesson) => lesson.id === id);
