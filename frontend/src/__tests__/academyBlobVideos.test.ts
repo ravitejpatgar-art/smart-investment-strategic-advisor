@@ -27,9 +27,9 @@ describe('SmartVest Academy — Vercel Blob Production Video Validation', () => 
     }
   });
 
-  it('verifies every English lesson has a non-empty videoUrl and uploaded lessons use Vercel Blob', () => {
-    // Vercel Blob URLs match: https://<store-id>.public.blob.vercel-storage.com/...
-    const vercelBlobRegex = /^https:\/\/[a-zA-Z0-9_-]+\.public\.blob\.vercel-storage\.com\/.*\.mp4$/i;
+  it('verifies every English lesson has a non-empty videoUrl and uploaded lessons use Vercel Blob or GitHub LFS media storage', () => {
+    // Vercel Blob or GitHub LFS media URLs:
+    const remoteVideoRegex = /^(https:\/\/[a-zA-Z0-9_-]+\.public\.blob\.vercel-storage\.com\/.*\.mp4|https:\/\/media\.githubusercontent\.com\/media\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/main\/frontend\/public\/academy\/.*\.mp4)$/i;
 
     // Verify key deployed lessons (investment, stock, shares, etf, mutual-fund, long-term)
     const deployedIds = [
@@ -50,10 +50,10 @@ describe('SmartVest Academy — Vercel Blob Production Video Validation', () => 
       expect(lesson.videoUrl || '').not.toContain('git-lfs');
 
       if (deployedIds.includes(lesson.id) || (lesson.videoUrl && lesson.videoUrl.startsWith('https://'))) {
-        expect(lesson.videoUrl).toMatch(vercelBlobRegex);
+        expect(lesson.videoUrl).toMatch(remoteVideoRegex);
         const enLang = lesson.languages?.en;
         if (enLang && enLang.videoUrl) {
-          expect(enLang.videoUrl).toMatch(vercelBlobRegex);
+          expect(enLang.videoUrl).toMatch(remoteVideoRegex);
         }
       }
     }

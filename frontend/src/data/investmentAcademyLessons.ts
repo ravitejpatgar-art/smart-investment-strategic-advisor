@@ -28,7 +28,7 @@ export const INVESTMENT_LESSONS: InvestmentLesson[] = [
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/investment.mp4',
+    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/investment.mp4',
     thumbnailUrl: '/academy/investment.webp',
     description: 'Learn the difference between saving and investing, and how putting capital to work in productive assets helps outpace inflation over time.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is Investment?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -74,7 +74,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     vestiqPrompt: 'Explain the difference between saving and investing using a simple real-world example.',
     languages: {
       en: {
-        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/investment.mp4',
+        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/investment.mp4',
         thumbnailUrl: '/academy/en/investment.webp',
         captionUrl: '/academy/en/investment.vtt',
         transcript: `Have you ever wondered why simply saving money in a bank account or cash locker is no longer enough to secure your financial future?\n\nSaving means keeping your unspent income safe in low-risk places. While saving preserves your nominal rupees, it suffers from a hidden threat called inflation. Over time, inflation causes prices of everyday goods, housing, and healthcare to rise, which constantly reduces the purchasing power of your idle cash.
@@ -171,7 +171,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/stock.mp4',
+    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/stock.mp4',
     thumbnailUrl: '/academy/stock.webp',
     description: 'Understand what owning a company stock actually means, how equity works, and how shareholders participate in corporate growth.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is a Stock?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -219,7 +219,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     vestiqPrompt: 'How does buying a stock make me a fractional owner of a business?',
     languages: {
       en: {
-        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/stock.mp4',
+        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/stock.mp4',
         thumbnailUrl: '/academy/en/stock.webp',
         captionUrl: '/academy/en/stock.vtt',
         transcript: `When you hear about people investing in the stock market, what are they actually buying? Is a stock just a ticker symbol moving up and down on a screen?\n\nA stock—also referred to as equity—represents legal fractional ownership in a real corporation. When a company wants to expand its factories, hire talented engineers, or research new products, it can raise money by issuing stock to the public on organized stock exchanges like the National Stock Exchange of India, BSE, or NASDAQ.
@@ -332,7 +332,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/shares.mp4',
+    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/shares.mp4',
     thumbnailUrl: '/academy/shares.webp',
     description: 'Learn the distinction between stock and shares, the pizza slice analogy, market capitalization, and stock split mechanics.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What are Shares?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -381,7 +381,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     vestiqPrompt: 'Explain the difference between stock, shares, and market capitalization.',
     languages: {
       en: {
-        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/shares.mp4',
+        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/shares.mp4',
         thumbnailUrl: '/academy/en/shares.webp',
         captionUrl: '/academy/en/shares.vtt',
         transcript: `People frequently use the terms 'stock' and 'shares' in financial conversations, but do you know the precise distinction between them?\n\nWhile 'stock' refers to the overarching concept of corporate ownership or equity in general, a 'share' represents the specific, countable unit of that ownership.
@@ -502,7 +502,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/etf.mp4',
+    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/etf.mp4',
     thumbnailUrl: '/academy/etf.webp',
     description: 'Explore Exchange-Traded Funds (ETFs), instant basket diversification, real-time exchange liquidity, and low expense ratios.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is an ETF?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -552,7 +552,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     vestiqPrompt: 'How does an ETF like NIFTY 50 give me instant diversification?',
     languages: {
       en: {
-        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/etf.mp4',
+        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/etf.mp4',
         thumbnailUrl: '/academy/en/etf.webp',
         captionUrl: '/academy/en/etf.vtt',
         transcript: `What if you want to invest in dozens of top companies across India or the world, but you don't have the time or money to research and buy 50 individual stocks?\n\nThis is where an ETF, or Exchange-Traded Fund, becomes a powerful tool for modern investors. An ETF is an investment fund that holds a diversified basket of securities—such as stocks, bonds, or commodities—and trades on a public stock exchange just like an individual stock.
@@ -681,7 +681,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/mutual-fund.mp4',
+    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/mutual-fund.mp4',
     thumbnailUrl: '/academy/mutual-fund.webp',
     description: 'Discover how mutual funds pool investor capital for professional management, NAV calculation, and diversified investing.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is a Mutual Fund?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -729,7 +729,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     vestiqPrompt: 'How does a mutual fund pool money, and what does NAV mean?',
     languages: {
       en: {
-        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/mutual-fund.mp4',
+        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/mutual-fund.mp4',
         thumbnailUrl: '/academy/en/mutual-fund.webp',
         captionUrl: '/academy/en/mutual-fund.vtt',
         transcript: `Why do tens of millions of Indian households invest their hard-earned money in mutual funds every single month?\n\nA Mutual Fund is an investment trust that pools money from thousands of individual investors to construct a professionally managed portfolio of stocks, bonds, or other securities.
@@ -842,7 +842,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/long-term.mp4',
+    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/long-term.mp4',
     thumbnailUrl: '/academy/long-term.webp',
     description: 'Why time in the market beats timing the market, historical return probabilities, and the power of patience over daily noise.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for Why Long-Term Investing?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -888,7 +888,7 @@ Long-term investing also offers massive structural advantages: you save signific
     vestiqPrompt: 'Why does time in the market beat timing the market?',
     languages: {
       en: {
-        videoUrl: 'https://qvbdjuhnwx9cogrr.public.blob.vercel-storage.com/academy/long-term.mp4',
+        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/long-term.mp4',
         thumbnailUrl: '/academy/en/long-term.webp',
         captionUrl: '/academy/en/long-term.vtt',
         transcript: `If you follow daily financial headlines, you might believe that investing is about buying and selling every day to predict market tops and bottoms. But what does historical evidence actually show?\n\nHistory consistently demonstrates that the most successful wealth builders are long-term investors. Long-term investing means committing your capital to quality assets for time horizons of 5, 10, 15 years or more.
