@@ -502,7 +502,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/etf.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/etf.mp4',
     thumbnailUrl: '/academy/etf.webp',
     description: 'Explore Exchange-Traded Funds (ETFs), instant basket diversification, real-time exchange liquidity, and low expense ratios.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is an ETF?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -552,7 +552,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     vestiqPrompt: 'How does an ETF like NIFTY 50 give me instant diversification?',
     languages: {
       en: {
-        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/etf.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/etf.mp4',
         thumbnailUrl: '/academy/en/etf.webp',
         captionUrl: '/academy/en/etf.vtt',
         transcript: `What if you want to invest in dozens of top companies across India or the world, but you don't have the time or money to research and buy 50 individual stocks?\n\nThis is where an ETF, or Exchange-Traded Fund, becomes a powerful tool for modern investors. An ETF is an investment fund that holds a diversified basket of securities—such as stocks, bonds, or commodities—and trades on a public stock exchange just like an individual stock.
@@ -681,7 +681,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/mutual-fund.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/mutual-fund.mp4',
     thumbnailUrl: '/academy/mutual-fund.webp',
     description: 'Discover how mutual funds pool investor capital for professional management, NAV calculation, and diversified investing.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is a Mutual Fund?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -729,7 +729,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     vestiqPrompt: 'How does a mutual fund pool money, and what does NAV mean?',
     languages: {
       en: {
-        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/mutual-fund.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/mutual-fund.mp4',
         thumbnailUrl: '/academy/en/mutual-fund.webp',
         captionUrl: '/academy/en/mutual-fund.vtt',
         transcript: `Why do tens of millions of Indian households invest their hard-earned money in mutual funds every single month?\n\nA Mutual Fund is an investment trust that pools money from thousands of individual investors to construct a professionally managed portfolio of stocks, bonds, or other securities.
@@ -842,7 +842,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/long-term.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/long-term.mp4',
     thumbnailUrl: '/academy/long-term.webp',
     description: 'Why time in the market beats timing the market, historical return probabilities, and the power of patience over daily noise.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for Why Long-Term Investing?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -888,7 +888,7 @@ Long-term investing also offers massive structural advantages: you save signific
     vestiqPrompt: 'Why does time in the market beat timing the market?',
     languages: {
       en: {
-        videoUrl: 'https://media.githubusercontent.com/media/ravitejpatgar-art/smart-investment-strategic-advisor/main/frontend/public/academy/long-term.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/long-term.mp4',
         thumbnailUrl: '/academy/en/long-term.webp',
         captionUrl: '/academy/en/long-term.vtt',
         transcript: `If you follow daily financial headlines, you might believe that investing is about buying and selling every day to predict market tops and bottoms. But what does historical evidence actually show?\n\nHistory consistently demonstrates that the most successful wealth builders are long-term investors. Long-term investing means committing your capital to quality assets for time horizons of 5, 10, 15 years or more.
@@ -985,7 +985,7 @@ Long-term investing also offers massive structural advantages: you save signific
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/compounding.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/compounding.mp4',
     thumbnailUrl: '/academy/compounding.webp',
     description: 'The mathematical force of exponential growth: initial principal plus accumulated returns creating momentum over time.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is Compounding?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -1034,7 +1034,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
     vestiqPrompt: 'Show me a numerical example of compounding with ₹5,000 monthly.',
     languages: {
       en: {
-        videoUrl: '/academy/en/compounding.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/compounding.mp4',
         thumbnailUrl: '/academy/en/compounding.webp',
         captionUrl: '/academy/en/compounding.vtt',
         transcript: `Why is compounding often described as the most powerful mathematical force in personal wealth creation?\n\nSimple interest earns returns only on your original principal. Compounding, however, means earning returns on your original principal PLUS all the accumulated returns from previous years.
@@ -1155,7 +1155,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/sip.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/sip.mp4',
     thumbnailUrl: '/academy/sip.webp',
     description: 'Systematic Investment Plans in India: automating monthly discipline and leveraging Rupee Cost Averaging across market cycles.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is SIP?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -1203,7 +1203,7 @@ Over time, this automatically lowers your average purchase price per unit withou
     vestiqPrompt: 'Explain Rupee Cost Averaging in SIP when markets fall and rise.',
     languages: {
       en: {
-        videoUrl: '/academy/en/sip.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/sip.mp4',
         thumbnailUrl: '/academy/en/sip.webp',
         captionUrl: '/academy/en/sip.vtt',
         transcript: `How can a salaried professional or student build a multi-lakh portfolio without saving up a massive lump sum or stressing over market timing?\n\nIn India, the most popular and disciplined way to invest is through a SIP—which stands for Systematic Investment Plan. A SIP is NOT a separate investment product or asset class; it is an automated METHOD of investing regularly into mutual funds.
@@ -1310,7 +1310,7 @@ Over time, this automatically lowers your average purchase price per unit withou
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/swp.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/swp.mp4',
     thumbnailUrl: '/academy/swp.webp',
     description: 'Systematic Withdrawal Plans: generating predictable, tax-efficient retirement cash flow while keeping capital invested.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is SWP?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -1357,7 +1357,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
     vestiqPrompt: 'How does an SWP provide monthly income for retirement tax-efficiently?',
     languages: {
       en: {
-        videoUrl: '/academy/en/swp.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/swp.mp4',
         thumbnailUrl: '/academy/en/swp.webp',
         captionUrl: '/academy/en/swp.vtt',
         transcript: `If a SIP is how you systematically build wealth during your working years, how do you harvest that wealth to generate regular monthly income when you retire?\n\nThe answer is an SWP—which stands for Systematic Withdrawal Plan. An SWP is the exact mirror image of a SIP. Instead of depositing money into a mutual fund each month, an SWP allows you to withdraw a fixed sum—say ₹25,000 every month—directly into your bank account from your accumulated mutual fund corpus.\n\nHere is what happens behind the scenes:
@@ -1462,7 +1462,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/hedge-fund.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/hedge-fund.mp4',
     thumbnailUrl: '/academy/hedge-fund.webp',
     description: 'Alternative investment funds (Category III AIFs), long/short strategies, leverage, derivatives, and suitability considerations.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for What is a Hedge Fund?. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -1511,7 +1511,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
     vestiqPrompt: 'Why are hedge funds restricted to institutional and accredited investors?',
     languages: {
       en: {
-        videoUrl: '/academy/en/hedge-fund.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/hedge-fund.mp4',
         thumbnailUrl: '/academy/en/hedge-fund.webp',
         captionUrl: '/academy/en/hedge-fund.vtt',
         transcript: `You frequently hear about global hedge funds managing billions of dollars and moving financial markets. But what are they, and how do they differ from retail mutual funds?\n\nA Hedge Fund is an alternative, private pooled investment vehicle designed for institutional investors and ultra-high-net-worth individuals. In India, hedge funds operate under Category III Alternative Investment Funds, or AIFs, regulated by SEBI.
@@ -1632,7 +1632,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/diversification.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/risk-return-diversification.mp4',
     thumbnailUrl: '/academy/diversification.webp',
     description: 'The inescapable link between risk and return, concentration danger, and multi-asset diversification as a risk management shield.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for Risk, Return & Diversification. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -1682,7 +1682,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
     vestiqPrompt: 'How should a beginner balance equities, debt, and gold across their portfolio?',
     languages: {
       en: {
-        videoUrl: '/academy/en/diversification.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/risk-return-diversification.mp4',
         thumbnailUrl: '/academy/en/diversification.webp',
         captionUrl: '/academy/en/diversification.vtt',
         transcript: `Is there any way to achieve high investment returns with zero risk? In financial economics, the answer is an absolute and definitive no.\n\nThere is a fundamental law in investing that every beginner must internalize: Risk and Potential Return are inseparable sides of the same coin.
@@ -1811,7 +1811,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/getting-started.mp4',
+    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/how-to-start-investing.mp4',
     thumbnailUrl: '/academy/getting-started.webp',
     description: 'A practical 5-step roadmap: emergency funds, goal horizons, risk profiling, digital KYC, and starting small automated SIPs.',
     aiVideoPrompt: `SmartVest Academy Master AI Video: Presenter-led educational explanation for How to Start Investing. 1080p, modern fintech aesthetic with dark navy/teal background, kinetic typography, dynamic financial diagrams, and multilingual neural voices. Duration >= 120s with real rupee examples and zero filler.`,
@@ -1868,7 +1868,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
     vestiqPrompt: 'What is the recommended 5-step checklist for a beginner starting with ₹1,000/month?',
     languages: {
       en: {
-        videoUrl: '/academy/en/getting-started.mp4',
+        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v1/how-to-start-investing.mp4',
         thumbnailUrl: '/academy/en/getting-started.webp',
         captionUrl: '/academy/en/getting-started.vtt',
         transcript: `Congratulations on completing the foundational concepts of the SmartVest Academy! Now, how do you take your very first real-world step with confidence?\n\nBeginning your investment journey does not require lakhs of rupees or an advanced economics degree. What it requires is a clear, disciplined, and sequential financial roadmap.

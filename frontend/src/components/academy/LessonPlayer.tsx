@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   ArrowRight,
   BookOpen,
-  Globe
+  Globe,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { VestiqMark } from '../common/VestiqLogo';
 
@@ -43,35 +45,259 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
 }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedAcademyLanguage>('en');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(lesson.durationSeconds);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [errorState, setErrorState] = useState<{
+    hasError: boolean;
+    message: string;
+    code?: number;
+  } | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const isPendingPlayRef = useRef(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync completion state and mark lesson as last opened
+  const MIN_BUFFER_SECONDS = 1.5;
+
+  const hasEnoughBuffered = (video: HTMLVideoElement | null): boolean => {
+    if (!video) return false;
+    // readyState 4: HAVE_ENOUGH_DATA (sufficient data to play through to the end)
+    if (video.readyState >= 4) return true;
+    // readyState 3: HAVE_FUTURE_DATA (data available for immediate and future frames)
+    if (video.readyState >= 3) {
+      const cur = video.currentTime;
+      for (let i = 0; i < video.buffered.length; i++) {
+        const start = video.buffered.start(i);
+        const end = video.buffered.end(i);
+        if (cur >= start && cur <= end) {
+          if (end - cur >= MIN_BUFFER_SECONDS || (video.duration > 0 && end >= video.duration - 0.3)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  // Sync completion state, mark lesson as last opened, and cleanly reset player lifecycle
   useEffect(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+
     setIsCompleted(academyProgress.isLessonCompleted(lesson.id));
     academyProgress.setLastLesson(lesson.id);
     setCurrentTime(0);
     setIsPlaying(false);
+    setIsBuffering(false);
+    setIsLoading(true);
+    isPendingPlayRef.current = false;
+    setErrorState(null);
+    setRetryCount(0);
     // Scroll smoothly to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    };
   }, [lesson.id, selectedLanguage]);
 
   const handleTogglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
+    const video = videoRef.current;
+    if (video) {
+      if (isPlaying || isPendingPlayRef.current) {
+        isPendingPlayRef.current = false;
+        setIsBuffering(false);
+        setIsPlaying(false);
+        video.pause();
       } else {
-        videoRef.current.play().catch(() => {});
+        if (errorState) setErrorState(null);
+        setIsPlaying(true);
+        isPendingPlayRef.current = true;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              isPendingPlayRef.current = false;
+              setIsBuffering(false);
+              setIsPlaying(true);
+            })
+            .catch((err: unknown) => {
+              isPendingPlayRef.current = false;
+              console.warn('[LessonPlayer] Playback play attempt failed:', err);
+              if (err instanceof Error && err.name !== 'AbortError') {
+                setIsPlaying(false);
+                setIsBuffering(false);
+              }
+            });
+        }
       }
-      setIsPlaying(!isPlaying);
     } else {
       // In placeholder mode, simulate playback
       setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleLoadStart = () => {
+    console.log(`[LessonPlayer] Video load start: ${activeVideoUrl}`);
+    setIsLoading(true);
+    if (isPlaying || isPendingPlayRef.current) {
+      setIsBuffering(true);
+    }
+    setErrorState(null);
+  };
+
+  const handleLoadedMetadata = () => {
+    const v = videoRef.current;
+    console.log(`[LessonPlayer] Metadata loaded: duration=${v?.duration}s, resolution=${v?.videoWidth}x${v?.videoHeight}, readyState=${v?.readyState}`);
+    if (v) {
+      setDuration(v.duration || lesson.durationSeconds);
+      setIsLoading(false);
+      setIsBuffering(false);
+      setErrorState(null);
+    }
+  };
+
+  const handleWaiting = () => {
+    const v = videoRef.current;
+    console.log(`[LessonPlayer] Waiting for buffer: readyState=${v?.readyState}, currentTime=${v?.currentTime}s`);
+    if (isPlaying || isPendingPlayRef.current) {
+      setIsBuffering(true);
+    }
+  };
+
+  const handleStalled = () => {
+    const v = videoRef.current;
+    console.warn(`[LessonPlayer] Media download stalled: networkState=${v?.networkState}, readyState=${v?.readyState}`);
+    if (isPlaying || isPendingPlayRef.current) {
+      setIsBuffering(true);
+    }
+  };
+
+  const handlePlaying = () => {
+    console.log('[LessonPlayer] Video playing successfully');
+    isPendingPlayRef.current = false;
+    setIsLoading(false);
+    setIsBuffering(false);
+    setIsPlaying(true);
+    setErrorState(null);
+  };
+
+  const handleCanPlay = () => {
+    const v = videoRef.current;
+    console.log(`[LessonPlayer] Can play: readyState=${v?.readyState}`);
+    setIsLoading(false);
+    setIsBuffering(false);
+    setErrorState(null);
+  };
+
+  const handleCanPlayThrough = () => {
+    const v = videoRef.current;
+    console.log(`[LessonPlayer] Can play through: readyState=${v?.readyState}`);
+    setIsLoading(false);
+    setIsBuffering(false);
+    setErrorState(null);
+  };
+
+  const handleProgress = () => {
+    if (isBuffering && videoRef.current && hasEnoughBuffered(videoRef.current)) {
+      setIsBuffering(false);
+    }
+  };
+
+  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const video = videoRef.current;
+    const mediaErr = video?.error;
+    const errCode = mediaErr?.code;
+    const errMsg = mediaErr?.message || 'Video stream could not be loaded.';
+
+    console.error('[LessonPlayer] Video playback media error:', {
+      code: errCode,
+      message: errMsg,
+      networkState: video?.networkState,
+      readyState: video?.readyState,
+      currentTime: video?.currentTime,
+      duration: video?.duration,
+      url: activeVideoUrl,
+      event: e
+    });
+
+    // Handle MEDIA_ERR_ABORTED (code 1)
+    // Abort errors occur normally during lesson unmounting or when Chrome aborts
+    // initial byte range to fetch tail metadata. Do not trigger error overlays or retries.
+    if (errCode === 1 || errCode === (typeof MediaError !== 'undefined' ? MediaError.MEDIA_ERR_ABORTED : 1)) {
+      console.warn('[LessonPlayer] Media operation aborted (MEDIA_ERR_ABORTED). Ignoring non-fatal abort.');
+      return;
+    }
+
+    setIsBuffering(false);
+    setIsLoading(false);
+    setIsPlaying(false);
+    isPendingPlayRef.current = false;
+
+    // Explicit friendly error messages mapped to MediaError codes
+    let friendlyMsg = 'We encountered an issue loading this lesson video.';
+    if (errCode === 2 || errCode === (typeof MediaError !== 'undefined' ? MediaError.MEDIA_ERR_NETWORK : 2)) {
+      friendlyMsg = 'A network error occurred while downloading the video stream. Please check your internet connection.';
+    } else if (errCode === 3 || errCode === (typeof MediaError !== 'undefined' ? MediaError.MEDIA_ERR_DECODE : 3)) {
+      friendlyMsg = 'An error occurred while decoding the video stream. The video format could not be decoded.';
+    } else if (errCode === 4 || errCode === (typeof MediaError !== 'undefined' ? MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED : 4)) {
+      friendlyMsg = 'The video stream is temporarily unreachable or unsupported by this browser.';
+    }
+
+    // Controlled automatic retry (maximum 2 retries)
+    if (retryCount < 2) {
+      const nextRetry = retryCount + 1;
+      console.log(`[LessonPlayer] Initiating automatic retry ${nextRetry}/2 in 1.5s...`);
+      setRetryCount(nextRetry);
+      setIsLoading(true);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = setTimeout(() => {
+        retryTimeoutRef.current = null;
+        if (videoRef.current) {
+          videoRef.current.load();
+        }
+      }, 1500);
+    } else {
+      setErrorState({
+        hasError: true,
+        message: friendlyMsg,
+        code: errCode
+      });
+    }
+  };
+
+  const handleManualRetry = () => {
+    console.log('[LessonPlayer] Manual retry requested by user');
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    setErrorState(null);
+    setRetryCount(0);
+    setIsLoading(true);
+    setIsBuffering(false);
+    if (videoRef.current) {
+      videoRef.current.load();
+      const p = videoRef.current.play();
+      if (p !== undefined) {
+        p.catch((err) => {
+          console.warn('[LessonPlayer] Manual retry play caught:', err);
+        });
+      }
     }
   };
 
@@ -94,6 +320,9 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     setCurrentTime(val);
     if (videoRef.current) {
       videoRef.current.currentTime = val;
+      if (!hasEnoughBuffered(videoRef.current) && isPlaying) {
+        setIsBuffering(true);
+      }
     }
   };
 
@@ -125,12 +354,12 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
   const localizedContent = lesson.languages?.[selectedLanguage];
 
   const activeVideoUrl = selectedLanguage === 'en'
-    ? lesson.videoUrl
-    : localizedContent?.videoUrl;
+    ? (lesson.languages?.en?.videoUrl || lesson.videoUrl)
+    : (localizedContent?.videoUrl || lesson.videoUrl);
 
   const activeThumbnailUrl = selectedLanguage === 'en'
     ? lesson.thumbnailUrl
-    : localizedContent?.thumbnailUrl;
+    : (localizedContent?.thumbnailUrl || lesson.thumbnailUrl);
 
   const activeCaptionUrl = selectedLanguage === 'en'
     ? lesson.videoUrl?.replace(/\.mp4$/i, '.vtt')
@@ -196,22 +425,44 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
           {activeVideoUrl ? (
             <video
               ref={videoRef}
+              key={`${lesson.id}-${selectedLanguage}-${activeVideoUrl}`}
               src={activeVideoUrl}
               poster={activeThumbnailUrl}
-              className="w-full h-full object-contain"
+              preload="metadata"
               playsInline
+              controls
+              className="w-full h-full object-contain cursor-pointer"
+              onClick={handleTogglePlay}
+              onLoadStart={handleLoadStart}
               onTimeUpdate={() => {
                 if (videoRef.current) {
                   setCurrentTime(videoRef.current.currentTime);
                 }
               }}
-              onLoadedMetadata={() => {
-                if (videoRef.current) {
-                  setDuration(videoRef.current.duration || lesson.durationSeconds);
+              onLoadedMetadata={handleLoadedMetadata}
+              onPlay={() => {
+                setIsPlaying(true);
+              }}
+              onPause={() => {
+                if (!isPendingPlayRef.current) {
+                  setIsPlaying(false);
+                  setIsBuffering(false);
                 }
+              }}
+              onWaiting={handleWaiting}
+              onPlaying={handlePlaying}
+              onCanPlay={handleCanPlay}
+              onCanPlayThrough={handleCanPlayThrough}
+              onProgress={handleProgress}
+              onStalled={handleStalled}
+              onError={handleError}
+              onSeeked={() => {
+                setIsBuffering(false);
               }}
               onEnded={() => {
                 setIsPlaying(false);
+                setIsBuffering(false);
+                isPendingPlayRef.current = false;
                 if (!isCompleted) {
                   academyProgress.markLessonComplete(lesson.id);
                   setIsCompleted(true);
@@ -241,12 +492,62 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
             </div>
           )}
 
-          {/* Floating Big Play Button if Paused */}
-          {activeVideoUrl && !isPlaying && (
+          {/* Friendly Error UI Fallback Overlay (Step 5) */}
+          {errorState?.hasError && (
+            <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 space-y-4">
+              <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center shadow-lg">
+                <AlertCircle className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5 max-w-md">
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  Video Playback Interrupted
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {errorState.message}
+                </p>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  You can retry streaming the video or continue learning by reading the full educational transcript below.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleManualRetry}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-xs font-semibold transition-all shadow-md cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Retry Playback</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Buffering Indicator */}
+          {(isPlaying || isPendingPlayRef.current) && isBuffering && !errorState?.hasError && (
+            <div className="absolute inset-0 m-auto flex items-center justify-center pointer-events-none z-20">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-white text-xs font-semibold shadow-xl">
+                <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                <span>Buffering...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State Overlay */}
+          {isLoading && !errorState?.hasError && !isPlaying && (
+            <div className="absolute inset-0 m-auto flex items-center justify-center pointer-events-none z-20">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-white text-xs font-semibold shadow-xl">
+                <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                <span>Loading video...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Floating Big Play Button if Paused and Not Loading */}
+          {activeVideoUrl && !isPlaying && !isLoading && !errorState?.hasError && (
             <button
               type="button"
               onClick={handleTogglePlay}
-              className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-[#0EA5E9]/90 hover:bg-[#0EA5E9] text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110 cursor-pointer"
+              className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-[#0EA5E9]/90 hover:bg-[#0EA5E9] text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110 cursor-pointer z-10"
               aria-label="Play video"
             >
               <Play className="w-7 h-7 ml-1 fill-current" />
