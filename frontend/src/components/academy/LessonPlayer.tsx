@@ -177,9 +177,13 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     ? (lesson.languages?.en?.hlsPlaylistUrl || lesson.hlsPlaylistUrl)
     : (localizedContent?.hlsPlaylistUrl || lesson.hlsPlaylistUrl);
 
-  const activeThumbnailUrl = selectedLanguage === 'en'
-    ? lesson.thumbnailUrl
+  const rawThumbnailUrl = selectedLanguage === 'en'
+    ? (lesson.languages?.en?.thumbnailUrl || lesson.thumbnailUrl)
     : (localizedContent?.thumbnailUrl || lesson.thumbnailUrl);
+
+  const activeThumbnailUrl = rawThumbnailUrl
+    ? `${rawThumbnailUrl}?v=20261011`
+    : '';
 
   const activeCaptionUrl = selectedLanguage === 'en'
     ? lesson.videoUrl?.replace(/\.mp4$/i, '.vtt')
