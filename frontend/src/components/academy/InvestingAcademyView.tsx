@@ -65,7 +65,7 @@ export const InvestingAcademyView: React.FC<InvestingAcademyViewProps> = ({
   // If a specific lesson is active, render the dedicated player view
   if (selectedLesson) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 min-h-screen">
+      <div className="p-3 sm:p-6 lg:p-8 min-h-screen max-w-[1600px] mx-auto">
         <LessonPlayer
           lesson={selectedLesson}
           onBack={handleBackToDashboard}

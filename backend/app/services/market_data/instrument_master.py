@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
+import time
 import re
 from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.orm import Session
@@ -16,6 +17,7 @@ class GlobalInstrumentMasterRegistry:
     Supports comprehensive global asset universes, multi-exchange listings,
     exact-first ranking, alias resolutions, and concurrent real-time quote hydration.
     """
+    _quote_executor = ThreadPoolExecutor(max_workers=32, thread_name_prefix="MasterQuoteEnrichment")
 
     def __init__(self):
         # Auto-seed database in background if empty or containing only minimal seeds
@@ -139,7 +141,7 @@ class GlobalInstrumentMasterRegistry:
 
             serialized = [self._serialize_instrument(inst) for inst in raw_items]
 
-            # Parallel quote enrichment
+            # Non-blocking quote enrichment: Reuse cached quotes or DB NAV without blocking catalog search
             def fetch_quote(it: Dict[str, Any]) -> Dict[str, Any]:
                 item_copy = dict(it)
                 is_mf = it.get("assetType") == "MUTUAL_FUND" or it.get("asset_type") == "MUTUAL_FUND"
@@ -179,7 +181,7 @@ class GlobalInstrumentMasterRegistry:
                         except (ValueError, TypeError):
                             pass
 
-                    # 2. Query MF provider directly with explicit asset_type
+                    # 2. Check cache for mutual fund quote
                     scheme_code = it.get("schemeCode") or it.get("scheme_code")
                     if not scheme_code and str(it.get("providerSymbol", "")).isdigit():
                         scheme_code = str(it["providerSymbol"])
@@ -187,16 +189,16 @@ class GlobalInstrumentMasterRegistry:
                         scheme_code = it["symbol"][5:]
 
                     target_sym = f"AMFI:{scheme_code}" if scheme_code else it["symbol"]
-                    try:
-                        q = market_registry.get_quote(target_sym, asset_type="MUTUAL_FUND")
-                        if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
-                            is_compat, _ = validate_quote_compatibility(it, q)
-                            if is_compat:
-                                item_copy["quote"] = q
-                                item_copy["price"] = q.get("price")
-                                return item_copy
-                    except Exception:
-                        pass
+                    cached_mf = (
+                        market_cache.get(f"quote:router:{target_sym.upper()}", allow_stale=True) or
+                        market_cache.get(f"quote:{target_sym.upper()}", allow_stale=True)
+                    )
+                    if cached_mf and cached_mf.get("price") is not None:
+                        is_compat, _ = validate_quote_compatibility(it, cached_mf)
+                        if is_compat:
+                            item_copy["quote"] = cached_mf
+                            item_copy["price"] = cached_mf.get("price")
+                            return item_copy
 
                     item_copy["quote"] = {
                         "symbol": it["symbol"],
@@ -219,91 +221,86 @@ class GlobalInstrumentMasterRegistry:
                     item_copy["price"] = None
                     return item_copy
 
-                # For equities / ETFs / Indices / Commodities, check cache first for instant response
+                # For equities / ETFs / Indices / Commodities: check cache (including stale) for instant response
                 sym_clean = it["symbol"].upper()
                 cached_quote = (
-                    market_cache.get(f"quote:router:{sym_clean}", allow_stale=False) or
-                    market_cache.get(f"quote:{sym_clean}", allow_stale=False)
+                    market_cache.get(f"quote:router:{sym_clean}", allow_stale=True) or
+                    market_cache.get(f"quote:{sym_clean}", allow_stale=True)
                 )
-                from app.services.market_data.providers.angel_provider import angel_provider
-                is_indian_equity = it.get("country") == "IN" or it.get("exchange") in ("NSE", "BSE")
-                if cached_quote and is_indian_equity and angel_provider.is_configured:
-                    if "Yahoo" in (cached_quote.get("source") or ""):
-                        cached_quote = None
 
-                if cached_quote and cached_quote.get("price") is not None:
-                    is_compat, _ = validate_quote_compatibility(it, cached_quote)
-                    if is_compat:
+                if cached_quote:
+                    if cached_quote.get("price") is not None:
+                        is_compat, _ = validate_quote_compatibility(it, cached_quote)
+                        if is_compat:
+                            item_copy["quote"] = cached_quote
+                            item_copy["price"] = cached_quote.get("price")
+                            item_copy["change"] = cached_quote.get("change")
+                            item_copy["changePct"] = cached_quote.get("changePct")
+                            return item_copy
+                    else:
                         item_copy["quote"] = cached_quote
-                        item_copy["price"] = cached_quote.get("price")
-                        item_copy["change"] = cached_quote.get("change")
-                        item_copy["changePct"] = cached_quote.get("changePct")
+                        item_copy["price"] = None
                         return item_copy
 
-                # Try live quote with quick resolution and strict compatibility validation
-                try:
-                    q = market_registry.get_quote(it["symbol"], asset_type=it.get("assetType"))
-                    if q and q.get("price") is not None and q.get("freshness") != "UNAVAILABLE":
-                        is_compat, _ = validate_quote_compatibility(it, q)
-                        if is_compat:
-                            item_copy["quote"] = q
-                            item_copy["price"] = q.get("price")
-                            item_copy["change"] = q.get("change")
-                            item_copy["changePct"] = q.get("changePct")
-                            return item_copy
-
-                    item_copy["quote"] = {
-                        "symbol": it["symbol"],
-                        "name": it["name"],
-                        "exchange": it.get("exchange") or "UNKNOWN",
-                        "assetType": it.get("assetType") or "STOCK",
-                        "price": None,
-                        "currency": it.get("currency") or "USD",
-                        "change": None,
-                        "changePct": None,
-                        "volume": None,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "marketStatus": "CLOSED",
-                        "freshness": "UNAVAILABLE",
-                        "status": "UNAVAILABLE",
-                        "source": "Market Feed Unavailable",
-                        "asOf": "Unavailable",
-                        "message": "Quote not currently available"
-                    }
-                    item_copy["price"] = None
-                except Exception:
-                    item_copy["quote"] = None
-                    item_copy["price"] = None
+                # Uncached quote: return unavailable structure without blocking catalog metadata loading
+                item_copy["quote"] = {
+                    "symbol": it["symbol"],
+                    "name": it["name"],
+                    "exchange": it.get("exchange") or "UNKNOWN",
+                    "assetType": it.get("assetType") or "STOCK",
+                    "price": None,
+                    "currency": it.get("currency") or "INR",
+                    "change": None,
+                    "changePct": None,
+                    "volume": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "marketStatus": "CLOSED",
+                    "freshness": "UNAVAILABLE",
+                    "status": "UNAVAILABLE",
+                    "source": "Market Feed Unavailable",
+                    "asOf": "Unavailable",
+                    "message": "Quote not currently available"
+                }
+                item_copy["price"] = None
                 return item_copy
 
-            if serialized:
-                with ThreadPoolExecutor(max_workers=min(len(serialized), 8)) as executor:
-                    enriched_items = list(executor.map(fetch_quote, serialized))
-            else:
-                enriched_items = []
+            enriched_items = [fetch_quote(it) for it in serialized]
 
-            # Hydrate items with institutional AI signal badges
+            # Hydrate items with institutional AI signal badges if already cached (fast & non-blocking)
             try:
                 from app.services.market_data.signal_engine import market_signal_engine
                 for it in enriched_items:
-                    try:
-                        sig = market_signal_engine.get_signal_for_instrument(
-                            symbol=it.get("symbol", ""),
-                            asset_type=it.get("assetType", "STOCK"),
-                            quote=it.get("quote")
-                        )
-                        it["signalBadge"] = {
-                            "signal": sig["overallSignal"],
-                            "confidence": sig["confidence"],
-                            "riskScore": sig["riskScore"]
-                        }
-                        it["signal"] = sig["overallSignal"]
-                        it["confidence"] = sig["confidence"]
-                        it["riskScore"] = sig["riskScore"]
-                    except Exception:
-                        it["signalBadge"] = None
+                    clean_sym = (it.get("symbol") or "").strip().upper()
+                    # 1. Use authentic cached signal if available in memory
+                    cached_sig_entry = market_signal_engine._cache.get(clean_sym)
+                    if cached_sig_entry:
+                        ts, sig = cached_sig_entry
+                        if time.time() - ts < market_signal_engine._cache_ttl_seconds and isinstance(sig, dict):
+                            sig_label = sig.get("overallSignal") or sig.get("signal")
+                            if sig_label:
+                                risk_val = sig.get("riskScore") or (sig.get("risk") or {}).get("riskScore")
+                                conf_val = sig.get("confidence")
+                                it["signalBadge"] = {
+                                    "signal": sig_label,
+                                    "confidence": conf_val,
+                                    "riskScore": risk_val
+                                }
+                                it["signal"] = sig_label
+                                it["confidence"] = conf_val
+                                it["riskScore"] = risk_val
+                                continue
+
+                    # 2. Uncached: return absent/null signal metadata without blocking or fabricating signals
+                    it["signalBadge"] = None
+                    it["signal"] = None
+                    it["confidence"] = None
+                    it["riskScore"] = None
             except Exception:
-                pass
+                for it in enriched_items:
+                    it["signalBadge"] = None
+                    it["signal"] = None
+                    it["confidence"] = None
+                    it["riskScore"] = None
 
             return {
                 "items": enriched_items,
