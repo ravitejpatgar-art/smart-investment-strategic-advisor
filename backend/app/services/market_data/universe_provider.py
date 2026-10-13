@@ -3,7 +3,7 @@ import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, cast, String
+from sqlalchemy import or_, and_, cast, String, case
 from app.models.instrument import Instrument
 from app.core.database import SessionLocal
 
@@ -2063,23 +2063,24 @@ class GlobalUniverseManager:
 
         # If no query string, apply default sorting (Index -> ETF -> Stock -> MF -> Commodity)
         if not q_clean:
-            def default_rank(item: Instrument):
-                type_prio = {"INDEX": 1, "ETF": 2, "STOCK": 3, "MUTUAL_FUND": 4, "COMMODITY": 5}
-                return (type_prio.get(item.asset_type, 9), item.name)
-
-            all_candidates = query_builder.all()
-            sorted_candidates = sorted(all_candidates, key=default_rank)
-            total = len(sorted_candidates)
+            order_case = case(
+                (Instrument.asset_type == "INDEX", 1),
+                (Instrument.asset_type == "ETF", 2),
+                (Instrument.asset_type == "STOCK", 3),
+                (Instrument.asset_type == "MUTUAL_FUND", 4),
+                (Instrument.asset_type == "COMMODITY", 5),
+                else_=9
+            )
+            total = query_builder.count()
             start_idx = (safe_page - 1) * safe_limit
-            end_idx = start_idx + safe_limit
-            page_items = sorted_candidates[start_idx:end_idx]
+            page_items = query_builder.order_by(order_case, Instrument.name).offset(start_idx).limit(safe_limit).all()
 
             return {
                 "items": page_items,
                 "page": safe_page,
                 "limit": safe_limit,
                 "total": total,
-                "has_next": end_idx < total
+                "has_next": (start_idx + safe_limit) < total
             }
 
         # Multi-stage Candidate Pre-Filtering across all search fields:

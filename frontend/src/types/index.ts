@@ -44,6 +44,27 @@ export type AssetCategory =
   | 'Corporate Debt'
   | 'Hybrid / Conservative Debt';
 
+export type QuoteStatus = 'LIVE' | 'DELAYED' | 'LAST_TRADED' | 'EOD_NAV' | 'UNAVAILABLE';
+
+export interface MarketDataProvenance {
+  source: string | null;
+  sourceType: string;
+  instrumentType: string;
+  market: string;
+  quoteStatus: QuoteStatus;
+  isLive: boolean;
+  quoteTimestamp: string | null;
+  fetchedAt: string;
+  asOfDate: string | null;
+  source_type?: string;
+  instrument_type?: string;
+  quote_status?: QuoteStatus;
+  is_live?: boolean;
+  quote_timestamp?: string | null;
+  fetched_at?: string;
+  as_of_date?: string | null;
+}
+
 export interface RecommendedAsset {
   id: string;
   name: string;
