@@ -133,10 +133,14 @@ INDEX_MAPPINGS = {
     "S&P 500": "^GSPC",
     "S&P500": "^GSPC",
     "SPX": "^GSPC",
+    "^GSPC": "^GSPC",
     "NASDAQ": "^IXIC",
+    "^IXIC": "^IXIC",
     "NASDAQ 100": "^NDX",
+    "^NDX": "^NDX",
     "DOW JONES": "^DJI",
     "DOW": "^DJI",
+    "^DJI": "^DJI",
     "RUSSELL 2000": "^RUT",
     "RUSSELL2000": "^RUT",
     "RUSSELL": "^RUT",
@@ -376,10 +380,10 @@ def normalize_global_symbol(symbol: str) -> Dict[str, Any]:
 
 def normalize_market_quote(
     symbol: str,
-    name: str,
-    exchange: str,
-    asset_type: str,
-    price: Optional[float],
+    name: str = "",
+    exchange: str = "NSE",
+    asset_type: str = "STOCK",
+    price: Optional[float] = None,
     change: Optional[float] = None,
     change_pct: Optional[float] = None,
     volume: Optional[int] = None,
@@ -399,6 +403,10 @@ def normalize_market_quote(
     provider_timestamp: Optional[int] = None,
     change_percent: Optional[float] = None,
     instrument_type: Optional[str] = None,
+    isin: Optional[str] = None,
+    scheme_code: Optional[str] = None,
+    quote_timestamp: Optional[str] = None,
+    market: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Standard canonical internal schema for all SmartVest market quotes.
@@ -408,6 +416,7 @@ def normalize_market_quote(
       - Mutual funds are NEVER live; price is NAV with navDate.
       - Trade timestamp is strictly the provider-supplied timestamp (NEVER datetime.now()).
     """
+    raw_timestamp = raw_timestamp or quote_timestamp
     now_utc = datetime.now(timezone.utc)
     as_of = format_ist_timestamp(now_utc)
     
@@ -426,24 +435,7 @@ def normalize_market_quote(
     # Determine instrument type
     inst_type = (instrument_type or asset_type or "STOCK").upper()
     is_mf = inst_type == "MUTUAL_FUND" or asset_type.upper() == "MUTUAL_FUND"
-
-    # Mutual fund invariant: NEVER live, always PUBLISHED / NAV
-    if is_mf:
-        is_live_flag = False
-        inst_type = "MUTUAL_FUND"
-        asset_type = "MUTUAL_FUND"
-        if market_status in ["OPEN", "CLOSED"]:
-            market_status = "PUBLISHED"
-    else:
-        # Stock or ETF: strictly check session state
-        if market_status in ["CLOSED", "WEEKEND", "HOLIDAY", "PRE_OPEN", "UNKNOWN"]:
-            is_live_flag = False
-        elif is_live is not None:
-            is_live_flag = bool(is_live and (not is_stale) and (market_status == "OPEN"))
-        elif freshness_str in ["REALTIME", "LIVE"]:
-            is_live_flag = (not is_stale) and (market_status == "OPEN") and (inst_type in ["STOCK", "ETF", "INDEX"])
-        else:
-            is_live_flag = False
+    is_bond = inst_type in ["BOND", "DEBT", "CORPORATE_BOND"] or (asset_type or "").upper() in ["BOND", "DEBT", "CORPORATE_BOND"]
 
     # Timestamp rule: NEVER use datetime.now() as the trade timestamp
     # If raw_timestamp is missing, we preserve None or the provider timestamp
@@ -459,7 +451,82 @@ def normalize_market_quote(
         except Exception:
             pass
 
+    # Dynamic staleness evaluation from timestamp
+    if ts_iso and not is_stale:
+        try:
+            ts_dt = datetime.fromisoformat(ts_iso.replace("Z", "+00:00"))
+            age_secs = (now_utc - ts_dt).total_seconds()
+            if age_secs > 900:  # Older than 15 minutes is not live
+                is_stale = True
+        except Exception:
+            pass
+
+    # Mutual fund invariant: NEVER live, always PUBLISHED / NAV
+    if is_mf:
+        is_live_flag = False
+        inst_type = "MUTUAL_FUND"
+        asset_type = "MUTUAL_FUND"
+        if market_status in ["OPEN", "CLOSED"]:
+            market_status = "PUBLISHED"
+    elif is_bond:
+        is_live_flag = False
+        inst_type = "BOND"
+        asset_type = "BOND"
+    else:
+        # Stock or ETF: strictly check session state
+        if market_status in ["CLOSED", "WEEKEND", "HOLIDAY", "PRE_OPEN", "UNKNOWN"]:
+            is_live_flag = False
+        elif is_stale:
+            is_live_flag = False
+        elif is_live is not None:
+            is_live_flag = bool(is_live and (not is_stale) and (market_status == "OPEN"))
+        elif freshness_str in ["REALTIME", "LIVE"]:
+            is_live_flag = (not is_stale) and (market_status == "OPEN") and (inst_type in ["STOCK", "ETF", "INDEX"])
+        else:
+            is_live_flag = False
+
     display_ts_ist = format_ist_timestamp(ts_iso) if ts_iso else as_of
+
+    # Determine standardized quote_status: LIVE | DELAYED | LAST_TRADED | EOD_NAV | UNAVAILABLE
+    if p_val is None or freshness_str == "UNAVAILABLE":
+        quote_status = "UNAVAILABLE"
+    elif is_mf:
+        quote_status = "EOD_NAV"
+    elif is_bond:
+        quote_status = "LAST_TRADED"
+    elif is_live_flag:
+        quote_status = "LIVE"
+    elif freshness_str == "DELAYED" or (source and "DELAY" in source.upper()):
+        quote_status = "DELAYED"
+    else:
+        quote_status = "LAST_TRADED"
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    as_of_date_val = data_date or nav_date
+    if not as_of_date_val and ts_iso:
+        as_of_date_val = ts_iso.split("T")[0] if "T" in ts_iso else ts_iso
+
+    source_type = (
+        "OFFICIAL_NAV_FEED" if is_mf else (
+            "EXCHANGE_REPORTING" if is_bond else (
+                "EXCHANGE_GATEWAY" if is_live_flag else (
+                    "DELAYED_FEED" if quote_status == "DELAYED" else "EXCHANGE_GATEWAY"
+                )
+            )
+        )
+    )
+
+    provenance = {
+        "source": source or "Market Feed",
+        "source_type": source_type,
+        "instrument_type": inst_type,
+        "market": exchange or ("AMFI" if is_mf else "NSE"),
+        "quote_status": quote_status,
+        "is_live": is_live_flag,
+        "quote_timestamp": ts_iso,
+        "fetched_at": fetched_at,
+        "as_of_date": as_of_date_val
+    }
 
     return {
         "symbol": symbol,
@@ -487,11 +554,28 @@ def normalize_market_quote(
         "providerTimestamp": provider_timestamp,
         "marketStatus": market_status,
         "freshness": freshness_str,
+        "status": quote_status,
+        "quoteStatus": quote_status,
+        "quote_status": quote_status,
         "source": source,
         "isLive": is_live_flag,
+        "is_live": is_live_flag,
         "isStale": is_stale,
         "asOf": display_ts_ist,
-        "navDate": nav_date
+        "navDate": nav_date,
+        "nav_date": nav_date,
+        "tradeDate": data_date or nav_date,
+        "trade_date": data_date or nav_date,
+        "fetchedAt": fetched_at,
+        "fetched_at": fetched_at,
+        "asOfDate": as_of_date_val,
+        "as_of_date": as_of_date_val,
+        "isin": isin,
+        "schemeCode": scheme_code,
+        "scheme_code": scheme_code,
+        "schemeName": name if is_mf else None,
+        "scheme_name": name if is_mf else None,
+        "provenance": provenance
     }
 
 def create_unavailable_quote(
@@ -502,6 +586,18 @@ def create_unavailable_quote(
     """Creates a strictly typed unavailable response with zero fake numbers."""
     now_utc = datetime.now(timezone.utc)
     display_ist = format_ist_timestamp(now_utc)
+    fetched_at = now_utc.isoformat()
+    provenance = {
+        "source": None,
+        "source_type": "UNAVAILABLE",
+        "instrument_type": "UNKNOWN",
+        "market": "UNKNOWN",
+        "quote_status": "UNAVAILABLE",
+        "is_live": False,
+        "quote_timestamp": None,
+        "fetched_at": fetched_at,
+        "as_of_date": None
+    }
     return {
         "symbol": symbol,
         "name": symbol,
@@ -528,10 +624,20 @@ def create_unavailable_quote(
         "providerTimestamp": None,
         "marketStatus": market_status,
         "freshness": DataFreshness.UNAVAILABLE.value,
+        "status": "UNAVAILABLE",
+        "quoteStatus": "UNAVAILABLE",
+        "quote_status": "UNAVAILABLE",
         "source": None,
         "isLive": False,
+        "is_live": False,
         "isStale": True,
         "asOf": display_ist,
         "navDate": None,
+        "tradeDate": None,
+        "fetchedAt": fetched_at,
+        "fetched_at": fetched_at,
+        "asOfDate": None,
+        "as_of_date": None,
+        "provenance": provenance,
         "message": message
     }

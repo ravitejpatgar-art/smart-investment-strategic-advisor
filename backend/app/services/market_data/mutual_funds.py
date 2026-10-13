@@ -28,6 +28,7 @@ MF_SCHEME_MAP = {
     "118989": {"code": "118989", "name": "HDFC Balanced Advantage Fund Direct-Growth", "category": "Balanced Advantage"},
     "119588": {"code": "119588", "name": "SBI Magnum Gilt Fund Direct-Growth", "category": "Corporate Debt"},
     "145552": {"code": "145552", "name": "SBI Corporate Bond Fund Direct-Growth", "category": "Corporate Debt"},
+    "118987": {"code": "118987", "name": "HDFC Corporate Bond Fund Direct-Growth", "category": "Corporate Debt", "isin": "INF179K01XD8"},
     "119582": {"code": "119582", "name": "SBI Banking & PSU Debt Fund Direct-Growth", "category": "Corporate Debt"},
     "119776": {"code": "119776", "name": "Kotak Equity Arbitrage Fund Direct-Growth", "category": "Conservative Hybrid"},
     "NIFTY50_INDEX": {"code": "120716", "name": "UTI Nifty 50 Index Fund Direct-Growth", "category": "Index Fund"},
@@ -39,6 +40,11 @@ MF_SCHEME_MAP = {
     "ICICILIQ": {"code": "120586", "name": "ICICI Prudential Liquid Fund Direct-Growth", "category": "Liquid Fund"},
     "SHORT_DEBT_FUND": {"code": "119062", "name": "HDFC Short Duration Debt Fund Direct-Growth", "category": "Short Duration Debt"},
     "HDFCSHORT": {"code": "119062", "name": "HDFC Short Duration Debt Fund Direct-Growth", "category": "Short Duration Debt"},
+    "HDFC_CORP_BOND": {"code": "118987", "name": "HDFC Corporate Bond Fund Direct-Growth", "category": "Corporate Debt", "isin": "INF179K01XD8"},
+    "HDFC CORPORATE BOND FUND DIRECT": {"code": "118987", "name": "HDFC Corporate Bond Fund Direct-Growth", "category": "Corporate Debt", "isin": "INF179K01XD8"},
+    "HDFC CORPORATE BOND FUND DIRECT-GROWTH": {"code": "118987", "name": "HDFC Corporate Bond Fund Direct-Growth", "category": "Corporate Debt", "isin": "INF179K01XD8"},
+    "HDFC CORPORATE BOND FUND": {"code": "118987", "name": "HDFC Corporate Bond Fund Direct-Growth", "category": "Corporate Debt", "isin": "INF179K01XD8"},
+    "HDFC CORPORATE BOND": {"code": "118987", "name": "HDFC Corporate Bond Fund Direct-Growth", "category": "Corporate Debt", "isin": "INF179K01XD8"},
     "SMALLCAP_FUND": {"code": "125354", "name": "Nippon India Small Cap Fund Direct-Growth", "category": "Small Cap Fund"},
     "NIPPSMALL": {"code": "125354", "name": "Nippon India Small Cap Fund Direct-Growth", "category": "Small Cap Fund"},
     "CONSERVATIVE_HYBRID": {"code": "120616", "name": "ICICI Prudential Conservative Hybrid Fund Direct-Growth", "category": "Conservative Hybrid"},
@@ -115,6 +121,14 @@ class MutualFundsProvider(BaseMarketDataProvider):
                 
         if "UTI" in s_clean or ("NIFTY" in s_clean and "BEES" not in s_clean and "^" not in s_clean):
             return MF_SCHEME_MAP["UTI_NIFTY_50"]
+        if "HDFC" in s_clean and ("CORP" in s_clean or "CORPORATE" in s_clean):
+            return MF_SCHEME_MAP["HDFC_CORP_BOND"]
+        if "SBI" in s_clean and ("CORP" in s_clean or "CORPORATE" in s_clean):
+            return MF_SCHEME_MAP["145552"]
+        if "SBI" in s_clean and "GILT" in s_clean:
+            return MF_SCHEME_MAP["119588"]
+        if "SBI" in s_clean and ("BANKING" in s_clean or "PSU" in s_clean):
+            return MF_SCHEME_MAP["119582"]
         if "HDFC" in s_clean and "FLEXI" in s_clean:
             return MF_SCHEME_MAP["HDFC_FLEXICAP"]
         if "PARAG" in s_clean or "PPFCF" in s_clean or "PPFAS" in s_clean or "FLEXI" in s_clean:
@@ -220,7 +234,9 @@ class MutualFundsProvider(BaseMarketDataProvider):
                     market_status="PUBLISHED",
                     nav_date=nav_date,
                     raw_timestamp=raw_ts,
-                    provider_timestamp=prov_ts
+                    provider_timestamp=prov_ts,
+                    isin=scheme_info.get("isin"),
+                    scheme_code=scheme_code
                 )
 
                 valid, _ = validate_quote_data(quote)
@@ -270,7 +286,9 @@ class MutualFundsProvider(BaseMarketDataProvider):
                             market_status="PUBLISHED",
                             nav_date=inst.nav_date or "Latest Published",
                             raw_timestamp=db_ts,
-                            provider_timestamp=db_prov_ts
+                            provider_timestamp=db_prov_ts,
+                            isin=scheme_info.get("isin"),
+                            scheme_code=scheme_code
                         )
                         market_cache.set(cache_key, quote, ttl_seconds=3600)
                         return quote

@@ -1,6 +1,7 @@
 import { apiClient } from './api';
 import { logger } from './logger';
 import { auditLogger } from './auditLogger';
+import type { QuoteStatus, MarketDataProvenance } from '../types';
 import {
   isDemoMode,
   DEMO_COVERAGE,
@@ -21,7 +22,8 @@ export type FreshnessType =
   | 'STALE'
   | 'UNAVAILABLE';
 
-export type MarketDataStatus = 'LIVE' | 'DELAYED' | 'FALLBACK' | 'DEMO' | 'UNAVAILABLE';
+export type MarketDataStatus = 'LIVE' | 'DELAYED' | 'LAST_TRADED' | 'EOD_NAV' | 'FALLBACK' | 'DEMO' | 'UNAVAILABLE';
+export type { QuoteStatus, MarketDataProvenance };
 
 export interface MarketDataProviderAdapter {
   name: string;
@@ -142,65 +144,175 @@ export function normalizePaidProviderQuote(data: any, originalSymbol: string): M
 export function normalizeMarketQuote(raw: unknown, symbol: string): MarketQuote {
   const data = (raw && typeof raw === 'object') ? (raw as Record<string, any>) : {};
   const originalSymbol = symbol.toUpperCase();
-  const p = data.price !== undefined && data.price !== null ? Number(data.price) : 0;
+  const hasPrice = data.price !== undefined && data.price !== null && !isNaN(Number(data.price));
+  const p = hasPrice ? Number(data.price) : null;
   const chg = data.change !== undefined && data.change !== null ? Number(data.change) : 0;
   const chgPct = data.changePct !== undefined && data.changePct !== null
     ? Number(data.changePct)
     : (data.changePercent !== undefined && data.changePercent !== null ? Number(data.changePercent) : 0);
-  const isRealtime = Boolean(data.isRealtime || data.freshness === 'REALTIME' || data.status === 'LIVE');
 
-  const rawExchangeTs = data.exchangeTimestampUtc || data.exchangeTimestamp || data.timestamp || null;
+  const rawExchangeTs = data.exchangeTimestampUtc || data.exchangeTimestamp || data.timestamp || data.quote_timestamp || null;
   const displayIst = data.displayTimestampIst || (rawExchangeTs ? formatIstTimestamp(rawExchangeTs) : (data.asOf || 'Today'));
+
+  const isMF = data.assetType === 'MUTUAL_FUND' || data.instrumentType === 'MUTUAL_FUND' || originalSymbol.startsWith('AMFI:');
+  const isBond = data.assetType === 'BOND' || data.assetType === 'DEBT' || data.instrumentType === 'BOND';
+
+  let quoteStatus: QuoteStatus = 'UNAVAILABLE';
+  if (p === null || data.freshness === 'UNAVAILABLE' || data.status === 'UNAVAILABLE' || data.quoteStatus === 'UNAVAILABLE' || data.quote_status === 'UNAVAILABLE') {
+    quoteStatus = 'UNAVAILABLE';
+  } else if (isMF) {
+    quoteStatus = 'EOD_NAV';
+  } else if (isBond) {
+    quoteStatus = 'LAST_TRADED';
+  } else if (data.quoteStatus === 'LIVE' || (data.isLive && data.marketStatus === 'OPEN')) {
+    quoteStatus = 'LIVE';
+  } else if (data.quoteStatus === 'DELAYED' || data.freshness === 'DELAYED' || data.status === 'DELAYED') {
+    quoteStatus = 'DELAYED';
+  } else {
+    quoteStatus = (data.quoteStatus as QuoteStatus) || (data.quote_status as QuoteStatus) || 'LAST_TRADED';
+  }
+
+  const isRealtime = quoteStatus === 'LIVE';
+  const asOfDateVal = data.asOfDate || data.as_of_date || data.navDate || data.tradeDate || data.dataDate || (rawExchangeTs ? String(rawExchangeTs).split('T')[0] : null);
+  const fetchedAtVal = data.fetchedAt || data.fetched_at || new Date().toISOString();
+
+  const resolvedSource = data.source || (p === null ? null : (isMF ? 'AMFI Published Daily NAV' : (isBond ? 'NSE Corporate Bond Reporting Platform (CBRICS)' : `Authorized Feed (${getPaidProviderName()})`)));
+  const resolvedSourceType = p === null ? 'UNAVAILABLE' : (isMF ? 'OFFICIAL_NAV_FEED' : (isBond ? 'EXCHANGE_REPORTING' : (isRealtime ? 'EXCHANGE_GATEWAY' : 'DELAYED_FEED')));
+  const resolvedInstType = isMF ? 'MUTUAL_FUND' : (isBond ? 'BOND' : (data.instrumentType || data.assetType || 'STOCK'));
+  const resolvedMarket = data.exchange || (isMF ? 'AMFI' : 'NSE');
+
+  const provenance: MarketDataProvenance = data.provenance ? {
+    source: data.provenance.source || data.source || null,
+    sourceType: data.provenance.source_type || data.provenance.sourceType || resolvedSourceType,
+    source_type: data.provenance.source_type || data.provenance.sourceType || resolvedSourceType,
+    instrumentType: data.provenance.instrument_type || data.provenance.instrumentType || resolvedInstType,
+    instrument_type: data.provenance.instrument_type || data.provenance.instrumentType || resolvedInstType,
+    market: data.provenance.market || data.exchange || resolvedMarket,
+    quoteStatus: (data.provenance.quote_status || data.provenance.quoteStatus || quoteStatus) as QuoteStatus,
+    quote_status: (data.provenance.quote_status || data.provenance.quoteStatus || quoteStatus) as QuoteStatus,
+    isLive: Boolean(data.provenance.is_live ?? (quoteStatus === 'LIVE')),
+    is_live: Boolean(data.provenance.is_live ?? (quoteStatus === 'LIVE')),
+    quoteTimestamp: data.provenance.quote_timestamp || data.provenance.quoteTimestamp || rawExchangeTs,
+    quote_timestamp: data.provenance.quote_timestamp || data.provenance.quoteTimestamp || rawExchangeTs,
+    fetchedAt: data.provenance.fetched_at || data.provenance.fetchedAt || fetchedAtVal,
+    fetched_at: data.provenance.fetched_at || data.provenance.fetchedAt || fetchedAtVal,
+    asOfDate: data.provenance.as_of_date || data.provenance.asOfDate || asOfDateVal,
+    as_of_date: data.provenance.as_of_date || data.provenance.asOfDate || asOfDateVal
+  } : {
+    source: resolvedSource,
+    sourceType: resolvedSourceType,
+    source_type: resolvedSourceType,
+    instrumentType: resolvedInstType,
+    instrument_type: resolvedInstType,
+    market: resolvedMarket,
+    quoteStatus,
+    quote_status: quoteStatus,
+    isLive: isRealtime,
+    is_live: isRealtime,
+    quoteTimestamp: rawExchangeTs,
+    quote_timestamp: rawExchangeTs,
+    fetchedAt: fetchedAtVal,
+    fetched_at: fetchedAtVal,
+    asOfDate: asOfDateVal,
+    as_of_date: asOfDateVal
+  };
 
   return {
     symbol: originalSymbol,
     name: data.name || originalSymbol,
-    exchange: data.exchange || (originalSymbol.includes('.NS') ? 'NSE' : 'BSE'),
-    assetType: data.assetType || (originalSymbol.includes('NIFTY') || originalSymbol.includes('SENSEX') ? 'INDEX' : 'STOCK'),
+    exchange: data.exchange || (isMF ? 'AMFI' : (originalSymbol.includes('.NS') ? 'NSE' : 'BSE')),
+    assetType: isMF ? 'MUTUAL_FUND' : (isBond ? 'BOND' : (data.assetType || (originalSymbol.includes('NIFTY') || originalSymbol.includes('SENSEX') ? 'INDEX' : 'STOCK'))),
+    instrumentType: isMF ? 'MUTUAL_FUND' : (isBond ? 'BOND' : (data.instrumentType || data.assetType || 'STOCK')),
     price: p,
+    nav: isMF ? p : (data.nav ?? null),
     currency: data.currency || 'INR',
-    change: Math.round(chg * 100) / 100,
-    changePct: Math.round(chgPct * 100) / 100,
+    change: p !== null ? Math.round(chg * 100) / 100 : null,
+    changePct: p !== null ? Math.round(chgPct * 100) / 100 : null,
+    changePercent: p !== null ? Math.round(chgPct * 100) / 100 : null,
     volume: data.volume !== undefined && data.volume !== null ? Number(data.volume) : 0,
     open: data.open !== undefined && data.open !== null ? Number(data.open) : p,
     high: data.high !== undefined && data.high !== null ? Number(data.high) : p,
     low: data.low !== undefined && data.low !== null ? Number(data.low) : p,
     prevClose: data.prevClose !== undefined && data.prevClose !== null ? Number(data.prevClose) : p,
+    previousClose: data.previousClose !== undefined && data.previousClose !== null ? Number(data.previousClose) : (data.prevClose !== undefined && data.prevClose !== null ? Number(data.prevClose) : p),
     timestamp: rawExchangeTs || new Date().toISOString(),
     exchangeTimestamp: rawExchangeTs,
     exchangeTimestampUtc: rawExchangeTs,
     displayTimestampIst: displayIst,
-    marketStatus: data.marketStatus || 'OPEN',
-    freshness: isRealtime ? 'REALTIME' : (data.freshness || 'DELAYED'),
-    status: isRealtime ? 'LIVE' : (data.status === 'DELAYED' ? 'DELAYED' : 'LIVE'),
-    source: data.source || `Authorized Feed (${getPaidProviderName()})`,
-    provider: data.provider || data.source || null,
+    marketStatus: isMF ? 'PUBLISHED' : (data.marketStatus || 'OPEN'),
+    freshness: p === null ? 'UNAVAILABLE' : (isRealtime ? 'REALTIME' : (data.freshness || 'DELAYED')),
+    status: quoteStatus as MarketDataStatus,
+    quoteStatus,
+    provenance,
+    source: provenance.source,
+    provider: data.provider || provenance.source,
     asOf: displayIst,
-    navDate: data.navDate || null,
-    isLive: Boolean(data.isLive),
+    asOfDate: asOfDateVal,
+    fetchedAt: fetchedAtVal,
+    quoteTimestamp: rawExchangeTs,
+    navDate: data.navDate || (isMF ? asOfDateVal : null),
+    tradeDate: data.tradeDate || (isBond ? asOfDateVal : null),
+    tradeTime: data.tradeTime || data.trade_time || null,
+    isLive: isRealtime,
     isStale: Boolean(data.isStale),
+    isin: data.isin || null,
+    schemeCode: data.schemeCode || data.scheme_code || null,
+    issuer: data.issuer || null,
+    coupon: data.coupon !== undefined && data.coupon !== null ? Number(data.coupon) : null,
+    maturity: data.maturity || null,
+    creditRating: data.creditRating || data.credit_rating || null,
+    ytm: data.ytm !== undefined && data.ytm !== null ? Number(data.ytm) : (data.yieldToMaturity !== undefined && data.yieldToMaturity !== null ? Number(data.yieldToMaturity) : null),
+    yieldToMaturity: data.yieldToMaturity !== undefined && data.yieldToMaturity !== null ? Number(data.yieldToMaturity) : (data.ytm !== undefined && data.ytm !== null ? Number(data.ytm) : null),
     token: data.token || null,
     tradingsymbol: data.tradingsymbol || null,
     dataQuality: data.dataQuality || null,
-    message: data.message || 'Data supplied by configured market provider'
+    message: p === null ? (isMF ? 'Latest NAV unavailable' : (isBond ? 'Latest trade unavailable' : 'Live quote unavailable')) : (data.message || 'Data supplied by verified market provider')
   };
+}
+
+export function resolveInstrumentQuoteStatus(quote?: Partial<MarketQuote> | null): QuoteStatus {
+  if (!quote || quote.price === null || quote.price === undefined || isNaN(quote.price)) {
+    return 'UNAVAILABLE';
+  }
+  if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE' || quote.quoteStatus === 'UNAVAILABLE') {
+    return 'UNAVAILABLE';
+  }
+  if (quote.quoteStatus) {
+    return quote.quoteStatus;
+  }
+  const isMF = quote.assetType === 'MUTUAL_FUND' || quote.instrumentType === 'MUTUAL_FUND';
+  if (isMF) return 'EOD_NAV';
+
+  const isBond = quote.assetType === 'BOND' || quote.assetType === 'DEBT' || quote.instrumentType === 'BOND';
+  if (isBond) return 'LAST_TRADED';
+
+  if (quote.isLive === true && quote.marketStatus === 'OPEN') return 'LIVE';
+  if (quote.status === 'LIVE' && quote.isLive !== false && quote.marketStatus === 'OPEN') return 'LIVE';
+  if (quote.freshness === 'REALTIME' && quote.isLive !== false && quote.marketStatus === 'OPEN') return 'LIVE';
+  if (quote.status === 'DELAYED' || quote.freshness === 'DELAYED') return 'DELAYED';
+  return 'LAST_TRADED';
 }
 
 export function resolveQuoteStatus(quote?: Partial<MarketQuote> | null): MarketDataStatus {
   if (!quote) return 'UNAVAILABLE';
-  if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE') return 'UNAVAILABLE';
+  if (quote.freshness === 'UNAVAILABLE' || quote.status === 'UNAVAILABLE' || quote.quoteStatus === 'UNAVAILABLE') return 'UNAVAILABLE';
   if (quote.price === null || (quote.price !== undefined && isNaN(quote.price))) return 'UNAVAILABLE';
+
+  if (quote.status === 'FALLBACK' || quote.source?.includes('Fallback')) return 'FALLBACK';
+  if (quote.status === 'DEMO' || quote.freshness === 'MODEL_ASSUMPTION' || quote.source?.includes('Deterministic Demo')) return 'DEMO';
+  if (quote.status === 'EOD_NAV' || quote.quoteStatus === 'EOD_NAV') return 'EOD_NAV';
+  if (quote.status === 'LAST_TRADED' || quote.quoteStatus === 'LAST_TRADED') return 'LAST_TRADED';
 
   // Mutual funds are NEVER live intraday quotes
   const isMF = quote.assetType === 'MUTUAL_FUND' || quote.instrumentType === 'MUTUAL_FUND';
   if (isMF) {
-    return 'FALLBACK';
+    return 'EOD_NAV';
   }
 
   // Market closed or stale quotes can NEVER be LIVE
   const isClosed = quote.marketStatus === 'CLOSED' || quote.marketStatus === 'WEEKEND' || quote.marketStatus === 'HOLIDAY' || quote.marketStatus === 'PRE_OPEN';
   if (isClosed || quote.isStale === true) {
-    return quote.status === 'DELAYED' ? 'DELAYED' : 'FALLBACK';
+    return quote.status === 'DELAYED' ? 'DELAYED' : 'LAST_TRADED';
   }
 
   // Explicit isLive metadata from provider
@@ -214,11 +326,10 @@ export function resolveQuoteStatus(quote?: Partial<MarketQuote> | null): MarketD
   if (quote.status) return quote.status;
   if (quote.freshness === 'REALTIME') return 'LIVE';
   if (quote.freshness === 'DELAYED') return 'DELAYED';
-  if (quote.freshness === 'MODEL_ASSUMPTION' || quote.source?.includes('Deterministic Demo')) return 'DEMO';
   if (quote.freshness === 'LATEST_AVAILABLE' || quote.freshness === 'END_OF_DAY' || quote.freshness === 'HISTORICAL') {
-    return 'FALLBACK';
+    return 'LAST_TRADED';
   }
-  return 'FALLBACK';
+  return 'LAST_TRADED';
 }
 
 export interface MarketQuote {
@@ -244,13 +355,28 @@ export interface MarketQuote {
   marketStatus: string;
   freshness: FreshnessType;
   status?: MarketDataStatus;
+  quoteStatus?: QuoteStatus;
+  provenance?: MarketDataProvenance;
   source: string | null;
   provider?: string | null;
   asOf: string;
+  asOfDate?: string | null;
+  fetchedAt?: string;
+  quoteTimestamp?: string | null;
   navDate?: string | null;
+  tradeDate?: string | null;
+  tradeTime?: string | null;
   message?: string;
   isLive?: boolean;
   isStale?: boolean;
+  isin?: string | null;
+  schemeCode?: string | null;
+  issuer?: string | null;
+  coupon?: number | null;
+  maturity?: string | null;
+  creditRating?: string | null;
+  ytm?: number | null;
+  yieldToMaturity?: number | null;
   providerTimestamp?: number | null;
   exchangeTimestamp?: string | null;
   exchangeTimestampUtc?: string | null;
@@ -600,6 +726,7 @@ export interface MarketInstrumentsResponse {
   has_prev?: boolean;
   hasMore?: boolean;
   filters?: Record<string, any>;
+  error?: string;
 }
 
 export interface MarketCoverageResponse {
@@ -626,7 +753,7 @@ export interface MarketCoverageResponse {
 }
 
 // Direct AMFI Scheme Directory
-const DIRECT_AMFI_SCHEMES: Record<string, { code: string; name: string }> = {
+export const DIRECT_AMFI_SCHEMES: Record<string, { code: string; name: string; isin?: string }> = {
   'UTI NIFTY 50 INDEX FUND DIRECT': { code: '120716', name: 'UTI Nifty 50 Index Fund Direct Growth' },
   'UTI NIFTY NEXT 50 INDEX FUND DIRECT': { code: '120717', name: 'UTI Nifty Next 50 Index Fund Direct Growth' },
   'PARAG PARIKH FLEXI CAP FUND DIRECT': { code: '122639', name: 'Parag Parikh Flexi Cap Fund Direct Growth' },
@@ -640,6 +767,11 @@ const DIRECT_AMFI_SCHEMES: Record<string, { code: string; name: string }> = {
   'KOTAK EMERGING EQUITY FUND DIRECT': { code: '119775', name: 'Kotak Emerging Equity Fund Direct Growth' },
   'TATA DIGITAL INDIA FUND DIRECT': { code: '135781', name: 'Tata Digital India Fund Direct Growth' },
   'HDFC BALANCED ADVANTAGE FUND DIRECT': { code: '118989', name: 'HDFC Balanced Advantage Fund Direct Growth' },
+  'HDFC CORPORATE BOND FUND DIRECT': { code: '118987', name: 'HDFC Corporate Bond Fund Direct Growth', isin: 'INF179K01XD8' },
+  'HDFC CORPORATE BOND FUND DIRECT-GROWTH': { code: '118987', name: 'HDFC Corporate Bond Fund Direct Growth', isin: 'INF179K01XD8' },
+  'HDFC CORPORATE BOND FUND': { code: '118987', name: 'HDFC Corporate Bond Fund Direct Growth', isin: 'INF179K01XD8' },
+  'HDFC CORPORATE BOND': { code: '118987', name: 'HDFC Corporate Bond Fund Direct Growth', isin: 'INF179K01XD8' },
+  '118987': { code: '118987', name: 'HDFC Corporate Bond Fund Direct Growth', isin: 'INF179K01XD8' },
   'SBI MAGNUM GILT FUND DIRECT': { code: '119588', name: 'SBI Magnum Gilt Fund Direct Growth' },
   'SBI CORPORATE BOND FUND DIRECT': { code: '145552', name: 'SBI Corporate Bond Fund Direct Growth' },
   'SBI BANKING & PSU DEBT FUND DIRECT': { code: '119582', name: 'SBI Banking & PSU Debt Fund Direct Growth' },
@@ -667,12 +799,13 @@ export const FEATURED_CATALOG_SYMBOLS = [
   '120716',
   '122639',
   '120586',
-  '119062'
+  '119062',
+  '118987'
 ];
 
 const INDEX_SYMBOLS = new Set(['NIFTY 50', '^NSEI', 'SENSEX', '^BSESN', 'S&P 500', '^GSPC', 'NASDAQ', '^IXIC']);
 
-function matchSchemeCode(symbol: string): string | null {
+export function matchSchemeCode(symbol: string): string | null {
   if (!symbol) return null;
   const clean = symbol.trim().toUpperCase();
   if (INDEX_SYMBOLS.has(clean)) return null;
@@ -686,6 +819,10 @@ function matchSchemeCode(symbol: string): string | null {
       return /^\d+$/.test(v.code) ? v.code : null;
     }
   }
+  if (clean.includes('HDFC') && (clean.includes('CORP') || clean.includes('CORPORATE'))) return '118987';
+  if (clean.includes('SBI') && (clean.includes('CORP') || clean.includes('CORPORATE'))) return '145552';
+  if (clean.includes('SBI') && clean.includes('GILT')) return '119588';
+  if (clean.includes('SBI') && (clean.includes('BANKING') || clean.includes('PSU'))) return '119582';
   if ((clean.includes('UTI') && clean.includes('INDEX')) || (clean.includes('NIFTY') && clean.includes('FUND'))) return '120716';
   if (clean.includes('NEXT 50') && clean.includes('FUND')) return '120717';
   if (clean.includes('PARAG') || clean.includes('FLEXI')) return '122639';
@@ -712,28 +849,50 @@ async function fetchDirectAmfiQuote(schemeCode: string, originalSymbol: string):
     if (isNaN(nav)) return null;
     const change = isNaN(prevNav) ? 0 : nav - prevNav;
     const changePct = prevNav > 0 ? (change / prevNav) * 100 : 0;
+    const fetchedAt = new Date().toISOString();
     return {
       symbol: originalSymbol,
       name: data.meta?.scheme_name || originalSymbol,
       exchange: 'AMFI',
       assetType: 'MUTUAL_FUND',
+      instrumentType: 'MUTUAL_FUND',
       price: nav,
+      nav: nav,
       currency: 'INR',
       change: Math.round(change * 100) / 100,
       changePct: Math.round(changePct * 100) / 100,
+      changePercent: Math.round(changePct * 100) / 100,
       volume: 0,
       open: nav,
       high: nav,
       low: nav,
       prevClose: isNaN(prevNav) ? nav : prevNav,
-      timestamp: new Date().toISOString(),
+      previousClose: isNaN(prevNav) ? nav : prevNav,
+      timestamp: latest.date || fetchedAt,
       marketStatus: 'PUBLISHED',
       freshness: 'LATEST_AVAILABLE',
-      status: 'FALLBACK',
-      source: 'AMFI Official NAV Feed',
+      status: 'EOD_NAV',
+      quoteStatus: 'EOD_NAV',
+      source: 'AMFI Published Daily NAV',
       asOf: latest.date,
+      asOfDate: latest.date,
+      fetchedAt: fetchedAt,
+      quoteTimestamp: latest.date,
       navDate: latest.date,
-      message: 'Latest available market data shown'
+      isLive: false,
+      schemeCode: schemeCode,
+      provenance: {
+        source: 'AMFI Published Daily NAV',
+        sourceType: 'OFFICIAL_NAV_FEED',
+        instrumentType: 'MUTUAL_FUND',
+        market: 'AMFI',
+        quoteStatus: 'EOD_NAV',
+        isLive: false,
+        quoteTimestamp: latest.date,
+        fetchedAt: fetchedAt,
+        asOfDate: latest.date
+      },
+      message: 'Latest published AMFI daily NAV shown'
     };
   } catch (e) {
     console.warn(`[MFAPI_FAIL] Could not fetch direct AMFI quote for ${schemeCode}:`, e);
@@ -1115,9 +1274,10 @@ export const marketApi = {
       if (params.limit) queryParts.push(`limit=${params.limit}`);
 
       const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
-      const res = await apiClient.get<any>(`/market/instruments${queryString}`);
-      if (res.data && Array.isArray(res.data.items)) {
-        const normalizedItems: MarketInstrument[] = res.data.items.map((raw: any) => ({
+      const res = await apiClient.get<any>(`/market/instruments${queryString}`, { timeout: 10000 });
+      const rawList = Array.isArray(res.data?.items) ? res.data.items : (Array.isArray(res.data) ? res.data : null);
+      if (rawList) {
+        const normalizedItems: MarketInstrument[] = rawList.map((raw: any) => ({
           ...raw,
           assetType: raw.asset_type || raw.assetType,
           assetClass: raw.asset_class || raw.assetClass || 'EQUITY',
@@ -1134,14 +1294,14 @@ export const marketApi = {
         }));
         return {
           items: normalizedItems,
-          total: res.data.total ?? normalizedItems.length,
-          page: res.data.page ?? params.page ?? 1,
-          limit: res.data.limit ?? params.limit ?? 25,
-          totalPages: res.data.totalPages ?? res.data.total_pages ?? Math.ceil((res.data.total || normalizedItems.length) / (res.data.limit || 25)),
-          hasNext: res.data.hasNext ?? res.data.has_next ?? res.data.hasMore ?? false,
-          hasPrev: res.data.hasPrev ?? res.data.has_prev ?? false,
-          hasMore: res.data.hasMore ?? res.data.hasNext ?? res.data.has_next ?? false,
-          filters: res.data.filters
+          total: res.data?.total ?? normalizedItems.length,
+          page: res.data?.page ?? params.page ?? 1,
+          limit: res.data?.limit ?? params.limit ?? 25,
+          totalPages: res.data?.totalPages ?? res.data?.total_pages ?? Math.ceil((res.data?.total || normalizedItems.length) / (res.data?.limit || 25)),
+          hasNext: res.data?.hasNext ?? res.data?.has_next ?? res.data?.hasMore ?? false,
+          hasPrev: res.data?.hasPrev ?? res.data?.has_prev ?? false,
+          hasMore: res.data?.hasMore ?? res.data?.hasNext ?? res.data?.has_next ?? false,
+          filters: res.data?.filters
         };
       }
       return {
@@ -1155,7 +1315,7 @@ export const marketApi = {
         hasMore: false,
         filters: {}
       };
-    } catch {
+    } catch (err: any) {
       return {
         items: [],
         total: 0,
@@ -1165,7 +1325,8 @@ export const marketApi = {
         hasNext: false,
         hasPrev: false,
         hasMore: false,
-        filters: {}
+        filters: {},
+        error: err?.message || 'Failed to fetch instruments'
       };
     }
   },
@@ -1178,7 +1339,7 @@ export const marketApi = {
       };
     }
     try {
-      const res = await apiClient.get('/market/overview');
+      const res = await apiClient.get('/market/overview', { timeout: 8000 });
       if (res.data && res.data.indices && Array.isArray(res.data.indices) && res.data.indices.length > 0) {
         return {
           ...res.data,
