@@ -28,7 +28,7 @@ export const INVESTMENT_LESSONS: InvestmentLesson[] = [
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/investment.mp4',
+    videoUrl: '/academy/en/investment-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/100f4a7f-d903-4b1f-8e8c-5f2054e1effb/playlist.m3u8',
     thumbnailUrl: '/academy/investment.webp',
     description: 'Learn the difference between saving and investing, and how putting capital to work in productive assets helps outpace inflation over time.',
@@ -75,7 +75,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     vestiqPrompt: 'Explain the difference between saving and investing using a simple real-world example.',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/investment.mp4',
+        videoUrl: '/academy/en/investment-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/100f4a7f-d903-4b1f-8e8c-5f2054e1effb/playlist.m3u8',
         thumbnailUrl: '/academy/en/investment.webp',
         captionUrl: '/academy/en/investment.vtt',
@@ -87,7 +87,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'Saving preserves cash for today; investing puts capital to work to help beat inflation over tomorrow.'
       },
       hi: {
-        videoUrl: '/academy/hi/investment.mp4',
+        videoUrl: '/academy/hi/investment-optimized.mp4',
         thumbnailUrl: '/academy/hi/investment.webp',
         captionUrl: '/academy/hi/investment.vtt',
         transcript: `नमस्ते! क्या आपने कभी सोचा है कि केवल बैंक खाते या घर में नकदी बचाकर रखना आपके वित्तीय भविष्य को सुरक्षित करने के लिए पर्याप्त क्यों नहीं है?\n\nबचत का अर्थ है अपनी बची हुई आय को कम जोखिम वाले बैंक खाते या लॉकर में सुरक्षित रखना। बचत आपके मूल रुपयों को तो सुरक्षित रखती है, लेकिन यह 'मुद्रास्फीति' यानी महंगाई के अदृश्य खतरे से नहीं बच पाती। समय के साथ, महंगाई के कारण रोजमर्रा की वस्तुओं, भोजन, शिक्षा और स्वास्थ्य सेवाओं की कीमतें लगातार बढ़ती हैं, जिससे आपकी रखी हुई नकदी की वास्तविक क्रय शक्ति घटती जाती है।
@@ -98,7 +98,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'बचत आज की सुरक्षा के लिए है; निवेश कल की महंगाई को मात देकर संपत्ति बढ़ाने के लिए है।'
       },
       kn: {
-        videoUrl: '/academy/kn/investment.mp4',
+        videoUrl: '/academy/kn/investment-optimized.mp4',
         thumbnailUrl: '/academy/kn/investment.webp',
         captionUrl: '/academy/kn/investment.vtt',
         transcript: `ನಮಸ್ಕಾರ! ಬ್ಯಾಂಕ್ ಖಾತೆಯಲ್ಲಿ ಅಥವಾ ಮನೆಯಲ್ಲಿ ಕೇವಲ ಹಣವನ್ನು ಉಳಿತಾಯ ಮಾಡುವುದರಿಂದ ಮಾತ್ರ ನಿಮ್ಮ ಆರ್ಥಿಕ ಭವಿಷ್ಯ ಸುರಕ್ಷಿತವಾಗಿರಲು ಸಾಧ್ಯವಿಲ್ಲ ಏಕೆ ಎಂದು ನೀವು ಎಂದಾದರೂ ಯೋಚಿಸಿದ್ದೀರಾ?\n\nಉಳಿತಾಯ ಎಂದರೆ ನಿಮ್ಮ ಉಳಿದ ಆದಾಯವನ್ನು ಕಡಿಮೆ ಅಪಾಯವಿರುವ ಬ್ಯಾಂಕ್ ಖಾತೆ ಅಥವಾ ಲಾಕರ್‌ನಲ್ಲಿ ಸುರಕ್ಷಿತವಾಗಿ ಇಡುವುದು. ಉಳಿತಾಯವು ನಿಮ್ಮ ಮೂಲ ರೂಪಾಯಿಗಳನ್ನು ಸಂರಕ್ಷಿಸುತ್ತದೆ, ಆದರೆ ಇದು 'ಹಣದುಬ್ಬರ' ಅಥವಾ ಬೆಲೆ ಏರಿಕೆಯ ಅದೃಶ್ಯ ಅಪಾಯವನ್ನು ಎದುರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ಕಾಲಾನಂತರದಲ್ಲಿ, ಹಣದುಬ್ಬರದಿಂದಾಗಿ ದಿನನಿತ್ಯದ ವಸ್ತುಗಳು, ಆಹಾರ, ಶಿಕ್ಷಣ ಮತ್ತು ಆರೋಗ್ಯ ವೆಚ್ಚಗಳು ಹೆಚ್ಚಾಗುತ್ತವೆ, ಇದರಿಂದ ನಿಮ್ಮ ಬಳಿಯಿರುವ ನಗದು ಹಣದ ಕೊಳ್ಳುವ ಶಕ್ತಿ ಕಡಿಮೆಯಾಗುತ್ತದೆ.
@@ -109,7 +109,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'ಉಳಿತಾಯವು ಇಂದಿನ ತುರ್ತು ಪರಿಸ್ಥಿತಿಗಾಗಿ; ಹೂಡಿಕೆಯು ನಾಳಿನ ಹಣದುಬ್ಬರವನ್ನು ಸೋಲಿಸಿ ಸಂಪತ್ತು ಬೆಳೆಸಲು.'
       },
       te: {
-        videoUrl: '/academy/te/investment.mp4',
+        videoUrl: '/academy/te/investment-optimized.mp4',
         thumbnailUrl: '/academy/te/investment.webp',
         captionUrl: '/academy/te/investment.vtt',
         transcript: `నమస్కారం! కేవలం బ్యాంక్ ఖాతాలో లేదా ఇంట్లో నగదు రూపంలో డబ్బును దాచుకోవడం మీ ఆర్థిక భవిష్యత్తుకు ఎందుకు సరిపోదో మీరు ఎప్పుడైనా ఆలోచించారా?\n\nపొదుపు అంటే మీ మిగులు ఆదాయాన్ని తక్కువ రిస్క్ ఉండే బ్యాంక్ ఖాతా లేదా లాకర్‌లో భద్రపరచడం. పొదుపు మీ అసలు రూపాయలను భద్రంగా ఉంచుతుంది, కానీ ఇది 'ద్రవ్యోల్బణం' అంటే నిత్యావసర వస్తువుల ధరల పెరుగుదల అనే కనిపించని ముప్పును ఎదుర్కోలేదు. కాలక్రమేణా ద్రవ్యోల్బణం వల్ల సరుకులు, ఆహారం, విద్య, వైద్య ఖర్చులు నిరంతరం పెరుగుతాయి, దీనివల్ల మీ వద్ద ఉన్న నగదు కొనుగోలు శక్తి తగ్గుతుంది.
@@ -120,7 +120,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'పొదుపు నేటి అత్యవసరాలకు రక్షణ ఇస్తుంది; పెట్టుబడి రేపటి ద్రవ్యోల్బణాన్ని అధిగమించి సంపదను పెంచుతుంది.'
       },
       ta: {
-        videoUrl: '/academy/ta/investment.mp4',
+        videoUrl: '/academy/ta/investment-optimized.mp4',
         thumbnailUrl: '/academy/ta/investment.webp',
         captionUrl: '/academy/ta/investment.vtt',
         transcript: `வணக்கம்! வங்கிக் கணக்கிலோ அல்லது வீட்டிலோ பணத்தைச் சேமித்து வைப்பது மட்டும் உங்கள் நிதி எதிர்காலத்தைப் பாதுகாக்கப் போதுமானதாக இருக்காது என்பது பற்றி நீங்கள் எப்போதாவது யோசித்திருக்கிறீர்களா?\n\nசேமிப்பு என்பது உங்களின் உபரி வருமானத்தை குறைந்த ஆபத்துள்ள வங்கிக் கணக்கு அல்லது லாக்கரில் பாதுகாப்பாக வைப்பதாகும். சேமிப்பு உங்கள் மூல ரூபாய்களைப் பாதுகாக்கிறது, ஆனால் அது 'பணவீக்கம்' என்ற மறைமுக அச்சுறுத்தலை எதிர்கொள்ள முடியாது. காலப்போக்கில் பணவீக்கத்தால் உணவு, கல்வி, மருத்துவம் மற்றும் அத்தியாவசியப் பொருட்களின் விலைகள் தொடர்ந்து உயர்ந்து, உங்கள் பணத்தின் வாங்கும் சக்தியைக் குறைக்கிறது.
@@ -131,7 +131,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'சேமிப்பு என்பது இன்றைய அவசரத் தேவைக்கானது; முதலீடு என்பது நாளைய பணவீக்கத்தை வென்று செல்வத்தை உருவாக்குவது.'
       },
       ml: {
-        videoUrl: '/academy/ml/investment.mp4',
+        videoUrl: '/academy/ml/investment-optimized.mp4',
         thumbnailUrl: '/academy/ml/investment.webp',
         captionUrl: '/academy/ml/investment.vtt',
         transcript: `നമസ്കാരം! ബാങ്ക് അക്കൗണ്ടിലോ വീട്ടിലോ വെറുതെ പണം സൂക്ഷിക്കുന്നത് നിങ്ങളുടെ സാമ്പത്തിക ഭാവിയെ സുരക്ഷിതമാക്കാൻ പര്യാപ്തമല്ലെന്ന് നിങ്ങൾ എപ്പോഴെങ്കിലും ചിന്തിച്ചിട്ടുണ്ടോ?\n\nസമ്പാദ്യം എന്നാൽ നിങ്ങളുടെ മിച്ചവരുമാനം റിസ്ക് കുറഞ്ഞ ബാങ്ക് അക്കൗണ്ടിലോ ലോക്കറിലോ സൂക്ഷിക്കുക എന്നതാണ്. ഇത് നിങ്ങളുടെ പണത്തെ സംരക്ഷിക്കുന്നുണ്ടെങ്കിലും, 'പണപ്പെരുപ്പം' അഥവാ വിലക്കയറ്റം എന്ന അദൃശ്യ ഭീഷണിയെ തടയാൻ സമ്പാദ്യത്തിന് കഴിയില്ല. കാലക്രമേണ നിത്യോപയോഗ സാധനങ്ങൾ, വിദ്യാഭ്യാസം, ചികിത്സ എന്നിവയുടെ ചിലവ് വർദ്ധിക്കുകയും നിങ്ങളുടെ പണത്തിന്റെ വാങ്ങൽ ശേഷി കുറയുകയും ചെയ്യുന്നു.
@@ -142,7 +142,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'സമ്പാദ്യം ഇന്നത്തെ അത്യാവശ്യങ്ങൾക്കുള്ളതാണ്; നിക്ഷേപം നാളത്തെ പണപ്പെരുപ്പത്തെ തോൽപ്പിച്ച് സമ്പത്ത് വളർത്താനാണ്.'
       },
       mr: {
-        videoUrl: '/academy/mr/investment.mp4',
+        videoUrl: '/academy/mr/investment-optimized.mp4',
         thumbnailUrl: '/academy/mr/investment.webp',
         captionUrl: '/academy/mr/investment.vtt',
         transcript: `नमस्कार! फक्त बँक खात्यात किंवा घरात रोख रक्कम साठवून ठेवणे तुमच्या आर्थिक भविष्यासाठी पुरेसे का नाही, याचा तुम्ही कधी विचार केला आहे का?\n\nबचत म्हणजे तुमचे शिल्लक उत्पन्न कमी जोखीम असलेल्या बँक खात्यात किंवा लॉकरमध्ये सुरक्षित ठेवणे. बचत तुमच्या मूळ रुपयांचे रक्षण करते, परंतु ती 'महागाई' (इन्फ्लेशन) या अदृश्य धोक्यापासून वाचू शकत नाही. कालांतराने महागाईमुळे अन्नधान्य, शिक्षण, आरोग्य आणि रोजच्या वस्तूंच्या किमती सातत्याने वाढतात, ज्यामुळे तुमच्याकडील रोख रकमेची वास्तविक खरेदी क्षमता कमी होते.
@@ -153,7 +153,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
         keyTakeaway: 'बचत आजच्या सुरक्षेसाठी आहे; गुंतवणूक उद्याची महागाई मात करून संपत्ती वाढवण्यासाठी आहे.'
       },
       bn: {
-        videoUrl: '/academy/bn/investment.mp4',
+        videoUrl: '/academy/bn/investment-optimized.mp4',
         thumbnailUrl: '/academy/bn/investment.webp',
         captionUrl: '/academy/bn/investment.vtt',
         transcript: `নমস্কার! আপনি কি কখনও ভেবে দেখেছেন যে কেবল ব্যাংক একাউন্টে বা ঘরে নগদ টাকা জমিয়ে রাখা আপনার আর্থিক ভবিষ্যতের সুরক্ষার জন্য কেন যথেষ্ট নয়?\n\nসঞ্চয় মানে আপনার অতিরিক্ত আয় কম ঝুঁকিপূর্ণ ব্যাংক একাউন্টে বা লকারে নিরাপদে রাখা। সঞ্চয় আপনার মূল টাকাকে নিরাপদ রাখে ঠিকই, কিন্তু এটি 'মুদ্রাস্ফীতি' বা জিনিসপত্রের মূল্যবৃদ্ধির অদৃশ্য বিপদ থেকে বাঁচতে পারে না। সময়ের সাথে সাথে মুদ্রাস্ফীতির কারণে খাদ্য, শিক্ষা, চিকিৎসা এবং নিত্যপ্রয়োজনীয় জিনিসপত্রের দাম ক্রমাগত বৃদ্ধি পায়, যা আপনার জমানো নগদ টাকার প্রকৃত ক্রয়ক্ষমতা কমিয়ে দেয়।
@@ -173,7 +173,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/stock.mp4',
+    videoUrl: '/academy/en/stock-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8e064de4-e645-4491-a0fc-8afbc7c7ef02/playlist.m3u8',
     thumbnailUrl: '/academy/stock.webp',
     description: 'Understand what owning a company stock actually means, how equity works, and how shareholders participate in corporate growth.',
@@ -222,7 +222,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     vestiqPrompt: 'How does buying a stock make me a fractional owner of a business?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/stock.mp4',
+        videoUrl: '/academy/en/stock-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8e064de4-e645-4491-a0fc-8afbc7c7ef02/playlist.m3u8',
         thumbnailUrl: '/academy/en/stock.webp',
         captionUrl: '/academy/en/stock.vtt',
@@ -236,7 +236,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'Buying a stock is not just trading tickers; it is becoming a part-owner of a real business.'
       },
       hi: {
-        videoUrl: '/academy/hi/stock.mp4',
+        videoUrl: '/academy/hi/stock-optimized.mp4',
         thumbnailUrl: '/academy/hi/stock.webp',
         captionUrl: '/academy/hi/stock.vtt',
         transcript: `जब आप लोगों को शेयर बाजार में निवेश करने की बात करते सुनते हैं, तो वे वास्तव में क्या खरीद रहे होते हैं? क्या स्टॉक केवल स्क्रीन पर ऊपर-नीचे होने वाला कोई नंबर है?\n\nस्टॉक—जिसे इक्विटी या शेयर भी कहा जाता है—किसी वास्तविक कंपनी में कानूनी आंशिक स्वामित्व का प्रतिनिधित्व करता है। जब किसी कंपनी को नए कारखाने खोलने, नए इंजीनियरों को नियुक्त करने या नए उत्पादों पर शोध करने के लिए पूंजी की आवश्यकता होती है, तो वह एनएसई (NSE) या बीएसई (BSE) जैसे स्टॉक एक्सचेंजों पर जनता को स्टॉक जारी करके धन जुटाती है।
@@ -249,7 +249,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'स्टॉक खरीदना केवल टिकर ट्रेड करना नहीं है; यह एक वास्तविक व्यवसाय का हिस्सेदार बनना है।'
       },
       kn: {
-        videoUrl: '/academy/kn/stock.mp4',
+        videoUrl: '/academy/kn/stock-optimized.mp4',
         thumbnailUrl: '/academy/kn/stock.webp',
         captionUrl: '/academy/kn/stock.vtt',
         transcript: `ಷೇರು ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಹೂಡಿಕೆ ಮಾಡುವ ಬಗ್ಗೆ ಜನರು ಮಾತನಾಡುವುದನ್ನು ನೀವು ಕೇಳಿದಾಗ, ಅವರು ನಿಜವಾಗಿ ಏನನ್ನು ಖರೀದಿಸುತ್ತಿದ್ದಾರೆ? ಸ್ಟಾಕ್ ಎಂದರೆ ಕೇವಲ ಕಂಪ್ಯೂಟರ್ ಪರದೆಯ ಮೇಲಿನ ಸಂಖ್ಯೆಯೇ?\n\nಸ್ಟಾಕ್—ಅಥವಾ ಈಕ್ವಿಟಿ—ಎಂದರೆ ನಿಜವಾದ ಕಂಪನಿಯಲ್ಲಿ ಕಾನೂನುಬದ್ಧ ಭಾಗಶಃ ಮಾಲೀಕತ್ವ. ಒಂದು ಕಂಪನಿಗೆ ತನ್ನ ವ್ಯಾಪಾರ ವಿಸ್ತರಿಸಲು, ಹೊಸ ಕಾರ್ಖಾನೆಗಳನ್ನು ನಿರ್ಮಿಸಲು ಅಥವಾ ಸಂಶೋಧನೆ ಮಾಡಲು ಹಣ ಬೇಕಾದಾಗ, ಅದು ಎನ್‌ಎಸ್‌ಇ (NSE) ಅಥವಾ ಬಿಎಸ್‌ಇ (BSE) ಯಂತಹ ಷೇರು ವಿನಿಮಯ ಕೇಂದ್ರಗಳಲ್ಲಿ ಸಾರ್ವಜನಿಕರಿಗೆ ಷೇರುಗಳನ್ನು ಬಿಡುಗಡೆ ಮಾಡುತ್ತದೆ.
@@ -262,7 +262,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'ಸ್ಟಾಕ್ ಖರೀದಿಸುವುದು ಎಂದರೆ ಕೇವಲ ಟ್ರೇಡಿಂಗ್ ಅಲ್ಲ; ಅದು ನೈಜ ವ್ಯವಹಾರದ ಮಾಲೀಕತ್ವವನ್ನು ಪಡೆಯುವುದು.'
       },
       te: {
-        videoUrl: '/academy/te/stock.mp4',
+        videoUrl: '/academy/te/stock-optimized.mp4',
         thumbnailUrl: '/academy/te/stock.webp',
         captionUrl: '/academy/te/stock.vtt',
         transcript: `స్టాక్ మార్కెట్లో పెట్టుబడి పెట్టడం గురించి ప్రజలు మాట్లాడటం మీరు విన్నప్పుడు, వారు అసలు ఏమి కొంటున్నారు? స్టాక్ అంటే స్క్రీన్ మీద పైకి కిందకి కదిలే ఒక సంఖ్య మాత్రమేనా?\n\nస్టాక్—దీనినే ఈక్విటీ లేదా షేర్ అని కూడా అంటారు—ఒక నిజమైన కంపెనీలో చట్టబద్ధమైన పాక్షిక యాజమాన్యాన్ని సూచిస్తుంది. ఒక కంపెనీ తన వ్యాపారాన్ని విస్తరించడానికి, కొత్త కర్మాగారాలు నిర్మించడానికి లేదా పరిశోధనల కోసం నిధులు అవసరమైనప్పుడు, అది ఎన్‌ఎస్‌ఈ (NSE) లేదా బిఎస్‌ఈ (BSE) వంటి స్టాక్ ఎక్స్ఛేంజీలలో ప్రజలకు షేర్లను జారీ చేయడం ద్వారా మూలధనాన్ని సేకరిస్తుంది.
@@ -275,7 +275,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'స్టాక్ కొనడం అంటే కేవలం ట్రేడింగ్ చేయడం కాదు; అది ఒక నిజమైన వ్యాపారంలో భాగస్వామ్యం పొందడం.'
       },
       ta: {
-        videoUrl: '/academy/ta/stock.mp4',
+        videoUrl: '/academy/ta/stock-optimized.mp4',
         thumbnailUrl: '/academy/ta/stock.webp',
         captionUrl: '/academy/ta/stock.vtt',
         transcript: `பங்குச் சந்தையில் முதலீடு செய்வது பற்றி மக்கள் பேசுவதைக் கேட்கும்போது, அவர்கள் உண்மையில் எதை வாங்குகிறார்கள்? பங்கு என்பது வெறும் கணிப்பொறித் திரையில் ஏறி இறங்கும் எண்களா?\n\nபங்கு—அல்லது ஈக்விட்டி—என்பது ஒரு உண்மையான நிறுவனத்தில் சட்டப்பூர்வ பகுதி உரிமையைக் குறிக்கிறது. ஒரு நிறுவனம் தனது தொழிலை விரிவாக்க, புதிய தொழிற்சாலைகள் கட்ட அல்லது புதிய ஆராய்ச்சிகளை மேற்கொள்ள நிதி தேவைப்படும்போது, அது என்எஸ்இ (NSE) அல்லது பிஎஸ்இ (BSE) போன்ற பங்குச் சந்தைகளில் பொதுமக்களுக்குப் பங்குகளை வெளியிட்டு மூலதனத்தைத் திரட்டுகிறது.
@@ -288,7 +288,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'பங்கு வாங்குவது என்பது வெறும் வர்த்தகம் மட்டுமல்ல; அது ஒரு உண்மையான நிறுவனத்தின் உரிமையாளராக மாறுவது.'
       },
       ml: {
-        videoUrl: '/academy/ml/stock.mp4',
+        videoUrl: '/academy/ml/stock-optimized.mp4',
         thumbnailUrl: '/academy/ml/stock.webp',
         captionUrl: '/academy/ml/stock.vtt',
         transcript: `സ്റ്റോക്ക് മാർക്കറ്റിൽ നിക്ഷേപിക്കുന്നതിനെക്കുറിച്ച് ആളുകൾ സംസാരിക്കുന്നത് കേൾക്കുമ്പോൾ, അവർ യഥാർത്ഥത്തിൽ എന്താണ് വാങ്ങുന്നത്? സ്റ്റോക്ക് എന്നാൽ സ്ക്രീനിൽ കയറിയിറങ്ങുന്ന അക്കങ്ങൾ മാത്രമാണോ?\n\nസ്റ്റോക്ക്—അഥവാ ഇക്വിറ്റി—എന്നാൽ ഒരു കമ്പനിയിലെ നിയമപരമായ ഭാഗിക ഉടമസ്ഥാവകാശമാണ്. ഒരു കമ്പനിക്ക് പുതിയ ഫാക്ടറികൾ സ്ഥാപിക്കാനോ പുതിയ ഉൽപ്പന്നങ്ങൾ വികസിപ്പിക്കാനോ പണം ആവശ്യമായി വരുമ്പോൾ, എൻഎസ്ഇ (NSE) അല്ലെങ്കിൽ ബിഎസ്ഇ (BSE) പോലുള്ള സ്റ്റോക്ക് എക്സ്ചേഞ്ചുകൾ വഴി പൊതുജനങ്ങൾക്ക് ഓഹരികൾ വിതരണം ചെയ്ത് മൂലധനം സമാഹരിക്കുന്നു.
@@ -301,7 +301,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'സ്റ്റോക്ക് വാങ്ങുക എന്നാൽ വെറും ട്രേഡിംഗ് അല്ല; അത് ഒരു യഥാർത്ഥ ബിസിനസ്സിന്റെ ഉടമസ്ഥാവകാശം നേടലാണ്.'
       },
       mr: {
-        videoUrl: '/academy/mr/stock.mp4',
+        videoUrl: '/academy/mr/stock-optimized.mp4',
         thumbnailUrl: '/academy/mr/stock.webp',
         captionUrl: '/academy/mr/stock.vtt',
         transcript: `जेव्हा लोक शेअर बाजारात गुंतवणूक करण्याबद्दल बोलतात, तेव्हा ते नेमके काय खरेदी करत असतात? स्टॉक म्हणजे फक्त स्क्रीनवर वर-खाली होणारा आकडा असतो का?\n\nस्टॉक—ज्याला इक्विटी किंवा शेअर असेही म्हणतात—एका खऱ्या कंपनीतील कायदेशीर अंशतः मालकी दर्शवतो. जेव्हा एखाद्या कंपनीला नवीन कारखाने उभारण्यासाठी, नवीन अभियंते नियुक्त करण्यासाठी किंवा नवीन उत्पादनांवर संशोधन करण्यासाठी भांडवलाची आवश्यकता असते, तेव्हा ती एनएसई (NSE) किंवा बीएसई (BSE) सारख्या शेअर बाजारात जनतेला शेअर्स जारी करून निधी उभारते.
@@ -314,7 +314,7 @@ Second, through Dividends: when the company generates surplus profits, its board
         keyTakeaway: 'स्टॉक खरेदी करणे म्हणजे केवळ ट्रेडिंग नाही; ती एका खऱ्या व्यवसायाची मालकी मिळवणे आहे.'
       },
       bn: {
-        videoUrl: '/academy/bn/stock.mp4',
+        videoUrl: '/academy/bn/stock-optimized.mp4',
         thumbnailUrl: '/academy/bn/stock.webp',
         captionUrl: '/academy/bn/stock.vtt',
         transcript: `যখন মানুষ স্টক মার্কেটে বিনিয়োগের কথা বলে, তখন তারা আসলে কী ক্রয় করে? স্টক কি শুধুই স্ক্রিনে ওঠানামা করা কোনো সংখ্যা?\n\nস্টক—যাকে ইক্যুইটি বা শেয়ারও বলা হয়—একটি বাস্তব কোম্পানিতে আইনগত আংশিক মালিকানা নির্দেশ করে। একটি কোম্পানির যখন ব্যবসা বিস্তার করতে, নতুন কারখানা স্থাপন করতে বা গবেষণার জন্য অর্থের প্রয়োজন হয়, তখন তারা এনএসই (NSE) বা বিএসই (BSE)-এর মতো স্টক এক্সচেঞ্জে সাধারণ মানুষের কাছে শেয়ার ছেড়ে মূলধন সংগ্রহ করে।
@@ -336,7 +336,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/shares.mp4',
+    videoUrl: '/academy/en/shares-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/825b0fac-734a-4cdb-900b-b57a137122bd/playlist.m3u8',
     thumbnailUrl: '/academy/shares.webp',
     description: 'Learn the distinction between stock and shares, the pizza slice analogy, market capitalization, and stock split mechanics.',
@@ -386,7 +386,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     vestiqPrompt: 'Explain the difference between stock, shares, and market capitalization.',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/shares.mp4',
+        videoUrl: '/academy/en/shares-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/825b0fac-734a-4cdb-900b-b57a137122bd/playlist.m3u8',
         thumbnailUrl: '/academy/en/shares.webp',
         captionUrl: '/academy/en/shares.vtt',
@@ -401,7 +401,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'Shares are the countable units of company ownership; share price times total shares equals market cap.'
       },
       hi: {
-        videoUrl: '/academy/hi/shares.mp4',
+        videoUrl: '/academy/hi/shares-optimized.mp4',
         thumbnailUrl: '/academy/hi/shares.webp',
         captionUrl: '/academy/hi/shares.vtt',
         transcript: `वित्तीय बातचीत में लोग अक्सर 'स्टॉक' और 'शेयर' शब्दों का इस्तेमाल करते हैं, लेकिन क्या आप उनके बीच का सटीक अंतर जानते हैं?\n\nयद्यपि 'स्टॉक' शब्द किसी कंपनी के समग्र स्वामित्व या इक्विटी के विचार को संदर्भित करता है, लेकिन 'शेयर' उस स्वामित्व की एक विशिष्ट, गणनीय इकाई को दर्शाता है।
@@ -415,7 +415,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'शेयर्स कंपनी के स्वामित्व की गणनीय इकाइयाँ हैं; कुल शेयर्स गुणा शेयर मूल्य बराबर मार्केट कैप।'
       },
       kn: {
-        videoUrl: '/academy/kn/shares.mp4',
+        videoUrl: '/academy/kn/shares-optimized.mp4',
         thumbnailUrl: '/academy/kn/shares.webp',
         captionUrl: '/academy/kn/shares.vtt',
         transcript: `ಆರ್ಥಿಕ ಚರ್ಚೆಗಳಲ್ಲಿ ಜನರು 'ಸ್ಟಾಕ್' ಮತ್ತು 'ಷೇರು' ಎಂಬ ಪದಗಳನ್ನು ಬಳಸುತ್ತಾರೆ, ಆದರೆ ಅವುಗಳ ನಡುವಿನ ನಿಖರವಾದ ವ್ಯತ್ಯಾಸ ನಿಮಗೆ ತಿಳಿದಿದೆಯೇ?\n\n'ಸ್ಟಾಕ್' ಎಂಬುದು ಕಂಪನಿಯ ಒಟ್ಟು ಮಾಲೀಕತ್ವ ಅಥವಾ ಈಕ್ವಿಟಿಯ ಪರಿಕಲ್ಪನೆಯನ್ನು ಸೂಚಿಸಿದರೆ, 'ಷೇರು' ಎಂಬುದು ಆ ಮಾಲೀಕತ್ವದ ನಿರ್ದಿಷ್ಟ ಮತ್ತು ಎಣಿಸಬಹುದಾದ ಒಂದು ಘಟಕವಾಗಿದೆ.
@@ -429,7 +429,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'ಷೇರುಗಳು ಕಂಪನಿಯ ಮಾಲೀಕತ್ವದ ಎಣಿಸಬಹುದಾದ ಘಟಕಗಳು; ಒಟ್ಟು ಷೇರುಗಳು ಗುಣಿಸು ಷೇರು ಬೆಲೆ ಎಂದರೆ ಮಾರುಕಟ್ಟೆ ಮೌಲ್ಯ.'
       },
       te: {
-        videoUrl: '/academy/te/shares.mp4',
+        videoUrl: '/academy/te/shares-optimized.mp4',
         thumbnailUrl: '/academy/te/shares.webp',
         captionUrl: '/academy/te/shares.vtt',
         transcript: `ఆర్థిక విషయాల్లో ప్రజలు తరచుగా 'స్టాక్' మరియు 'షేర్' అనే పదాలను వాడుతుంటారు, అయితే వాటి మధ్య ఉన్న ఖచ్చితమైన తేడా మీకు తెలుసా?\n\n'స్టాక్' అనేది కంపెనీ మొత్తం యాజమాన్యం లేదా ఈక్విటీ భావనను సూచిస్తుంది, అయితే 'షేర్' అనేది ఆ యాజమాన్యానికి సంబంధించిన ఒక నిర్దిష్టమైన, లెక్కించదగిన యూనిట్.
@@ -443,7 +443,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'షేర్లు కంపెనీ యాజమాన్యపు లెక్కించదగిన యూనిట్లు; మొత్తం షేర్లు గుణకారం షేర్ ధర సమానం మార్కెట్ క్యాప్.'
       },
       ta: {
-        videoUrl: '/academy/ta/shares.mp4',
+        videoUrl: '/academy/ta/shares-optimized.mp4',
         thumbnailUrl: '/academy/ta/shares.webp',
         captionUrl: '/academy/ta/shares.vtt',
         transcript: `நிதி தொடர்பான உரையாடல்களில் மக்கள் 'ஸ்டாக்' மற்றும் 'ஷேர்' என்ற வார்த்தைகளைப் பயன்படுத்துகிறார்கள், ஆனால் அவற்றுக்கு இடையேயான துல்லியமான வேறுபாடு உங்களுக்குத் தெரியுமா?\n\n'ஸ்டாக்' என்பது நிறுவனத்தின் ஒட்டுமொத்த உரிமை அல்லது ஈக்விட்டியைக் குறிக்கும் போது, 'ஷேர்' என்பது அந்த உரிமையின் குறிப்பிட்ட, கணக்கிடக்கூடிய ஒரு அலகைக் குறிக்கிறது.
@@ -457,7 +457,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'ஷேர்கள் என்பது நிறுவனத்தின் கணக்கிடக்கூடிய உரிமை அலகுகள்; மொத்த பங்குகள் பெருக்கல் பங்கு விலை சமம் சந்தை மதிப்பு.'
       },
       ml: {
-        videoUrl: '/academy/ml/shares.mp4',
+        videoUrl: '/academy/ml/shares-optimized.mp4',
         thumbnailUrl: '/academy/ml/shares.webp',
         captionUrl: '/academy/ml/shares.vtt',
         transcript: `സാമ്പത്തിക ചർച്ചകളിൽ ആളുകൾ 'സ്റ്റോക്ക്', 'ഷെയർ' എന്നീ വാക്കുകൾ ഉപയോഗിക്കാറുണ്ട്, എന്നാൽ അവ തമ്മിലുള്ള കൃത്യമായ വ്യത്യാസം നിങ്ങൾക്ക് അറിയാമോ?\n\n'സ്റ്റോക്ക്' എന്നത് കമ്പനിയുടെ മൊത്തം ഉടമസ്ഥാവകാശത്തെ അല്ലെങ്കിൽ ഇക്വിറ്റിയെ സൂചിപ്പിക്കുമ്പോൾ, 'ഷെയർ' എന്നത് ആ ഉടമസ്ഥാവകാശത്തിന്റെ കൃത്യമായി എണ്ണാൻ കഴിയുന്ന ഒരു യൂണിറ്റാണ്.
@@ -471,7 +471,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'ഷെയറുകൾ എന്നത് കമ്പനി ഉടമസ്ഥാവകാശത്തിന്റെ എണ്ണാവുന്ന യൂണിറ്റുകളാണ്; ആകെ ഷെയറുകൾ ഗുണം ഷെയർ വില സമം മാർക്കറ്റ് ക്യാപ്.'
       },
       mr: {
-        videoUrl: '/academy/mr/shares.mp4',
+        videoUrl: '/academy/mr/shares-optimized.mp4',
         thumbnailUrl: '/academy/mr/shares.webp',
         captionUrl: '/academy/mr/shares.vtt',
         transcript: `आर्थिक संभाषणांमध्ये लोक 'स्टॉक' आणि 'शेअर' हे शब्द वापरतात, पण त्यातील नेमका फरक तुम्हाला माहिती आहे का?\n\n'स्टॉक' हा शब्द कंपनीच्या एकूण मालकी किंवा इक्विटीच्या संकल्पनेचा संदर्भ देतो, तर 'शेअर' हे त्या मालकीचे एक विशिष्ट, मोजता येण्याजोगे एकक (युनिट) असते.
@@ -485,7 +485,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
         keyTakeaway: 'शेअर्स म्हणजे कंपनीच्या मालकीचे मोजता येण्याजोगे युनिट्स; एकूण शेअर्स गुणिले शेअर किंमत म्हणजे मार्केट कॅप.'
       },
       bn: {
-        videoUrl: '/academy/bn/shares.mp4',
+        videoUrl: '/academy/bn/shares-optimized.mp4',
         thumbnailUrl: '/academy/bn/shares.webp',
         captionUrl: '/academy/bn/shares.vtt',
         transcript: `আর্থিক আলোচনায় মানুষ প্রায়শই 'স্টক' এবং 'শেয়ার' শব্দ দুটি ব্যবহার করে, কিন্তু আপনি কি এ দুটির সঠিক পার্থক্য জানেন?\n\n'স্টক' শব্দটি কোম্পানির সামগ্রিক মালিকানা বা ইক্যুইটির ধারণাকে নির্দেশ করে, আর 'শেয়ার' হলো সেই মালিকানার একটি নির্দিষ্ট, পরিমাপযোগ্য একক বা ইউনিট।
@@ -508,7 +508,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/etf.mp4',
+    videoUrl: '/academy/en/etf-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/3d810bb4-e710-4ece-9796-9de5a640b78f/playlist.m3u8',
     thumbnailUrl: '/academy/etf.webp',
     description: 'Explore Exchange-Traded Funds (ETFs), instant basket diversification, real-time exchange liquidity, and low expense ratios.',
@@ -559,7 +559,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     vestiqPrompt: 'How does an ETF like NIFTY 50 give me instant diversification?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/etf.mp4',
+        videoUrl: '/academy/en/etf-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/3d810bb4-e710-4ece-9796-9de5a640b78f/playlist.m3u8',
         thumbnailUrl: '/academy/en/etf.webp',
         captionUrl: '/academy/en/etf.vtt',
@@ -575,7 +575,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'An ETF gives you a diversified basket of many companies in a single, low-cost, liquid trade.'
       },
       hi: {
-        videoUrl: '/academy/hi/etf.mp4',
+        videoUrl: '/academy/hi/etf-optimized.mp4',
         thumbnailUrl: '/academy/hi/etf.webp',
         captionUrl: '/academy/hi/etf.vtt',
         transcript: `क्या आप भारत या दुनिया की शीर्ष 50 कंपनियों में एक साथ निवेश करना चाहते हैं, लेकिन आपके पास 50 अलग-अलग शेयर खरीदने का समय या लाखों रुपये नहीं हैं?\n\nयहीं पर ईटीएफ, यानी एक्सचेंज-ट्रेडेड फंड (Exchange-Traded Fund), आधुनिक निवेशकों के लिए एक बहुत शक्तिशाली उपकरण साबित होता है। ईटीएफ एक निवेश फंड है जिसमें कई प्रतिभूतियों—जैसे स्टॉक, बॉन्ड या कमोडिटी—की एक विविध बास्केट होती है, और यह स्टॉक एक्सचेंज पर एक सामान्य शेयर की तरह ही खरीदा और बेचा जाता है।
@@ -590,7 +590,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'ईटीएफ आपको एक ही कम लागत वाले और लिक्विड ट्रेड में कई कंपनियों की विविधता प्रदान करता है।'
       },
       kn: {
-        videoUrl: '/academy/kn/etf.mp4',
+        videoUrl: '/academy/kn/etf-optimized.mp4',
         thumbnailUrl: '/academy/kn/etf.webp',
         captionUrl: '/academy/kn/etf.vtt',
         transcript: `ಭಾರತದ ಅಥವಾ ಪ್ರಪಂಚದ ಅಗ್ರ 50 ಕಂಪನಿಗಳಲ್ಲಿ ಏಕಕಾಲದಲ್ಲಿ ಹೂಡಿಕೆ ಮಾಡಲು ಬಯಸುವಿರಾ, ಆದರೆ 50 ಪ್ರತ್ಯೇಕ ಷೇರುಗಳನ್ನು ಖರೀದಿಸಲು ಹಣ ಅಥವಾ ಸಮಯವಿಲ್ಲವೇ?\n\nಇಲ್ಲಿಯೇ ಇಟಿಎಫ್ (ETF - Exchange-Traded Fund) ಪ್ರಮುಖ ಪಾತ್ರ ವಹಿಸುತ್ತದೆ. ಇಟಿಎಫ್ ಎನ್ನುವುದು ಷೇರುಗಳು, ಬಾಂಡ್‌ಗಳು ಅಥವಾ ಚಿನ್ನದಂತಹ ವಿವಿಧ ಭದ್ರತೆಗಳ ಬುಟ್ಟಿಯನ್ನು ಹೊಂದಿರುವ ಹೂಡಿಕೆ ನಿಧಿಯಾಗಿದೆ ಮತ್ತು ಇದು ಸಾಮಾನ್ಯ ಷೇರಿನಂತೆಯೇ ಸ್ಟಾಕ್ ಎಕ್ಸ್‌ಚೇಂಜ್‌ನಲ್ಲಿ ವ್ಯಾಪಾರವಾಗುತ್ತದೆ.
@@ -605,7 +605,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'ಇಟಿಎಫ್ ಒಂದೇ ಕಡಿಮೆ ವೆಚ್ಚದ ವಹಿವಾಟಿನಲ್ಲಿ ಅನೇಕ ಕಂಪನಿಗಳ ವೈವಿಧ್ಯಮಯ ಹೂಡಿಕೆಯನ್ನು ನೀಡುತ್ತದೆ.'
       },
       te: {
-        videoUrl: '/academy/te/etf.mp4',
+        videoUrl: '/academy/te/etf-optimized.mp4',
         thumbnailUrl: '/academy/te/etf.webp',
         captionUrl: '/academy/te/etf.vtt',
         transcript: `భారతదేశంలోని లేదా ప్రపంచంలోని అగ్రశ్రేణి 50 కంపెనీలలో ఒకేసారి పెట్టుబడి పెట్టాలనుకుంటున్నారా, కానీ 50 వేర్వేరు షేర్లను కొనేంత డబ్బు లేదా సమయం లేదా?\n\nఇక్కడే ఈటీఎఫ్ (ETF - Exchange-Traded Fund) ఆధునిక పెట్టుబడిదారులకు అద్భుతమైన సాధనంగా మారుతుంది. ఇటిఎఫ్ అనేది షేర్లు, బాండ్లు లేదా బంగారం వంటి అనేక సెక్యూరిటీల బుట్టను కలిగి ఉండే ఒక పెట్టుబడి నిధి, ఇది సాధారణ షేరు లాగానే స్టాక్ ఎక్స్ఛేంజ్‌లో వర్తకం అవుతుంది.
@@ -620,7 +620,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'ఇటిఎఫ్ ఒకే తక్కువ-ఖర్చు ట్రేడ్‌లో అనేక కంపెనీల వైవిధ్యభరితమైన బుట్టను అందిస్తుంది.'
       },
       ta: {
-        videoUrl: '/academy/ta/etf.mp4',
+        videoUrl: '/academy/ta/etf-optimized.mp4',
         thumbnailUrl: '/academy/ta/etf.webp',
         captionUrl: '/academy/ta/etf.vtt',
         transcript: `இந்தியாவின் அல்லது உலகின் முன்னணி 50 நிறுவனங்களில் ஒரே நேரத்தில் முதலீடு செய்ய விரும்புகிறீர்களா, ஆனால் 50 தனித்தனி பங்குகளை வாங்க நேரமோ பணமோ இல்லையா?\n\nஇங்குதான் இடிஎஃப் (ETF - Exchange-Traded Fund) நவீன முதலீட்டாளர்களுக்கு ஒரு சிறந்த கருவியாக மாறுகிறது. இடிஎஃப் என்பது பங்குகள், பத்திரங்கள் அல்லது தங்கம் போன்ற பல சொத்துக்களின் தொகுப்பைக் கொண்ட ஒரு முதலீட்டு நிதியாகும், மேலும் இது சாதாரண பங்கைப்போலவே பங்குச் சந்தையில் வர்த்தகம் செய்யப்படுகிறது.
@@ -635,7 +635,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'இடிஎஃப் ஒரே குறைந்த கட்டண வர்த்தகத்தில் பல நிறுவனங்களின் பல்வகைப்பட்ட தொகுப்பை வழங்குகிறது.'
       },
       ml: {
-        videoUrl: '/academy/ml/etf.mp4',
+        videoUrl: '/academy/ml/etf-optimized.mp4',
         thumbnailUrl: '/academy/ml/etf.webp',
         captionUrl: '/academy/ml/etf.vtt',
         transcript: `ഇന്ത്യയിലെ മുൻനിര 50 കമ്പനികളിൽ ഒരേസമയം നിക്ഷേപിക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ, എന്നാൽ 50 കമ്പനികളുടെ ഷെയറുകൾ വെവ്വേറെ വാങ്ങാൻ പണമോ സമയമോ ഇല്ലേ?\n\nഇവിടെയാണ് ഇടിഎഫ് (ETF - Exchange-Traded Fund) ആധുനിക നിക്ഷേപകർക്ക് മികച്ചൊരു വഴിയാകുന്നത്. ഓഹരികൾ, ബോണ്ടുകൾ അല്ലെങ്കിൽ സ്വർണ്ണം എന്നിവയുടെ വൈവിധ്യമാർന്ന ശേഖരമുള്ള ഒരു നിക്ഷേപ ഫണ്ടാണ് ഇടിഎഫ്, ഇത് സാധാരണ ഷെയർ പോലെ തന്നെ സ്റ്റോക്ക് എക്സ്ചേഞ്ചിൽ ട്രേഡ് ചെയ്യപ്പെടുന്നു.
@@ -650,7 +650,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'ഇടിഎഫ് ഒറ്റ ട്രേഡിലൂടെ കുറഞ്ഞ ചിലവിൽ നിരവധി കമ്പനികളുടെ വൈവിധ്യമാർന്ന ബാസ്കറ്റ് നൽകുന്നു.'
       },
       mr: {
-        videoUrl: '/academy/mr/etf.mp4',
+        videoUrl: '/academy/mr/etf-optimized.mp4',
         thumbnailUrl: '/academy/mr/etf.webp',
         captionUrl: '/academy/mr/etf.vtt',
         transcript: `तुम्हाला भारतातील किंवा जगातील अव्वल 50 कंपन्यांमध्ये एकाच वेळी गुंतवणूक करायची आहे, पण 50 वेगळे शेअर्स खरेदी करायला पुरेसा वेळ किंवा लाखो रुपये नाहीत का?\n\nयेथेच ईटीएफ (ETF - Exchange-Traded Fund) आधुनिक गुंतवणूकदारांसाठी एक उत्तम साधन ठरतो. ईटीएफ हा शेअर्स, रोखे किंवा सोने यासारख्या अनेक सिक्युरिटीजची बास्केट असलेला फंड आहे, आणि तो सामान्य शेअरप्रमाणेच स्टॉक एक्स्चेंजवर खरेदी-विक्री केला जातो.
@@ -665,7 +665,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
         keyTakeaway: 'ईटीएफ एकाच कमी खर्चाच्या ट्रेडमध्ये अनेक कंपन्यांची वैविध्यपूर्ण बास्केट प्रदान करतो.'
       },
       bn: {
-        videoUrl: '/academy/bn/etf.mp4',
+        videoUrl: '/academy/bn/etf-optimized.mp4',
         thumbnailUrl: '/academy/bn/etf.webp',
         captionUrl: '/academy/bn/etf.vtt',
         transcript: `আপনি কি ভারতের বা বিশ্বের শীর্ষ ৫০টি কোম্পানিতে একসাথে বিনিয়োগ করতে চান, কিন্তু ৫০টি আলাদা শেয়ার কেনার মতো অর্থ বা সময় নেই?\n\nএখানেই ইটিএফ (ETF - Exchange-Traded Fund) আধুনিক বিনিয়োগকারীদের জন্য একটি শক্তিশালী মাধ্যম হয়ে ওঠে। ইটিএফ হলো একটি বিনিয়োগ ফান্ড যার মধ্যে শেয়ার, বন্ড বা সোনার মতো বহুবিধ সিকিউরিটির একটি বাস্কেট বা ঝুড়ি থাকে এবং এটি সাধারণ শেয়ারের মতোই স্টক এক্সচেঞ্জে কেনাবেচা করা যায়।
@@ -689,7 +689,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/mutual-fund.mp4',
+    videoUrl: '/academy/en/mutual-fund-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/751561c4-c037-4ae5-8ed8-389ef8424de2/playlist.m3u8',
     thumbnailUrl: '/academy/mutual-fund.webp',
     description: 'Discover how mutual funds pool investor capital for professional management, NAV calculation, and diversified investing.',
@@ -738,7 +738,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     vestiqPrompt: 'How does a mutual fund pool money, and what does NAV mean?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/mutual-fund.mp4',
+        videoUrl: '/academy/en/mutual-fund-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/751561c4-c037-4ae5-8ed8-389ef8424de2/playlist.m3u8',
         thumbnailUrl: '/academy/en/mutual-fund.webp',
         captionUrl: '/academy/en/mutual-fund.vtt',
@@ -752,7 +752,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'Mutual funds pool collective investor capital for professional management and built-in diversification.'
       },
       hi: {
-        videoUrl: '/academy/hi/mutual-fund.mp4',
+        videoUrl: '/academy/hi/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/hi/mutual-fund.webp',
         captionUrl: '/academy/hi/mutual-fund.vtt',
         transcript: `करोड़ों भारतीय परिवार हर महीने अपनी गाढ़ी कमाई का एक हिस्सा म्यूचुअल फंड में क्यों निवेश करते हैं?\n\nम्यूचुअल फंड एक ऐसा निवेश ट्रस्ट है जो हजारों व्यक्तिगत निवेशकों से पैसा इकट्ठा करता है और उस एकत्रित पूंजी से शेयरों, बॉन्डों और अन्य प्रतिभूतियों का एक पेशेवर रूप से प्रबंधित पोर्टफोलियो बनाता है।
@@ -765,7 +765,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'म्यूचुअल फंड पेशेवर प्रबंधन और विविधीकरण के लिए हजारों निवेशकों के धन को एक साथ जोड़ते हैं।'
       },
       kn: {
-        videoUrl: '/academy/kn/mutual-fund.mp4',
+        videoUrl: '/academy/kn/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/kn/mutual-fund.webp',
         captionUrl: '/academy/kn/mutual-fund.vtt',
         transcript: `ಕೋಟಿಗಟ್ಟಲೆ ಭಾರತೀಯ ಕುಟುಂಬಗಳು ಪ್ರತಿ ತಿಂಗಳು ತಮ್ಮ ಕಷ್ಟಪಟ್ಟು ಗಳಿಸಿದ ಹಣವನ್ನು ಮ್ಯೂಚುವಲ್ ಫಂಡ್‌ಗಳಲ್ಲಿ ಏಕೆ ಹೂಡಿಕೆ ಮಾಡುತ್ತವೆ?\n\nಮ್ಯೂಚುವಲ್ ಫಂಡ್ ಎನ್ನುವುದು ಸಾವಿರಾರು ವೈಯಕ್ತಿಕ ಹೂಡಿಕೆದಾರರಿಂದ ಹಣವನ್ನು ಸಂಗ್ರಹಿಸಿ, ಆ ಒಟ್ಟು ಬಂಡವಾಳದಿಂದ ಷೇರುಗಳು ಮತ್ತು ಬಾಂಡ್‌ಗಳ ವೃತ್ತಿಪರವಾಗಿ ನಿರ್ವಹಿಸಲ್ಪಡುವ ಪೋರ್ಟ್‌ಫೋಲಿಯೊವನ್ನು ರಚಿಸುವ ಹೂಡಿಕೆ ಸಂಸ್ಥೆಯಾಗಿದೆ.
@@ -778,7 +778,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'ಮ್ಯೂಚುವಲ್ ಫಂಡ್‌ಗಳು ವೃತ್ತಿಪರ ನಿರ್ವಹಣೆ ಮತ್ತು ವೈವಿಧ್ಯತೆಗಾಗಿ ಸಾವಿರಾರು ಹೂಡಿಕೆದಾರರ ಹಣವನ್ನು ಒಟ್ಟುಗೂಡಿಸುತ್ತವೆ.'
       },
       te: {
-        videoUrl: '/academy/te/mutual-fund.mp4',
+        videoUrl: '/academy/te/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/te/mutual-fund.webp',
         captionUrl: '/academy/te/mutual-fund.vtt',
         transcript: `కోట్లాది భారతీయ కుటుంబాలు ప్రతి నెలా తమ కష్టార్జితాన్ని మ్యూచువల్ ఫండ్లలో ఎందుకు పెట్టుబడి పెడుతున్నాయి?\n\nమ్యూచువల్ ఫండ్ అనేది వేలాది మంది వ్యక్తిగత పెట్టుబడిదారుల నుండి నిధులను సేకరించి, ఆ ఉమ్మడి మూలధనంతో షేర్లు మరియు బాండ్ల యొక్క వృత్తిపరంగా నిర్వహించబడే పోర్ట్‌ఫోలియోను రూపొందించే సంస్థ.
@@ -791,7 +791,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'మ్యూచువల్ ఫండ్లు వృత్తిపరమైన నిర్వహణ మరియు డైవర్సిఫికేషన్ కోసం వేలాది మంది పెట్టుబడిదారుల నిధులను ఒకచోట చేర్చుతాయి.'
       },
       ta: {
-        videoUrl: '/academy/ta/mutual-fund.mp4',
+        videoUrl: '/academy/ta/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/ta/mutual-fund.webp',
         captionUrl: '/academy/ta/mutual-fund.vtt',
         transcript: `கோடிக்கணக்கான இந்தியக் குடும்பங்கள் ஒவ்வொரு மாதமும் தங்களின் உழைத்த பணத்தை மியூச்சுவல் ஃபண்டுகளில் ஏன் முதலீடு செய்கிறார்கள்?\n\nமியூச்சுவல் ஃபண்ட் என்பது ஆயிரக்கணக்கான தனிப்பட்ட முதலீட்டாளர்களிடமிருந்து பணத்தை ஒன்று திரட்டி, அந்த நிதியைக் கொண்டு பங்குகள் மற்றும் பத்திரங்களின் தொழில்முறை நிர்வகிக்கப்படும் போர்ட்ஃபோலியோவை உருவாக்கும் ஒரு முதலீட்டு அமைப்பாகும்.
@@ -804,7 +804,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'மியூச்சுவல் ஃபண்டுகள் தொழில்முறை மேலாண்மை மற்றும் பல்வகைப்படுத்தலுக்காக ஆயிரக்கணக்கான முதலீட்டாளர்களின் பணத்தை ஒன்று சேர்க்கின்றன.'
       },
       ml: {
-        videoUrl: '/academy/ml/mutual-fund.mp4',
+        videoUrl: '/academy/ml/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/ml/mutual-fund.webp',
         captionUrl: '/academy/ml/mutual-fund.vtt',
         transcript: `കോടിക്കണക്കിന് ഇന്ത്യൻ കുടുംബങ്ങൾ എല്ലാ മാസവും കഷ്ടപ്പെട്ട് സമ്പാദിച്ച പണം മ്യൂച്വൽ ഫണ്ടുകളിൽ നിക്ഷേപിക്കുന്നത് എന്തുകൊണ്ടാണ്?\n\nആയിരക്കണക്കിന് വ്യക്തിഗത നിക്ഷേപകരിൽ നിന്ന് പണം സമാഹരിച്ച് ഓഹരികളുടെയും ബോണ്ടുകളുടെയും ഒരു പ്രൊഫഷണൽ പോർട്ട്ഫോളിയോ രൂപീകരിക്കുന്ന സ്ഥാപനമാണ് മ്യൂച്വൽ ഫണ്ട്.
@@ -817,7 +817,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'പ്രൊഫഷണൽ മാനേജ്‌മെന്റിനും വൈവിധ്യവൽക്കരണത്തിനുമായി ആയിരക്കണക്കിന് നിക്ഷേപകരുടെ പണം മ്യൂച്വൽ ഫണ്ടുകൾ ഒരുമിപ്പിക്കുന്നു.'
       },
       mr: {
-        videoUrl: '/academy/mr/mutual-fund.mp4',
+        videoUrl: '/academy/mr/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/mr/mutual-fund.webp',
         captionUrl: '/academy/mr/mutual-fund.vtt',
         transcript: `कोट्यवधी भारतीय कुटुंबे दरमहा त्यांच्या कष्टाचे पैसे म्युच्युअल फंडात का गुंतवतात?\n\nम्युच्युअल फंड ही एक अशी गुंतवणूक संस्था आहे जी हजारो वैयक्तिक गुंतवणूकदारांकडून पैसा गोळा करते आणि त्या निधीतून शेअर्स आणि रोख्यांचा व्यावसायिकरित्या व्यवस्थापित पोर्टफोलिओ तयार करते.
@@ -830,7 +830,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
         keyTakeaway: 'म्युच्युअल फंड व्यावसायिक व्यवस्थापन आणि वैविध्यीकरणासाठी हजारो गुंतवणूकदारांचा पैसा एकत्र आणतात.'
       },
       bn: {
-        videoUrl: '/academy/bn/mutual-fund.mp4',
+        videoUrl: '/academy/bn/mutual-fund-optimized.mp4',
         thumbnailUrl: '/academy/bn/mutual-fund.webp',
         captionUrl: '/academy/bn/mutual-fund.vtt',
         transcript: `কোটি কোটি ভারতীয় পরিবার প্রতি মাসে তাদের কষ্টার্জিত অর্থ কেন মিউচুয়াল ফান্ডে বিনিয়োগ করছে?\n\nমিউচুয়াল ফান্ড হলো এমন একটি বিনিয়োগ ট্রাস্ট যা হাজার হাজার সাধারণ বিনিয়োগকারীর কাছ থেকে অর্থ সংগ্রহ করে শেয়ার এবং বন্ডের একটি পেশাদারভাবে পরিচালিত পোর্টফোলিও তৈরি করে।
@@ -852,7 +852,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/long-term.mp4',
+    videoUrl: '/academy/en/long-term-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8dafd07a-c1b5-41ef-8da3-cb6714f51116/playlist.m3u8',
     thumbnailUrl: '/academy/long-term.webp',
     description: 'Why time in the market beats timing the market, historical return probabilities, and the power of patience over daily noise.',
@@ -899,7 +899,7 @@ Long-term investing also offers massive structural advantages: you save signific
     vestiqPrompt: 'Why does time in the market beat timing the market?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/long-term.mp4',
+        videoUrl: '/academy/en/long-term-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8dafd07a-c1b5-41ef-8da3-cb6714f51116/playlist.m3u8',
         thumbnailUrl: '/academy/en/long-term.webp',
         captionUrl: '/academy/en/long-term.vtt',
@@ -911,7 +911,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'Time in the market beats timing the market; patience allows businesses and compounding to work for you.'
       },
       hi: {
-        videoUrl: '/academy/hi/long-term.mp4',
+        videoUrl: '/academy/hi/long-term-optimized.mp4',
         thumbnailUrl: '/academy/hi/long-term.webp',
         captionUrl: '/academy/hi/long-term.vtt',
         transcript: `यदि आप दैनिक वित्तीय समाचार देखते हैं, तो आपको लग सकता है कि निवेश का मतलब रोजाना शेयर खरीदना और बेचना है। लेकिन ऐतिहासिक आंकड़े वास्तव में क्या साबित करते हैं?\n\nइतिहास लगातार यह दिखाता है कि सबसे सफल धन निर्माता वे होते हैं जो दीर्घकालिक निवेशक होते हैं। दीर्घकालिक निवेश का अर्थ है अपनी पूंजी को 5, 10, 15 या उससे अधिक वर्षों के लिए गुणवत्तापूर्ण संपत्तियों में निवेशित रखना।
@@ -922,7 +922,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'बाजार को टाइम करने से बेहतर है बाजार में समय बिताना; धैर्य से कंपाउंडिंग आपके लिए काम करती है।'
       },
       kn: {
-        videoUrl: '/academy/kn/long-term.mp4',
+        videoUrl: '/academy/kn/long-term-optimized.mp4',
         thumbnailUrl: '/academy/kn/long-term.webp',
         captionUrl: '/academy/kn/long-term.vtt',
         transcript: `ದೈನಂದಿನ ಸುದ್ದಿಗಳನ್ನು ನೋಡುವಾಗ ಹೂಡಿಕೆ ಎಂದರೆ ಪ್ರತಿದಿನ ಷೇರುಗಳನ್ನು ಖರೀದಿಸುವುದು ಮತ್ತು ಮಾರುವುದು ಎಂದು ಅನಿಸಬಹುದು. ಆದರೆ ಇತಿಹಾಸವು ಏನನ್ನು ಸಾಬೀತುಪಡಿಸುತ್ತದೆ?\n\nಇತಿಹಾಸದ ಪ್ರಕಾರ ದೀರ್ಘಾವಧಿಯ ಹೂಡಿಕೆದಾರರೇ ಅತ್ಯಂತ ಯಶಸ್ವಿ ಸಂಪತ್ತು ಸೃಷ್ಟಿಕರ್ತರು. ದೀರ್ಘಾವಧಿ ಹೂಡಿಕೆ ಎಂದರೆ ನಿಮ್ಮ ಬಂಡವಾಳವನ್ನು 5, 10, 15 ಅಥವಾ ಅದಕ್ಕಿಂತ ಹೆಚ್ಚು ವರ್ಷಗಳ ಕಾಲ ಗುಣಮಟ್ಟದ ಆಸ್ತಿಗಳಲ್ಲಿ ತೊಡಗಿಸುವುದು.
@@ -933,7 +933,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'ಮಾರುಕಟ್ಟೆಯನ್ನು ಟೈಮ್ ಮಾಡುವುದಕ್ಕಿಂತ ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಸಮಯ ಕಳೆಯುವುದು ಮುಖ್ಯ; ತಾಳ್ಮೆಯಿಂದ ಕಾಂಪೌಂಡಿಂಗ್ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ.'
       },
       te: {
-        videoUrl: '/academy/te/long-term.mp4',
+        videoUrl: '/academy/te/long-term-optimized.mp4',
         thumbnailUrl: '/academy/te/long-term.webp',
         captionUrl: '/academy/te/long-term.vtt',
         transcript: `రోజూ ఆర్థిక వార్తలను చూసినప్పుడు పెట్టుబడి అంటే రోజూ షేర్లను కొనడం, అమ్మడం అనిపించవచ్చు. కానీ చరిత్ర వాస్తవానికి ఏమి నిరూపిస్తోంది?\n\nచరిత్ర ప్రకారం దీర్ఘకాలిక పెట్టుబడిదారులే అత్యంత విజయవంతమైన సంపద సృష్టికర్తలు. దీర్ఘకాలిక పెట్టుబడి అంటే మీ మూలధనాన్ని 5, 10, 15 లేదా అంతకంటే ఎక్కువ సంవత్సరాల పాటు నాణ్యమైన ఆస్తులలో ఉంచడం.
@@ -944,7 +944,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'మార్కెట్‌ను టైమ్ చేయడం కంటే మార్కెట్‌లో సమయం గడపడమే ముఖ్యం; ఓర్పుతో కాంపౌండింగ్ సంపదను సృష్టిస్తుంది.'
       },
       ta: {
-        videoUrl: '/academy/ta/long-term.mp4',
+        videoUrl: '/academy/ta/long-term-optimized.mp4',
         thumbnailUrl: '/academy/ta/long-term.webp',
         captionUrl: '/academy/ta/long-term.vtt',
         transcript: `தினசரி நிதிச் செய்திகளைப் பார்க்கும்போது முதலீடு என்பது தினமும் பங்குகளை வாங்கி விற்பது என்று தோன்றலாம். ஆனால் வரலாறு உண்மையில் என்ன நிரூபிக்கிறது?\n\nவரலாற்று ரீதியாக நீண்ட கால முதலீட்டாளர்களே மிகப்பெரிய செல்வத்தை உருவாக்கியுள்ளனர். நீண்ட கால முதலீடு என்பது உங்கள் மூலதனத்தை 5, 10, 15 அல்லது அதற்கு மேற்பட்ட ஆண்டுகளுக்குத் தரமான சொத்துக்களில் முதலீடு செய்து வைத்திருப்பதாகும்.
@@ -955,7 +955,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'சந்தையை டைம் செய்வதை விட சந்தையில் நீண்ட காலம் இருப்பதே சிறந்தது; பொறுமையுடன் கூட்டு வட்டி உங்களுக்காக உழைக்கும்.'
       },
       ml: {
-        videoUrl: '/academy/ml/long-term.mp4',
+        videoUrl: '/academy/ml/long-term-optimized.mp4',
         thumbnailUrl: '/academy/ml/long-term.webp',
         captionUrl: '/academy/ml/long-term.vtt',
         transcript: `ദൈനംദിന വാർത്തകൾ കാണുമ്പോൾ നിക്ഷേപം എന്നാൽ ദിവസവും ഓഹരികൾ വാങ്ങലും വിൽക്കലുമാണെന്ന് തോന്നാം. എന്നാൽ ചരിത്രം യഥാർത്ഥത്തിൽ എന്താണ് തെളിയിക്കുന്നത്?\n\nചരിത്രപരമായി ദീർഘകാല നിക്ഷേപകരാണ് ഏറ്റവും വലിയ സമ്പത്ത് ഉണ്ടാക്കിയിട്ടുള്ളത്. ദീർഘകാല നിക്ഷേപം എന്നാൽ നിങ്ങളുടെ പണം 5, 10, 15 അല്ലെങ്കിൽ അതിൽ കൂടുതൽ വർഷത്തേക്ക് മികച്ച ആസ്തികളിൽ നിലനിർത്തുക എന്നതാണ്.
@@ -966,7 +966,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'മാർക്കറ്റ് ടൈം ചെയ്യുന്നതിനേക്കാൾ മാർക്കറ്റിൽ കൂടുതൽ സമയം തുടരുന്നതാണ് പ്രധാനം; ക്ഷമയോടെയുള്ള കോമ്പൗണ്ടിംഗ് സമ്പത്ത് നൽകും.'
       },
       mr: {
-        videoUrl: '/academy/mr/long-term.mp4',
+        videoUrl: '/academy/mr/long-term-optimized.mp4',
         thumbnailUrl: '/academy/mr/long-term.webp',
         captionUrl: '/academy/mr/long-term.vtt',
         transcript: `दररोजच्या आर्थिक बातम्या पाहिल्यावर गुंतवणूक म्हणजे रोज शेअर्स खरेदी-विक्री करणे असे वाटू शकते. पण इतिहास प्रत्यक्षात काय सिद्ध करतो?\n\nइतिहास सातत्याने दाखवून देतो की दीर्घकालीन गुंतवणूकदारच सर्वात यशस्वी संपत्ती निर्माते असतात. दीर्घकालीन गुंतवणूक म्हणजे तुमचे भांडवल 5, 10, 15 किंवा त्याहून अधिक वर्षे चांगल्या मालमत्तेत गुंतवून ठेवणे.
@@ -977,7 +977,7 @@ Long-term investing also offers massive structural advantages: you save signific
         keyTakeaway: 'बाजाराची वेळ साधण्यापेक्षा बाजारात वेळ घालवणे महत्त्वाचे; संयमाने चक्रवाढ संपत्ती तयार करते.'
       },
       bn: {
-        videoUrl: '/academy/bn/long-term.mp4',
+        videoUrl: '/academy/bn/long-term-optimized.mp4',
         thumbnailUrl: '/academy/bn/long-term.webp',
         captionUrl: '/academy/bn/long-term.vtt',
         transcript: `প্রতিদিনের আর্থিক খবর দেখলে মনে হতে পারে বিনিয়োগ মানে প্রতিদিন শেয়ার কেনাবেচা করা। কিন্তু ইতিহাস প্রকৃতপক্ষে কী প্রমাণ করে?\n\nইতিহাস ধারাবাহিকভাবে প্রমাণ করে যে দীর্ঘমেয়াদী বিনিয়োগকারীরাই সবচেয়ে সফল সম্পদ নির্মাতা। দীর্ঘমেয়াদী বিনিয়োগ মানে আপনার অর্থ ৫, ১০, ১৫ বা তার বেশি বছরের জন্য ভালো সম্পদে বিনিয়োগ করে রাখা।
@@ -997,7 +997,7 @@ Long-term investing also offers massive structural advantages: you save signific
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/compounding.mp4',
+    videoUrl: '/academy/en/compounding-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/ef3b3a20-9d19-48a2-8080-d04355308c80/playlist.m3u8',
     thumbnailUrl: '/academy/compounding.webp',
     description: 'The mathematical force of exponential growth: initial principal plus accumulated returns creating momentum over time.',
@@ -1047,7 +1047,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
     vestiqPrompt: 'Show me a numerical example of compounding with ₹5,000 monthly.',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/compounding.mp4',
+        videoUrl: '/academy/en/compounding-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/ef3b3a20-9d19-48a2-8080-d04355308c80/playlist.m3u8',
         thumbnailUrl: '/academy/en/compounding.webp',
         captionUrl: '/academy/en/compounding.vtt',
@@ -1062,7 +1062,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'Compounding is mathematical momentum: returns earning returns over uninterrupted time.'
       },
       hi: {
-        videoUrl: '/academy/hi/compounding.mp4',
+        videoUrl: '/academy/hi/compounding-optimized.mp4',
         thumbnailUrl: '/academy/hi/compounding.webp',
         captionUrl: '/academy/hi/compounding.vtt',
         transcript: `कंपाउंडिंग को व्यक्तिगत धन सृजन में दुनिया की सबसे शक्तिशाली गणितीय शक्ति क्यों कहा जाता है? अल्बर्ट आइंस्टीन ने कथित तौर पर इसे दुनिया का आठवां अजूबा कहा था।\n\nसाधारण ब्याज में आपको केवल अपने मूलधन पर ही रिटर्न मिलता है। लेकिन कंपाउंडिंग यानी चक्रवृद्धि का अर्थ है अपने मूलधन के साथ-साथ पिछले वर्षों में अर्जित किए गए सभी रिटर्न और ब्याज पर भी नया रिटर्न कमाना।
@@ -1076,7 +1076,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'कंपाउंडिंग गणितीय गति है: बिना रुकावट के समय के साथ रिटर्न पर रिटर्न कमाना।'
       },
       kn: {
-        videoUrl: '/academy/kn/compounding.mp4',
+        videoUrl: '/academy/kn/compounding-optimized.mp4',
         thumbnailUrl: '/academy/kn/compounding.webp',
         captionUrl: '/academy/kn/compounding.vtt',
         transcript: `ವೈಯಕ್ತಿಕ ಹಣಕಾಸು ಜಗತ್ತಿನಲ್ಲಿ ಕಾಂಪೌಂಡಿಂಗ್ ಅನ್ನು ಅತ್ಯಂತ ಶಕ್ತಿಶಾಲಿ ಗಣಿತ ಶಕ್ತಿ ಎಂದು ಏಕೆ ಕರೆಯುತ್ತಾರೆ?\n\nಸರಳ ಬಡ್ಡಿಯಲ್ಲಿ ನೀವು ಕೇವಲ ಅಸಲಿನ ಮೇಲೆ ಮಾತ್ರ ಆದಾಯ ಗಳಿಸುತ್ತೀರಿ. ಆದರೆ ಕಾಂಪೌಂಡಿಂಗ್ ಅಥವಾ ಚಕ್ರಬಡ್ಡಿಯಲ್ಲಿ ನಿಮ್ಮ ಮೂಲ ಅಸಲು ಮತ್ತು ಹಿಂದಿನ ವರ್ಷಗಳಲ್ಲಿ ಗಳಿಸಿದ ಎಲ್ಲಾ ಲಾಭದ ಮೇಲೆಯೂ ಹೊಸ ಲಾಭವನ್ನು ಗಳಿಸುತ್ತೀರಿ.
@@ -1090,7 +1090,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'ಕಾಂಪೌಂಡಿಂಗ್ ಎಂದರೆ ಗಳಿಕೆಯ ಮೇಲೆ ಮತ್ತಷ್ಟು ಗಳಿಕೆಯನ್ನು ಸತತವಾಗಿ ಪಡೆಯುವ ಅದ್ಭುತ ಶಕ್ತಿ.'
       },
       te: {
-        videoUrl: '/academy/te/compounding.mp4',
+        videoUrl: '/academy/te/compounding-optimized.mp4',
         thumbnailUrl: '/academy/te/compounding.webp',
         captionUrl: '/academy/te/compounding.vtt',
         transcript: `వ్యక్తిగత సంపద సృష్టిలో కాంపౌండింగ్‌ను అత్యంత శక్తివంతమైన గణిత శక్తి అని ఎందుకు అంటారు?\n\nసాధారణ వడ్డీలో మీరు అసలుపై మాత్రమే లాభం పొందుతారు. కానీ కాంపౌండింగ్ లేదా చక్రవడ్డీలో మీ అసలుతో పాటు గత సంవత్సరాల్లో వచ్చిన మొత్తం లాభాలపై కూడా కొత్త లాభాలను పొందుతారు.
@@ -1104,7 +1104,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'కాంపౌండింగ్ అనేది లాభాలపై తిరిగి లాభాలను నిరంతరం ఆర్జించే గణిత అద్భుతం.'
       },
       ta: {
-        videoUrl: '/academy/ta/compounding.mp4',
+        videoUrl: '/academy/ta/compounding-optimized.mp4',
         thumbnailUrl: '/academy/ta/compounding.webp',
         captionUrl: '/academy/ta/compounding.vtt',
         transcript: `தனிநபர் நிதி உலகில் கூட்டு வட்டி ஏன் மிகவும் சக்திவாய்ந்த கணித ஆற்றலாகக் கருதப்படுகிறது?\n\nதனி வட்டியில் உங்கள் அசல் தொகைக்கு மட்டுமே வருமானம் கிடைக்கும். ஆனால் கூட்டு வட்டியில் உங்கள் அசல் தொகையுடன் சேர்த்து முந்தைய ஆண்டுகளில் ஈட்டிய அனைத்து லாபங்களுக்கும் புதிய வருமானம் கிடைக்கும்.
@@ -1118,7 +1118,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'கூட்டு வட்டி என்பது வருமானத்தின் மீதும் தொடர்ந்து வருமானம் ஈட்டும் அற்புத கணித ஆற்றல்.'
       },
       ml: {
-        videoUrl: '/academy/ml/compounding.mp4',
+        videoUrl: '/academy/ml/compounding-optimized.mp4',
         thumbnailUrl: '/academy/ml/compounding.webp',
         captionUrl: '/academy/ml/compounding.vtt',
         transcript: `സാമ്പത്തിക ലോകത്ത് കോമ്പൗണ്ടിംഗിനെ ഏറ്റവും ശക്തമായ ഗണിത ശക്തി എന്ന് വിളിക്കുന്നത് എന്തുകൊണ്ടാണ്?\n\nസാധാരണ പലിശയിൽ നിങ്ങളുടെ മുതൽ തുകയ്ക്ക് മാത്രമേ വരുമാനം ലഭിക്കൂ. എന്നാൽ കോമ്പൗണ്ടിംഗിൽ നിങ്ങളുടെ മുതലിനും മുൻ വർഷങ്ങളിൽ ലഭിച്ച ലാഭത്തിനും ചേർത്ത് പുതിയ ലാഭം ലഭിക്കുന്നു.
@@ -1132,7 +1132,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'കോമ്പൗണ്ടിംഗ് എന്നാൽ ലാഭത്തിന്മേൽ വീണ്ടും ലാഭം തുടർച്ചയായി നേടുന്ന അത്ഭുതകരമായ ഗണിത ശക്തിയാണ്.'
       },
       mr: {
-        videoUrl: '/academy/mr/compounding.mp4',
+        videoUrl: '/academy/mr/compounding-optimized.mp4',
         thumbnailUrl: '/academy/mr/compounding.webp',
         captionUrl: '/academy/mr/compounding.vtt',
         transcript: `व्यक्तिगत संपत्ती निर्मितीमध्ये चक्रवाढ म्हणजेच कंपाउंडिंगला जगातील सर्वात शक्तिशाली गणिती शक्ती का म्हटले जाते?\n\nसरळ व्याजात तुम्हाला केवळ मुद्दलावरच परतावा मिळतो. पण कंपाउंडिंगमध्ये तुमच्या मुद्दलासोबतच मागील वर्षांत मिळालेल्या सर्व नफ्यावरही नवीन परतावा मिळतो.
@@ -1146,7 +1146,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
         keyTakeaway: 'कंपाउंडिंग ही परताव्यावर सातत्याने नवीन परतावा मिळवण्याची शक्तिशाली गणिती ताकद आहे.'
       },
       bn: {
-        videoUrl: '/academy/bn/compounding.mp4',
+        videoUrl: '/academy/bn/compounding-optimized.mp4',
         thumbnailUrl: '/academy/bn/compounding.webp',
         captionUrl: '/academy/bn/compounding.vtt',
         transcript: `ব্যক্তিগত সম্পদ তৈরিতে কম্পাউন্ডিং অর্থাৎ চক্রবৃদ্ধি সুদকে বিশ্বের সবচেয়ে শক্তিশালী গাণিতিক শক্তি কেন বলা হয়?\n\nসরল সুদে আপনি কেবল মূলধনের ওপর রিটার্ন পান। কিন্তু কম্পাউন্ডিংয়ে আপনি আপনার মূলধনের সাথে সাথে বিগত বছরগুলোতে অর্জিত সমস্ত লাভের ওপরও নতুন লাভ পান।
@@ -1169,7 +1169,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/sip.mp4',
+    videoUrl: '/academy/en/sip-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/7c6494f6-56f1-403e-9abd-8ab2e70bdd20/playlist.m3u8',
     thumbnailUrl: '/academy/sip.webp',
     description: 'Systematic Investment Plans in India: automating monthly discipline and leveraging Rupee Cost Averaging across market cycles.',
@@ -1218,7 +1218,7 @@ Over time, this automatically lowers your average purchase price per unit withou
     vestiqPrompt: 'Explain Rupee Cost Averaging in SIP when markets fall and rise.',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/sip.mp4',
+        videoUrl: '/academy/en/sip-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/7c6494f6-56f1-403e-9abd-8ab2e70bdd20/playlist.m3u8',
         thumbnailUrl: '/academy/en/sip.webp',
         captionUrl: '/academy/en/sip.vtt',
@@ -1232,7 +1232,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'A SIP turns regular savings into automated investing through disciplined Rupee Cost Averaging.'
       },
       hi: {
-        videoUrl: '/academy/hi/sip.mp4',
+        videoUrl: '/academy/hi/sip-optimized.mp4',
         thumbnailUrl: '/academy/hi/sip.webp',
         captionUrl: '/academy/hi/sip.vtt',
         transcript: `एक मध्यमवर्गीय वेतनभोगी पेशेवर या छात्र बिना किसी भारी एकमुश्त राशि और बिना बाजार के दैनिक तनाव के लाखों रुपये का बड़ा पोर्टफोलियो कैसे बना सकता है?\n\nभारत में निवेश करने का सबसे लोकप्रिय, सुरक्षित और अनुशासित तरीका एसआईपी है—जिसका पूरा नाम सिस्टेमैटिक इन्वेस्टमेंट प्लान (Systematic Investment Plan) है। एसआईपी कोई अलग उत्पाद या नई परिसंपत्ति नहीं है; यह म्यूचुअल फंड में नियमित और व्यवस्थित रूप से निवेश करने का एक स्वचालित तरीका है।
@@ -1245,7 +1245,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'एसआईपी नियमित बचत को रूपी कॉस्ट एवरेजिंग के जरिए अनुशासित स्वचालित निवेश में बदल देता है।'
       },
       kn: {
-        videoUrl: '/academy/kn/sip.mp4',
+        videoUrl: '/academy/kn/sip-optimized.mp4',
         thumbnailUrl: '/academy/kn/sip.webp',
         captionUrl: '/academy/kn/sip.vtt',
         transcript: `ಒಬ್ಬ ಸಂಬಳ ಪಡೆಯುವ ಉದ್ಯೋಗಿ ಅಥವಾ ವಿದ್ಯಾರ್ಥಿ ದೊಡ್ಡ ಮೊತ್ತವಿಲ್ಲದೆ ಮತ್ತು ಮಾರುಕಟ್ಟೆಯ ಚಿಂತೆಯಿಲ್ಲದೆ ಲಕ್ಷಾಂತರ ರೂಪಾಯಿಗಳ ಪೋರ್ಟ್‌ಫೋಲಿಯೊವನ್ನು ಹೇಗೆ ನಿರ್ಮಿಸಬಹುದು?\n\nಭಾರತದಲ್ಲಿ ಅತ್ಯಂತ ಜನಪ್ರಿಯ ಮತ್ತು ಶಿಸ್ತುಬದ್ಧ ಹೂಡಿಕೆ ವಿಧಾನವೇ ಎಸ್‌ಐಪಿ—ಅಂದರೆ ಸಿಸ್ಟಮ್ಯಾಟಿಕ್ ಇನ್ವೆಸ್ಟ್‌ಮೆಂಟ್ ಪ್ಲಾನ್ (Systematic Investment Plan). ಎಸ್‌ಐಪಿ ಪ್ರತ್ಯೇಕ ಉತ್ಪನ್ನವಲ್ಲ; ಇದು ಮ್ಯೂಚುವಲ್ ಫಂಡ್‌ಗಳಲ್ಲಿ ನಿಯಮಿತವಾಗಿ ಹೂಡಿಕೆ ಮಾಡುವ ಒಂದು ಸ್ವಯಂಚಾಲಿತ ವಿಧಾನವಾಗಿದೆ.
@@ -1257,7 +1257,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'ಎಸ್‌ಐಪಿ ನಿಮ್ಮ ಮಾಸಿಕ ಉಳಿತಾಯವನ್ನು ರೂಪಾಯಿ ವೆಚ್ಚದ ಸರಾಸರಿಯ ಮೂಲಕ ಸ್ವಯಂಚಾಲಿತ ಹೂಡಿಕೆಯನ್ನಾಗಿ ಮಾಡುತ್ತದೆ.'
       },
       te: {
-        videoUrl: '/academy/te/sip.mp4',
+        videoUrl: '/academy/te/sip-optimized.mp4',
         thumbnailUrl: '/academy/te/sip.webp',
         captionUrl: '/academy/te/sip.vtt',
         transcript: `ఒక ఉద్యోగి లేదా విద్యార్థి పెద్ద మొత్తం లేకపోయినా మరియు మార్కెట్ ఒత్తిడి లేకుండా లక్షల రూపాయల పోర్ట్‌ఫోలియోను ఎలా నిర్మించవచ్చు?\n\nభారతదేశంలో అత్యంత ప్రజాదరణ పొందిన క్రమశిక్షణాయుతమైన పెట్టుబడి విధానమే ఎస్ఐపి—అంటే సిస్టమాటిక్ ఇన్వెస్ట్‌మెంట్ ప్లాన్ (Systematic Investment Plan). ఎస్ఐపి అనేది ప్రత్యేక ఉత్పత్తి కాదు; ఇది మ్యూచువల్ ఫండ్లలో క్రమం తప్పకుండా పెట్టుబడి పెట్టే ఆటోమేటెడ్ పద్ధతి.
@@ -1269,7 +1269,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'ఎస్ఐపి మీ నెలవారీ పొదుపును రూపాయి ఖర్చు సగటు ద్వారా క్రమశిక్షణతో కూడిన ఆటోమేటెడ్ పెట్టుబడిగా మారుస్తుంది.'
       },
       ta: {
-        videoUrl: '/academy/ta/sip.mp4',
+        videoUrl: '/academy/ta/sip-optimized.mp4',
         thumbnailUrl: '/academy/ta/sip.webp',
         captionUrl: '/academy/ta/sip.vtt',
         transcript: `ஒரு மாதச் சம்பளக்காரர் அல்லது மாணவர் பெரிய தொகை இல்லாமலும் சந்தைக் கவலை இல்லாமலும் லட்சக்கணக்கான போர்ட்ஃபோலியோவை உருவாக்குவது எப்படி?\n\nஇந்தியாவில் மிகவும் பிரபலமான மற்றும் ஒழுக்கமான முதலீட்டு முறை எஸ்ஐபி—அதாவது சிஸ்டமேடிக் இன்வெஸ்ட்மென்ட் பிளான் (Systematic Investment Plan). எஸ்ஐபி என்பது தனி தயாரிப்பு அல்ல; இது மியூச்சுவல் ஃபண்டுகளில் தவறாமல் முதலீடு செய்யும் ஒரு தானியங்கி முறையாகும்.
@@ -1281,7 +1281,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'எஸ்ஐபி உங்கள் மாதாந்திர சேமிப்பை ரூபாய் செலவு சராசரி மூலம் ஒழுக்கமான தானியங்கி முதலீடாக மாற்றுகிறது.'
       },
       ml: {
-        videoUrl: '/academy/ml/sip.mp4',
+        videoUrl: '/academy/ml/sip-optimized.mp4',
         thumbnailUrl: '/academy/ml/sip.webp',
         captionUrl: '/academy/ml/sip.vtt',
         transcript: `ഒരു ശമ്പളക്കാരനോ വിദ്യാർത്ഥിക്കോ വലിയ തുകയില്ലാതെയും മാർക്കറ്റ് ടെൻഷൻ ഇല്ലാതെയും വലിയൊരു പോർട്ട്ഫോളിയോ എങ്ങനെ ഉണ്ടാക്കാം?\n\nഇന്ത്യയിലെ ഏറ്റവും ജനപ്രിയവും ചിട്ടയായതുമായ നിക്ഷേപ രീതിയാണ് എസ്ഐപി (SIP - Systematic Investment Plan). ഇതൊരു പ്രത്യേക ഉൽപ്പന്നമല്ല; മറിച്ച് മ്യൂച്വൽ ഫണ്ടുകളിൽ കൃത്യമായി നിക്ഷേപിക്കുന്ന ഒരു ഓട്ടോമേറ്റഡ് രീതിയാണ്.
@@ -1293,7 +1293,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'എസ്ഐപി നിങ്ങളുടെ പ്രതിമാസ സമ്പാദ്യത്തെ റുപ്പീ കോസ്റ്റ് ആവറേജിംഗ് വഴി ചിട്ടയായ ഓട്ടോമേറ്റഡ് നിക്ഷേപമാക്കുന്നു.'
       },
       mr: {
-        videoUrl: '/academy/mr/sip.mp4',
+        videoUrl: '/academy/mr/sip-optimized.mp4',
         thumbnailUrl: '/academy/mr/sip.webp',
         captionUrl: '/academy/mr/sip.vtt',
         transcript: `एक नोकरदार किंवा विद्यार्थी मोठ्या रकमेची वाट न पाहता आणि बाजाराची चिंता न करता लाखोंचा पोर्टफोलिओ कसा बनवू शकतो?\n\nभारतात गुंतवणूक करण्याचा सर्वात लोकप्रिय आणि शिस्तबद्ध मार्ग म्हणजे एसआयपी (SIP - Systematic Investment Plan). एसआयपी हे वेगळे उत्पादन नाही; तर म्युच्युअल फंडात नियमितपणे गुंतवणूक करण्याची एक स्वयंचलित पद्धत आहे.
@@ -1305,7 +1305,7 @@ Over time, this automatically lowers your average purchase price per unit withou
         keyTakeaway: 'एसआयपी तुमच्या मासिक बचतीला रुपी कॉस्ट सरासरीच्या माध्यमातून शिस्तबद्ध स्वयंचलित गुंतवणुकीत बदलते.'
       },
       bn: {
-        videoUrl: '/academy/bn/sip.mp4',
+        videoUrl: '/academy/bn/sip-optimized.mp4',
         thumbnailUrl: '/academy/bn/sip.webp',
         captionUrl: '/academy/bn/sip.vtt',
         transcript: `একজন চাকুরিজীবী বা শিক্ষার্থী কোনো বড় এককালীন অর্থ ছাড়া এবং বাজারের চিন্তা না করে লাখ লাখ টাকার পোর্টফোলিও কীভাবে গড়তে পারেন?\n\nভারতে সবচেয়ে জনপ্রিয় এবং সুশৃঙ্খল বিনিয়োগের মাধ্যম হলো এসআইপি (SIP - Systematic Investment Plan)। এসআইপি কোনো আলাদা পণ্য নয়; এটি মিউচুয়াল ফান্ডে নিয়মিত বিনিয়োগ করার একটি স্বয়ংক্রিয় পদ্ধতি।
@@ -1326,7 +1326,7 @@ Over time, this automatically lowers your average purchase price per unit withou
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/swp.mp4',
+    videoUrl: '/academy/en/swp-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/27462b82-4635-4a0f-975d-78282a6da663/playlist.m3u8',
     thumbnailUrl: '/academy/swp.webp',
     description: 'Systematic Withdrawal Plans: generating predictable, tax-efficient retirement cash flow while keeping capital invested.',
@@ -1374,7 +1374,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
     vestiqPrompt: 'How does an SWP provide monthly income for retirement tax-efficiently?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/swp.mp4',
+        videoUrl: '/academy/en/swp-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/27462b82-4635-4a0f-975d-78282a6da663/playlist.m3u8',
         thumbnailUrl: '/academy/en/swp.webp',
         captionUrl: '/academy/en/swp.vtt',
@@ -1387,7 +1387,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'An SWP provides structured periodic income by systematically redeeming units while keeping your remaining capital invested.'
       },
       hi: {
-        videoUrl: '/academy/hi/swp.mp4',
+        videoUrl: '/academy/hi/swp-optimized.mp4',
         thumbnailUrl: '/academy/hi/swp.webp',
         captionUrl: '/academy/hi/swp.vtt',
         transcript: `यदि एसआईपी आपके कामकाजी वर्षों में संपत्ति बनाने का तरीका है, तो रिटायरमेंट के बाद नियमित मासिक आय पाने के लिए उस संपत्ति का उपयोग कैसे किया जाए?\n\nइसका उत्तर है एसडब्ल्यूपी—यानी सिस्टेमैटिक विथड्रॉल प्लान (Systematic Withdrawal Plan)। एसडब्ल्यूपी बिल्कुल एसआईपी का दर्पण रूप है। हर महीने फंड में पैसे जमा करने के बजाय, एसडब्ल्यूपी आपको अपने जमा किए गए म्यूचुअल फंड फंड से हर महीने एक निश्चित राशि—जैसे ₹25,000—सीधे अपने बैंक खाते में निकालने की सुविधा देता है।\n\nयहाँ पर्दे के पीछे क्या होता है:
@@ -1399,7 +1399,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'एसडब्ल्यूपी बची हुई पूंजी को निवेशित रखते हुए यूनिट्स भुनाकर संरचित आवधिक मासिक आय देता है।'
       },
       kn: {
-        videoUrl: '/academy/kn/swp.mp4',
+        videoUrl: '/academy/kn/swp-optimized.mp4',
         thumbnailUrl: '/academy/kn/swp.webp',
         captionUrl: '/academy/kn/swp.vtt',
         transcript: `ನಿಮ್ಮ ಉದ್ಯೋಗದ ದಿನಗಳಲ್ಲಿ ಎಸ್‌ಐಪಿ ಮೂಲಕ ಸಂಪತ್ತು ನಿರ್ಮಿಸಿದ ನಂತರ, ನಿವೃತ್ತಿಯ ನಂತರ ಮಾಸಿಕ ಆದಾಯ ಪಡೆಯಲು ಆ ಸಂಪತ್ತನ್ನು ಹೇಗೆ ಬಳಸಿಕೊಳ್ಳುವುದು?\n\nಇದಕ್ಕೆ ಉತ್ತರವೇ ಎಸ್‌ಡಬ್ಲ್ಯೂಪಿ—ಅಂದರೆ ಸಿಸ್ಟಮ್ಯಾಟಿಕ್ ವಿದ್‌ಡ್ರಾವಲ್ ಪ್ಲಾನ್ (Systematic Withdrawal Plan). ಎಸ್‌ಡಬ್ಲ್ಯೂಪಿ ಎಸ್‌ಐಪಿಯ ನೇರ ಪ್ರತಿರೂಪವಾಗಿದೆ. ಹಣ ಠೇವಣಿ ಮಾಡುವ ಬದಲು, ನಿಮ್ಮ ಮ್ಯೂಚುವಲ್ ಫಂಡ್‌ನಿಂದ ಪ್ರತಿ ತಿಂಗಳು ನಿಗದಿತ ಮೊತ್ತವನ್ನು—ಉದಾಹರಣೆಗೆ ₹25,000—ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಖಾತೆಗೆ ಹಿಂಪಡೆಯಬಹುದು.\n\nಇಲ್ಲಿ ಏನು ಸಂಭವಿಸುತ್ತದೆ ಎಂದರೆ:
@@ -1411,7 +1411,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'ಎಸ್‌ಡಬ್ಲ್ಯೂಪಿ ಉಳಿದ ಬಂಡವಾಳವನ್ನು ಹೂಡಿಕೆಯಲ್ಲಿಯೇ ಇರಿಸಿ ನಿಯಮಿತ ಮಾಸಿಕ ಆದಾಯವನ್ನು ಒದಗಿಸುತ್ತದೆ.'
       },
       te: {
-        videoUrl: '/academy/te/swp.mp4',
+        videoUrl: '/academy/te/swp-optimized.mp4',
         thumbnailUrl: '/academy/te/swp.webp',
         captionUrl: '/academy/te/swp.vtt',
         transcript: `ఉద్యోగ విరమణ తర్వాత నెలవారీ ఖర్చుల కోసం ఎస్ఐపి ద్వారా సృష్టించిన సంపదను ఎలా సమర్థవంతంగా ఉపయోగించుకోవాలి?\n\nదీనికి సమాధానమే ఎస్డబ్ల్యూపి—అంటే సిస్టమాటిక్ విత్‌డ్రావల్ ప్లాన్ (Systematic Withdrawal Plan). ఎస్డబ్ల్యూపి అనేది ఎస్ఐపికి పూర్తి వ్యతిరేకం. డబ్బు జమ చేయడానికి బదులుగా, మీ మ్యూచువల్ ఫండ్ నుండి ప్రతి నెలా నిర్ణీత మొత్తాన్ని—ఉదాహరణకు ₹25,000—మీ బ్యాంక్ ఖాతాకు ఉపసంహరించుకోవచ్చు.\n\nఇక్కడ తెరవెనుక ఏమి జరుగుతుందంటే:
@@ -1423,7 +1423,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'ఎస్డబ్ల్యూపి మిగిలిన మూలధనాన్ని పెట్టుబడిలోనే ఉంచుతూ క్రమబద్ధమైన నెలవారీ ఆదాయాన్ని అందిస్తుంది.'
       },
       ta: {
-        videoUrl: '/academy/ta/swp.mp4',
+        videoUrl: '/academy/ta/swp-optimized.mp4',
         thumbnailUrl: '/academy/ta/swp.webp',
         captionUrl: '/academy/ta/swp.vtt',
         transcript: `பணிக்காலத்தில் எஸ்ஐபி மூலம் செல்வத்தை உருவாக்கிய பிறகு, ஓய்வுக்காலத்தில் மாதாந்திர வருமானம் பெற அந்தச் செல்வத்தை எவ்வாறு பயன்படுத்துவது?\n\nஇதற்கான விடைதான் எஸ்டபிள்யூபி—அதாவது சிஸ்டமேடிக் வித்ட்ராவல் பிளான் (Systematic Withdrawal Plan). எஸ்டபிள்யூபி என்பது எஸ்ஐபியின் நேர் எதிர் வடிவமாகும். பணத்தைச் செலுத்துவதற்குப் பதிலாக, உங்கள் மியூச்சுவல் ஃபண்டிலிருந்து ஒவ்வொரு மாதமும் ஒரு குறிப்பிட்ட தொகையை—உதாரணமாக ₹25,000—உங்கள் வங்கிக் கணக்கில் பெற்றுக்கொள்ளலாம்.\n\nஇங்கு என்ன நடக்கிறது என்றால்:
@@ -1435,7 +1435,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'எஸ்டபிள்யூபி மீதமுள்ள மூலதனத்தை முதலீட்டிலேயே வைத்துக்கொண்டு ஒழுங்கமைக்கப்பட்ட மாதாந்திர வருமானத்தை வழங்குகிறது.'
       },
       ml: {
-        videoUrl: '/academy/ml/swp.mp4',
+        videoUrl: '/academy/ml/swp-optimized.mp4',
         thumbnailUrl: '/academy/ml/swp.webp',
         captionUrl: '/academy/ml/swp.vtt',
         transcript: `എസ്ഐപി വഴി സമ്പത്ത് ഉണ്ടാക്കിയ ശേഷം, റിട്ടയർമെന്റ് കാലത്ത് പ്രതിമാസ വരുമാനം നേടാൻ ആ സമ്പത്ത് എങ്ങനെ ഫലപ്രദമായി ഉപയോഗിക്കാം?\n\nഇതിനുള്ള ഉത്തരമാണ് എസ്ഡബ്ല്യുപി (SWP - Systematic Withdrawal Plan). ഇത് എസ്ഐപിയുടെ നേർ വിപരീത രൂപമാണ്. പണം നിക്ഷേപിക്കുന്നതിന് പകരം, നിങ്ങളുടെ മ്യൂച്വൽ ഫണ്ടിൽ നിന്ന് എല്ലാ മാസവും നിശ്ചിത തുക—ഉദാഹരണത്തിന് ₹25,000—നിങ്ങളുടെ ബാങ്ക് അക്കൗണ്ടിലേക്ക് പിൻവലിക്കാം.\n\nഇവിടെ സംഭവിക്കുന്നത് എന്തെന്നാൽ:
@@ -1447,7 +1447,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'എസ്ഡബ്ല്യുപി ബാക്കി തുക നിക്ഷേപത്തിൽ നിലനിർത്തിക്കൊണ്ട് ക്രമമായ പ്രതിമാസ വരുമാനം നൽകുന്നു.'
       },
       mr: {
-        videoUrl: '/academy/mr/swp.mp4',
+        videoUrl: '/academy/mr/swp-optimized.mp4',
         thumbnailUrl: '/academy/mr/swp.webp',
         captionUrl: '/academy/mr/swp.vtt',
         transcript: `नोकरीच्या काळात एसआयपीद्वारे संपत्ती निर्माण केल्यानंतर, निवृत्तीनंतर मासिक उत्पन्न मिळवण्यासाठी त्या संपत्तीचा वापर कसा करायचा?\n\nयाचे उत्तर आहे एसडब्ल्यूपी (SWP - Systematic Withdrawal Plan). हा एसआयपीचा अगदी उलट प्रकार आहे. पैसे भरण्याऐवजी, तुमच्या म्युच्युअल फंडातून दरमहा एक निश्चित रक्कम—उदा. ₹25,000—थेट तुमच्या बँक खात्यात काढता येते.\n\nयेथे काय घडते ते पाहू:
@@ -1459,7 +1459,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
         keyTakeaway: 'एसडब्ल्यूपी उर्वरित भांडवल गुंतवणुकीत ठेवून नियमित मासिक उत्पन्न मिळवून देते.'
       },
       bn: {
-        videoUrl: '/academy/bn/swp.mp4',
+        videoUrl: '/academy/bn/swp-optimized.mp4',
         thumbnailUrl: '/academy/bn/swp.webp',
         captionUrl: '/academy/bn/swp.vtt',
         transcript: `কর্মজীবনে এসআইপির মাধ্যমে সম্পদ গড়ার পর, অবসরের সময় নিয়মিত মাসিক আয়ের জন্য সেই সম্পদ কীভাবে ব্যবহার করবেন?\n\nএর উত্তর হলো এসডব্লিউপি (SWP - Systematic Withdrawal Plan)। এটি এসআইপির সম্পূর্ণ বিপরীত প্রক্রিয়া। টাকা জমা দেওয়ার পরিবর্তে, আপনার মিউচুয়াল ফান্ড থেকে প্রতি মাসে একটি নির্দিষ্ট অংক—যেমন ₹২৫,০০০ টাকা—সরাসরি আপনার ব্যাংক একাউন্টে তুলে নেওয়া যায়।\n\nএখানে যা ঘটে তা হলো:
@@ -1480,7 +1480,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/hedge-fund.mp4',
+    videoUrl: '/academy/en/hedge-fund-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8499a715-1fba-4a9b-8c9c-84fcd06db919/playlist.m3u8',
     thumbnailUrl: '/academy/hedge-fund.webp',
     description: 'Alternative investment funds (Category III AIFs), long/short strategies, leverage, derivatives, and suitability considerations.',
@@ -1530,7 +1530,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
     vestiqPrompt: 'Why are hedge funds restricted to institutional and accredited investors?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/hedge-fund.mp4',
+        videoUrl: '/academy/en/hedge-fund-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8499a715-1fba-4a9b-8c9c-84fcd06db919/playlist.m3u8',
         thumbnailUrl: '/academy/en/hedge-fund.webp',
         captionUrl: '/academy/en/hedge-fund.vtt',
@@ -1545,7 +1545,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'Hedge funds are specialized, high-minimum funds using complex strategies and leverage to pursue returns in all market conditions.'
       },
       hi: {
-        videoUrl: '/academy/hi/hedge-fund.mp4',
+        videoUrl: '/academy/hi/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/hi/hedge-fund.webp',
         captionUrl: '/academy/hi/hedge-fund.vtt',
         transcript: `आपने अक्सर वैश्विक हेज फंडों के बारे में सुना होगा जो अरबों डॉलर का प्रबंधन करते हैं और बाजारों को प्रभावित करते हैं। लेकिन वे क्या हैं और सामान्य म्यूचुअल फंड से कैसे अलग हैं?\n\nहेज फंड एक वैकल्पिक, निजी तौर पर एकत्रित निवेश फंड है जिसे बड़े संस्थागत निवेशकों और अत्यधिक उच्च-नेट-वर्थ वाले व्यक्तियों के लिए डिज़ाइन किया गया है। भारत में हेज फंड सेबी (SEBI) द्वारा विनियमित श्रेणी III अल्टरनेटिव इन्वेस्टमेंट फंड्स (AIFs) के तहत काम करते हैं।
@@ -1559,7 +1559,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'हेज फंड विशेष, उच्च-न्यूनतम फंड हैं जो सभी बाजार स्थितियों में रिटर्न पाने के लिए लीवरेज का उपयोग करते हैं।'
       },
       kn: {
-        videoUrl: '/academy/kn/hedge-fund.mp4',
+        videoUrl: '/academy/kn/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/kn/hedge-fund.webp',
         captionUrl: '/academy/kn/hedge-fund.vtt',
         transcript: `ಜಾಗತಿಕ ಮಾರುಕಟ್ಟೆಯನ್ನು ನಿಯಂತ್ರಿಸುವ ಹೆಡ್ಜ್ ಫಂಡ್‌ಗಳ ಬಗ್ಗೆ ನೀವು ಕೇಳಿರಬಹುದು. ಆದರೆ ಅವು ಸಾಮಾನ್ಯ ಮ್ಯೂಚುವಲ್ ಫಂಡ್‌ಗಳಿಗಿಂತ ಹೇಗೆ ಭಿನ್ನವಾಗಿವೆ?\n\nಹೆಡ್ಜ್ ಫಂಡ್ ಎನ್ನುವುದು ದೊಡ್ಡ ಸಾಂಸ್ಥಿಕ ಹೂಡಿಕೆದಾರರು ಮತ್ತು ಶ್ರೀಮಂತ ವ್ಯಕ್ತಿಗಳಿಗಾಗಿ ರೂಪಿಸಲಾದ ಖಾಸಗಿ ಹೂಡಿಕೆ ನಿಧಿಯಾಗಿದೆ. ಭಾರತದಲ್ಲಿ ಇವು ಸೆಬಿ (SEBI) ಅಡಿಯಲ್ಲಿ ವರ್ಗ III ಪರ್ಯಾಯ ಹೂಡಿಕೆ ನಿಧಿಗಳಾಗಿ (AIFs) ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತವೆ.
@@ -1573,7 +1573,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'ಹೆಡ್ಜ್ ಫಂಡ್‌ಗಳು ಎಲ್ಲಾ ಮಾರುಕಟ್ಟೆ ಪರಿಸ್ಥಿತಿಗಳಲ್ಲಿ ಲಾಭ ಗಳಿಸಲು ಲಿವರೇಜ್ ಬಳಸುವ ವಿಶೇಷ ಖಾಸಗಿ ನಿಧಿಗಳಾಗಿವೆ.'
       },
       te: {
-        videoUrl: '/academy/te/hedge-fund.mp4',
+        videoUrl: '/academy/te/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/te/hedge-fund.webp',
         captionUrl: '/academy/te/hedge-fund.vtt',
         transcript: `ప్రపంచ ఆర్థిక మార్కెట్లను ప్రభావితం చేసే హెడ్జ్ ఫండ్ల గురించి మీరు వినే ఉంటారు. కానీ అవి సాధారణ మ్యూచువల్ ఫండ్ల కంటే ఎలా భిన్నంగా ఉంటాయి?\n\nహెడ్జ్ ఫండ్ అనేది పెద్ద సంస్థాగత పెట్టుబడిదారులు మరియు సంపన్న వ్యక్తుల కోసం రూపొందించబడిన ప్రైవేట్ పెట్టుబడి నిధి. భారతదేశంలో ఇవి సెబీ (SEBI) పరిధిలోని కేటగిరీ III ప్రత్యామ్నాయ పెట్టుబడి నిధులుగా (AIFs) పనిచేస్తాయి.
@@ -1587,7 +1587,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'హెడ్జ్ ఫండ్లు అన్ని మార్కెట్ పరిస్థితుల్లో రాబడులను సాధించడానికి లెవరేజ్ ఉపయోగించే ప్రత్యేక ప్రైవేట్ నిధులు.'
       },
       ta: {
-        videoUrl: '/academy/ta/hedge-fund.mp4',
+        videoUrl: '/academy/ta/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/ta/hedge-fund.webp',
         captionUrl: '/academy/ta/hedge-fund.vtt',
         transcript: `உலகளாவிய நிதிச் சந்தைகளை ஆட்டிப்படைக்கும் ஹெட்ஜ் ஃபண்டுகள் பற்றி நீங்கள் கேள்விப்பட்டிருக்கலாம். ஆனால் அவை சாதாரண மியூச்சுவல் ஃபண்டுகளிலிருந்து எவ்வாறு வேறுபடுகின்றன?\n\nஹெட்ஜ் ஃபண்ட் என்பது பெரிய நிறுவன முதலீட்டாளர்கள் மற்றும் பெரும் பணக்காரர்களுக்காக வடிவமைக்கப்பட்ட ஒரு பிரத்யேக முதலீட்டு நிதியாகும். இந்தியாவில் இவை செபி (SEBI) ஒழுங்குமுறையின் கீழ் வகை III மாற்று முதலீட்டு நிதிகளாக (AIFs) செயல்படுகின்றன.
@@ -1601,7 +1601,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'ஹெட்ஜ் ஃபண்டுகள் அனைத்து சந்தை நிலைகளிலும் லாபம் ஈட்ட லீவரேஜைப் பயன்படுத்தும் சிறப்புத் தனியார் நிதிகள்.'
       },
       ml: {
-        videoUrl: '/academy/ml/hedge-fund.mp4',
+        videoUrl: '/academy/ml/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/ml/hedge-fund.webp',
         captionUrl: '/academy/ml/hedge-fund.vtt',
         transcript: `ആഗോള സാമ്പത്തിക വിപണികളെ സ്വാധീനിക്കുന്ന ഹെഡ്ജ് ഫണ്ടുകളെക്കുറിച്ച് നിങ്ങൾ കേട്ടിട്ടുണ്ടാകും. എന്നാൽ അവ സാധാരണ മ്യൂച്വൽ ഫണ്ടുകളിൽ നിന്ന് എങ്ങനെ വ്യത്യാസപ്പെട്ടിരിക്കുന്നു?\n\nവൻകിട സ്ഥാപനങ്ങൾക്കും സമ്പന്നരായ വ്യക്തികൾക്കുമായി രൂപകൽപ്പന ചെയ്തിട്ടുള്ള സ്വകാര്യ നിക്ഷേപ ഫണ്ടാണ് ഹെഡ്ജ് ഫണ്ട്. ഇന്ത്യയിൽ ഇവ സെബി (SEBI) നിയന്ത്രണത്തിലുള്ള കാറ്റഗറി III ആൾട്ടർനേറ്റീവ് ഇൻവെസ്റ്റ്‌മെന്റ് ഫണ്ടുകളായി (AIFs) പ്രവർത്തിക്കുന്നു.
@@ -1615,7 +1615,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'എല്ലാ വിപണി സാഹചര്യങ്ങളിലും നേട്ടമുണ്ടാക്കാൻ ലിവറേജ് ഉപയോഗിക്കുന്ന പ്രത്യേക സ്വകാര്യ ഫണ്ടുകളാണ് ഹെഡ്ജ് ഫണ്ടുകൾ.'
       },
       mr: {
-        videoUrl: '/academy/mr/hedge-fund.mp4',
+        videoUrl: '/academy/mr/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/mr/hedge-fund.webp',
         captionUrl: '/academy/mr/hedge-fund.vtt',
         transcript: `तुम्ही जागतिक बाजारावर प्रभाव टाकणाऱ्या हेज फंडांबद्दल ऐकले असेल. पण ते सामान्य म्युच्युअल फंडांपेक्षा कसे वेगळे असतात?\n\nहेज फंड हा मोठ्या संस्थात्मक गुंतवणूकदारांसाठी आणि अतिश्रीमंत व्यक्तींसाठी तयार केलेला खाजगी गुंतवणूक फंड आहे. भारतात हे सेबीच्या (SEBI) श्रेणी III पर्यायी गुंतवणूक फंड (AIFs) म्हणून काम करतात.
@@ -1629,7 +1629,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
         keyTakeaway: 'हेज फंड हे सर्व बाजाराच्या परिस्थितीत परतावा मिळवण्यासाठी लिव्हरेज वापरणारे विशेष खाजगी फंड आहेत.'
       },
       bn: {
-        videoUrl: '/academy/bn/hedge-fund.mp4',
+        videoUrl: '/academy/bn/hedge-fund-optimized.mp4',
         thumbnailUrl: '/academy/bn/hedge-fund.webp',
         captionUrl: '/academy/bn/hedge-fund.vtt',
         transcript: `বিশ্বের অর্থনৈতিক বাজারকে প্রভাবিত করা হেজ ফান্ডের কথা হয়তো আপনি শুনেছেন। কিন্তু সাধারণ মিউচুয়াল ফান্ড থেকে এগুলো কীভাবে আলাদা?\n\nহেজ ফান্ড হলো বৃহৎ প্রাতিষ্ঠানিক বিনিয়োগকারী এবং উচ্চবিত্ত ব্যক্তিদের জন্য তৈরি একটি বিশেষ ব্যক্তিগত বিনিয়োগ ফান্ড। ভারতে এগুলো সেবি (SEBI)-এর ক্যাটাগরি III অল্টারনেটিভ ইনভেস্টমেন্ট ফান্ড (AIFs) হিসেবে পরিচালিত হয়।
@@ -1652,7 +1652,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/risk-return-diversification.mp4',
+    videoUrl: '/academy/en/diversification-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/610ce9ff-aba0-4952-bdd3-9f9038455595/playlist.m3u8',
     thumbnailUrl: '/academy/diversification.webp',
     description: 'The inescapable link between risk and return, concentration danger, and multi-asset diversification as a risk management shield.',
@@ -1703,7 +1703,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
     vestiqPrompt: 'How should a beginner balance equities, debt, and gold across their portfolio?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/risk-return-diversification.mp4',
+        videoUrl: '/academy/en/diversification-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/610ce9ff-aba0-4952-bdd3-9f9038455595/playlist.m3u8',
         thumbnailUrl: '/academy/en/diversification.webp',
         captionUrl: '/academy/en/diversification.vtt',
@@ -1719,7 +1719,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'You cannot eliminate risk, but smart diversification balances risk and return across asset classes.'
       },
       hi: {
-        videoUrl: '/academy/hi/diversification.mp4',
+        videoUrl: '/academy/hi/diversification-optimized.mp4',
         thumbnailUrl: '/academy/hi/diversification.webp',
         captionUrl: '/academy/hi/diversification.vtt',
         transcript: `क्या बिना किसी जोखिम के बहुत अधिक निवेश रिटर्न पाने का कोई तरीका है? वित्तीय अर्थशास्त्र में इसका उत्तर बिल्कुल और स्पष्ट रूप से 'नहीं' है।\n\nनिवेश में एक बुनियादी नियम है जिसे हर नए निवेशक को गहराई से समझना चाहिए: जोखिम और संभावित रिटर्न एक ही सिक्के के दो पहलू हैं।
@@ -1734,7 +1734,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'आप जोखिम को पूरी तरह खत्म नहीं कर सकते, लेकिन विविधीकरण परिसंपत्ति वर्गों में जोखिम और रिटर्न को संतुलित करता है।'
       },
       kn: {
-        videoUrl: '/academy/kn/diversification.mp4',
+        videoUrl: '/academy/kn/diversification-optimized.mp4',
         thumbnailUrl: '/academy/kn/diversification.webp',
         captionUrl: '/academy/kn/diversification.vtt',
         transcript: `ಯಾವುದೇ ಅಪಾಯವಿಲ್ಲದೆ ಅತಿ ಹೆಚ್ಚಿನ ಹೂಡಿಕೆ ಲಾಭ ಪಡೆಯಲು ಸಾಧ್ಯವೇ? ಹಣಕಾಸು ಅರ್ಥಶಾಸ್ತ್ರದಲ್ಲಿ ಇದಕ್ಕೆ ಉತ್ತರ ಖಚಿತವಾಗಿ 'ಇಲ್ಲ'.\n\nಪ್ರತಿಯೊಬ್ಬ ಹೊಸ ಹೂಡಿಕೆದಾರರು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಬೇಕಾದ ಮೂಲ ನಿಯಮ: ಅಪಾಯ (Risk) ಮತ್ತು ಸಂಭಾವ್ಯ ಲಾಭ (Return) ಒಂದೇ ನಾಣ್ಯದ ಎರಡು ಮುಖಗಳು.
@@ -1749,7 +1749,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'ಅಪಾಯವನ್ನು ಸಂಪೂರ್ಣವಾಗಿ ಇಲ್ಲವಾಗಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ, ಆದರೆ ವೈವಿಧ್ಯೀಕರಣವು ಅಪಾಯ ಮತ್ತು ಲಾಭವನ್ನು ಸಮತೋಲನಗೊಳಿಸುತ್ತದೆ.'
       },
       te: {
-        videoUrl: '/academy/te/diversification.mp4',
+        videoUrl: '/academy/te/diversification-optimized.mp4',
         thumbnailUrl: '/academy/te/diversification.webp',
         captionUrl: '/academy/te/diversification.vtt',
         transcript: `ఎటువంటి రిస్క్ లేకుండా భారీ రాబడులను పొందడం సాధ్యమేనా? ఆర్థిక శాస్త్రంలో దీనికి సమాధానం ఖచ్చితంగా 'లేదు'.\n\nప్రతి కొత్త పెట్టుబడిదారుడు అర్థం చేసుకోవలసిన ప్రాథమిక నియమం: రిస్క్ (Risk) మరియు సంభావ్య రాబడి (Return) ఒకే నాణేనికి రెండు ముఖాలు.
@@ -1764,7 +1764,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'రిస్క్‌ను పూర్తిగా తొలగించలేము, కానీ డైవర్సిఫికేషన్ రిస్క్ మరియు రాబడిని సమతుల్యం చేస్తుంది.'
       },
       ta: {
-        videoUrl: '/academy/ta/diversification.mp4',
+        videoUrl: '/academy/ta/diversification-optimized.mp4',
         thumbnailUrl: '/academy/ta/diversification.webp',
         captionUrl: '/academy/ta/diversification.vtt',
         transcript: `எந்த ஆபத்தும் இல்லாமல் மிக அதிக முதலீட்டு வருமானத்தைப் பெற வழி இருக்கிறதா? நிதிப் பொருளாதாரத்தில் இதற்கு விடை திட்டவட்டமாக 'இல்லை'.\n\nஒவ்வொரு புதிய முதலீட்டாளரும் புரிந்து கொள்ள வேண்டிய அடிப்படை விதி: ஆபத்து (Risk) மற்றும் சாத்தியமான வருமானம் (Return) ஒரே நாணயத்தின் இரு பக்கங்கள்.
@@ -1779,7 +1779,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'ஆபத்தை முழுமையாக நீக்க முடியாது, ஆனால் பல்வகைப்படுத்தல் ஆபத்தையும் வருமானத்தையும் சமநிலைப்படுத்துகிறது.'
       },
       ml: {
-        videoUrl: '/academy/ml/diversification.mp4',
+        videoUrl: '/academy/ml/diversification-optimized.mp4',
         thumbnailUrl: '/academy/ml/diversification.webp',
         captionUrl: '/academy/ml/diversification.vtt',
         transcript: `യാതൊരു റിസ്കും ഇല്ലാതെ ഉയർന്ന നിക്ഷേപ നേട്ടം ഉണ്ടാക്കാൻ വഴിയുണ്ടോ? സാമ്പത്തിക ശാസ്ത്രത്തിൽ ഇതിനുള്ള ഉത്തരം തീർത്തും 'ഇല്ല' എന്നാണ്.\n\nഓരോ പുതിയ നിക്ഷേപകനും മനസ്സിലാക്കേണ്ട അടിസ്ഥാന നിയമം: റിസ്കും (Risk) സാധ്യതയുള്ള നേട്ടവും (Return) ഒരേ നാണയത്തിന്റെ ഇരുവശങ്ങളാണ്.
@@ -1794,7 +1794,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'റിസ്ക് പൂർണ്ണമായി ഒഴിവാക്കാനാവില്ല, എന്നാൽ വൈവിധ്യവൽക്കരണം റിസ്കും റിട്ടേണും തുലനം ചെയ്യുന്നു.'
       },
       mr: {
-        videoUrl: '/academy/mr/diversification.mp4',
+        videoUrl: '/academy/mr/diversification-optimized.mp4',
         thumbnailUrl: '/academy/mr/diversification.webp',
         captionUrl: '/academy/mr/diversification.vtt',
         transcript: `कोणतीही जोखीम न पत्करता खूप मोठा परतावा मिळवण्याचा मार्ग आहे का? अर्थशास्त्रात याचे उत्तर ठामपणे 'नाही' असे आहे.\n\nप्रत्येक नवीन गुंतवणूकदाराने समजून घेण्याचा मूलभूत नियम: जोखीम (Risk) आणि संभाव्य परतावा (Return) ही एकाच नाण्याच्या दोन बाजू आहेत.
@@ -1809,7 +1809,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
         keyTakeaway: 'जोखीम पूर्णपणे नष्ट करता येत नाही, पण वैविध्यीकरण जोखीम आणि परताव्याचा समतोल राखते.'
       },
       bn: {
-        videoUrl: '/academy/bn/diversification.mp4',
+        videoUrl: '/academy/bn/diversification-optimized.mp4',
         thumbnailUrl: '/academy/bn/diversification.webp',
         captionUrl: '/academy/bn/diversification.vtt',
         transcript: `কোনো ঝুঁকি ছাড়া খুব বেশি বিনিয়োগ রিটার্ন পাওয়ার কি কোনো উপায় আছে? অর্থনীতিতে এর উত্তর স্পষ্টতই 'না'।\n\nপ্রত্যেক নতুন বিনিয়োগকারীর জানা উচিত একটি মৌলিক নিয়ম: ঝুঁকি (Risk) এবং সম্ভাব্য লাভ (Return) একই মুদ্রার এপিঠ-ওপিঠ।
@@ -1833,7 +1833,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/how-to-start-investing.mp4',
+    videoUrl: '/academy/en/getting-started-optimized.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/f3a99f71-d59b-4816-8de8-ce19a9dbb5ca/playlist.m3u8',
     thumbnailUrl: '/academy/getting-started.webp',
     description: 'A practical 5-step roadmap: emergency funds, goal horizons, risk profiling, digital KYC, and starting small automated SIPs.',
@@ -1891,7 +1891,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
     vestiqPrompt: 'What is the recommended 5-step checklist for a beginner starting with ₹1,000/month?',
     languages: {
       en: {
-        videoUrl: 'https://github.com/ravitejpatgar-art/smart-investment-strategic-advisor/releases/download/academy-videos-v2-faststart/how-to-start-investing.mp4',
+        videoUrl: '/academy/en/getting-started-optimized.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/f3a99f71-d59b-4816-8de8-ce19a9dbb5ca/playlist.m3u8',
         thumbnailUrl: '/academy/en/getting-started.webp',
         captionUrl: '/academy/en/getting-started.vtt',
@@ -1914,7 +1914,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'Start by securing an emergency fund, defining your time horizon, and building a consistent monthly investing habit.'
       },
       hi: {
-        videoUrl: '/academy/hi/getting-started.mp4',
+        videoUrl: '/academy/hi/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/hi/getting-started.webp',
         captionUrl: '/academy/hi/getting-started.vtt',
         transcript: `स्मार्टवेस्ट एकेडमी के बुनियादी पाठों को पूरा करने पर बधाई! अब, आप पूरे विश्वास के साथ अपनी वास्तविक निवेश यात्रा का पहला कदम कैसे उठा सकते हैं?\n\nनिवेश शुरू करने के लिए लाखों रुपये या अर्थशास्त्र की किसी बड़ी डिग्री की आवश्यकता नहीं होती। इसके लिए एक स्पष्ट, अनुशासित और चरणबद्ध वित्तीय रोडमैप की आवश्यकता होती है।
@@ -1936,7 +1936,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'आपातकालीन फंड बनाकर, समय सीमा तय करके और लगातार मासिक एसआईपी की आदत डालकर शुरुआत करें।'
       },
       kn: {
-        videoUrl: '/academy/kn/getting-started.mp4',
+        videoUrl: '/academy/kn/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/kn/getting-started.webp',
         captionUrl: '/academy/kn/getting-started.vtt',
         transcript: `ಸ್ಮಾರ್ಟ್‌ವೆಸ್ಟ್ ಅಕಾಡೆಮಿಯ ಪಾಠಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿದ್ದಕ್ಕಾಗಿ ಅಭಿನಂದನೆಗಳು! ಈಗ ನಿಮ್ಮ ಮೊದಲ ನೈಜ ಹೂಡಿಕೆಯ ಹೆಜ್ಜೆಯನ್ನು ಆತ್ಮವಿಶ್ವಾಸದಿಂದ ಇಡುವುದು ಹೇಗೆ?\n\nಹೂಡಿಕೆ ಆರಂಭಿಸಲು ಲಕ್ಷಾಂತರ ರೂಪಾಯಿ ಅಥವಾ ಅರ್ಥಶಾಸ್ತ್ರದ ದೊಡ್ಡ ಪದವಿಯ ಅಗತ್ಯವಿಲ್ಲ. ಇದಕ್ಕೆ ಸ್ಪಷ್ಟ, ಶಿಸ್ತುಬದ್ಧ ಹಂತಗಳ ಮಾರ್ಗಸೂಚಿ ಅಗತ್ಯವಿದೆ.
@@ -1958,7 +1958,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'ತುರ್ತು ನಿಧಿ ರಚಿಸಿ, ಕಾಲಮಿತಿ ನಿಗದಿಪಡಿಸಿ ಮತ್ತು ಸಣ್ಣ ಮೊತ್ತದ ಮಾಸಿಕ ಎಸ್‌ಐಪಿ ಮೂಲಕ ಹೂಡಿಕೆ ಆರಂಭಿಸಿ.'
       },
       te: {
-        videoUrl: '/academy/te/getting-started.mp4',
+        videoUrl: '/academy/te/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/te/getting-started.webp',
         captionUrl: '/academy/te/getting-started.vtt',
         transcript: `స్మార్ట్‌వెస్ట్ అకాడమీ పాఠాలను పూర్తి చేసినందుకు అభినందనలు! ఇప్పుడు మీ మొదటి నిజమైన పెట్టుబడి అడుగును ఆత్మవిశ్వాసంతో ఎలా వేయాలి?\n\nపెట్టుబడి ప్రారంభించడానికి లక్షల రూపాయలు లేదా ఆర్థిక శాస్త్రంలో పెద్ద డిగ్రీ అవసరం లేదు. దీనికి స్పష్టమైన, క్రమశిక్షణాయుతమైన కార్యాచరణ ప్రణాళిక అవసరం.
@@ -1980,7 +1980,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'అత్యవసర నిధిని ఏర్పాటు చేసుకొని, కాలపరిమితి నిర్ణయించుకొని చిన్న నెలవారీ ఎస్ఐపితో ప్రారంభించండి.'
       },
       ta: {
-        videoUrl: '/academy/ta/getting-started.mp4',
+        videoUrl: '/academy/ta/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/ta/getting-started.webp',
         captionUrl: '/academy/ta/getting-started.vtt',
         transcript: `ஸ்மார்ட்வெஸ்ட் அகாடமியின் பாடங்களை வெற்றிகரமாக முடித்ததற்கு வாழ்த்துகள்! இப்போது உங்கள் முதல் முதலீட்டு அடியை நம்பிக்கையுடன் எடுத்து வைப்பது எப்படி?\n\nமுதலீட்டைத் தொடங்க லட்சக்கணக்கான ரூபாயோ அல்லது பொருளாதாரத்தில் பெரிய பட்டப்படிப்போ தேவையில்லை. இதற்கு ஒரு தெளிவான, ஒழுக்கமான படிப்படியான வழிகாட்டுதல் மட்டுமே தேவை.
@@ -2002,7 +2002,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'அவசர நிதியை உருவாக்கி, காலக்கெடுவை நிர்ணயித்து, எளிய மாதாந்திர எஸ்ஐபி மூலம் தொடங்குங்கள்.'
       },
       ml: {
-        videoUrl: '/academy/ml/getting-started.mp4',
+        videoUrl: '/academy/ml/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/ml/getting-started.webp',
         captionUrl: '/academy/ml/getting-started.vtt',
         transcript: `സ്മാർട്ട്‌വെസ്റ്റ് അക്കാദമി പാഠങ്ങൾ പൂർത്തിയാക്കിയതിന് അഭിനന്ദനങ്ങൾ! ഇനി നിങ്ങളുടെ ആദ്യ നിക്ഷേപ ചുവടുവെപ്പ് ആത്മവിശ്വാസത്തോടെ എങ്ങനെ നടത്താം?\n\nനിക്ഷേപം ആരംഭിക്കാൻ ലക്ഷക്കണക്കിന് രൂപയോ ഇക്കണോമിക്സിൽ വലിയ ബിരുദമോ ആവശ്യമില്ല. ഇതിന് വ്യക്തവും ചിട്ടയായതുമായ ഒരു കർമ്മപദ്ധതി മാത്രം മതി.
@@ -2024,7 +2024,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'അടിയന്തര ഫണ്ട് ഉണ്ടാക്കുക, ലക്ഷ്യങ്ങൾ നിശ്ചയിക്കുക, ചെറിയ പ്രതിമാസ എസ്ഐപി വഴി നിക്ഷേപം ആരംഭിക്കുക.'
       },
       mr: {
-        videoUrl: '/academy/mr/getting-started.mp4',
+        videoUrl: '/academy/mr/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/mr/getting-started.webp',
         captionUrl: '/academy/mr/getting-started.vtt',
         transcript: `स्मार्टव्हेस्ट अकॅडमीचे मूलभूत धडे पूर्ण केल्याबद्दल अभिनंदन! आता आत्मविश्वासाने पहिले गुंतवणुकीचे पाऊल कसे टाकायचे?\n\nगुंतवणूक सुरू करण्यासाठी लाखो रुपयांची किंवा अर्थशास्त्रातील मोठ्या पदवीची गरज नसते. यासाठी एका स्पष्ट, शिस्तबद्ध 5-टप्प्यांच्या कृती आराखड्याची गरज असते.
@@ -2046,7 +2046,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
         keyTakeaway: 'आपत्कालीन निधी तयार करा, उद्दिष्टे ठरवा आणि छोट्या मासिक एसआयपीने सुरुवात करा.'
       },
       bn: {
-        videoUrl: '/academy/bn/getting-started.mp4',
+        videoUrl: '/academy/bn/getting-started-optimized.mp4',
         thumbnailUrl: '/academy/bn/getting-started.webp',
         captionUrl: '/academy/bn/getting-started.vtt',
         transcript: `স্মার্টভেস্ট একাডেমির মৌলিক পাঠগুলো সম্পন্ন করার জন্য অভিনন্দন! এখন কীভাবে আত্মবিশ্বাসের সাথে বিনিয়োগের প্রথম পদক্ষেপ নেবেন?\n\nবিনিয়োগ শুরু করতে লাখ লাখ টাকা বা অর্থনীতির কোনো বড় ডিগ্রির প্রয়োজন হয় না। এর জন্য প্রয়োজন একটি সুশৃঙ্খল ও স্পষ্ট ৫-ধাপের কর্মপরিকল্পনা।

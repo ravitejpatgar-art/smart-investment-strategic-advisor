@@ -44,6 +44,9 @@ export interface LessonPlayerProps {
   onAskVestIQ?: (prompt: string) => void;
 }
 
+// Global session-level flag to avoid repeated 403/stall delays across lessons when Bunny CDN is suspended/unreachable
+let hasBunnyCdnFailedSessionWide = false;
+
 export const LessonPlayer: React.FC<LessonPlayerProps> = ({
   lesson,
   onBack,
@@ -71,8 +74,10 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
   const hlsNetworkRetryRef = useRef(0);
   const hlsMediaRetryRef = useRef(0);
   const isPendingPlayRef = useRef(false);
+  const isPlayingRef = useRef(false);
   const isMountedRef = useRef(true);
   const isFallbackToMp4Ref = useRef(false);
+  const isHlsPermanentlyFailedRef = useRef(false);
   const activeStreamTypeRef = useRef<'hls' | 'mp4' | 'none'>('none');
   const currentLessonIdRef = useRef<string>(lesson.id);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,7 +103,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
 
   const activeHlsPlaylistUrl = selectedLanguage === 'en'
     ? (lesson.languages?.en?.hlsPlaylistUrl || lesson.hlsPlaylistUrl)
-    : (localizedContent?.hlsPlaylistUrl || lesson.hlsPlaylistUrl);
+    : (localizedContent?.hlsPlaylistUrl || undefined);
 
   const rawThumbnailUrl = selectedLanguage === 'en'
     ? (lesson.languages?.en?.thumbnailUrl || lesson.thumbnailUrl)
@@ -109,7 +114,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     : '';
 
   const activeCaptionUrl = selectedLanguage === 'en'
-    ? lesson.videoUrl?.replace(/\.mp4$/i, '.vtt')
+    ? (lesson.languages?.en?.captionUrl || lesson.videoUrl?.replace(/-optimized\.mp4$/i, '.vtt').replace(/\.mp4$/i, '.vtt'))
     : localizedContent?.captionUrl;
 
   const activeTranscript = (selectedLanguage === 'en' ? lesson.transcript : localizedContent?.transcript) || lesson.transcript;
@@ -117,35 +122,46 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
 
   const hasMedia = Boolean(activeHlsPlaylistUrl || activeVideoUrl);
 
-  const MIN_BUFFER_SECONDS = 1.5;
+  const stallWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearStallWatchdog = useCallback(() => {
+    if (stallWatchdogRef.current) {
+      clearTimeout(stallWatchdogRef.current);
+      stallWatchdogRef.current = null;
+    }
+  }, []);
+
+  const resetStallWatchdog = useCallback((timeoutMs: number, onTimeout: () => void) => {
+    clearStallWatchdog();
+    stallWatchdogRef.current = setTimeout(onTimeout, timeoutMs);
+  }, [clearStallWatchdog]);
 
   const hasEnoughBuffered = (video: HTMLVideoElement | null): boolean => {
     if (!video) return false;
-    // readyState 4: HAVE_ENOUGH_DATA (sufficient data to play through to the end)
-    if (video.readyState >= 4) return true;
-    // readyState 3: HAVE_FUTURE_DATA (data available for immediate and future frames)
-    if (video.readyState >= 3) {
-      const cur = video.currentTime;
-      for (let i = 0; i < video.buffered.length; i++) {
-        const start = video.buffered.start(i);
-        const end = video.buffered.end(i);
-        if (cur >= start && cur <= end) {
-          if (end - cur >= MIN_BUFFER_SECONDS || (video.duration > 0 && end >= video.duration - 0.3)) {
-            return true;
-          }
-        }
+    // readyState 4: HAVE_ENOUGH_DATA or readyState 3: HAVE_FUTURE_DATA
+    if (video.readyState >= 3) return true;
+    // Check if buffered range extends beyond currentTime by at least 0.5s or reaches duration
+    const ct = video.currentTime;
+    const dur = video.duration;
+    if (dur && ct >= dur - 0.2) return true;
+    for (let i = 0; i < (video.buffered ? video.buffered.length : 0); i++) {
+      if (video.buffered.start(i) <= ct && video.buffered.end(i) > ct + 0.3) {
+        return true;
       }
     }
     return false;
   };
 
-  const activateMp4Fallback = useCallback((video: HTMLVideoElement, reason: string) => {
+  const activateMp4Fallback = useCallback((video: HTMLVideoElement, reason: string, resumePlay?: boolean) => {
     if (isFallbackToMp4Ref.current) return;
     if (!activeVideoUrl) {
       console.warn(`[LessonPlayer] No MP4 fallback available (${reason}).`);
+      clearStallWatchdog();
       setIsBuffering(false);
       setIsLoading(false);
       setIsPlaying(false);
+      isPlayingRef.current = false;
+      isPendingPlayRef.current = false;
       setErrorState({
         hasError: true,
         message: 'The video stream is temporarily unreachable and no fallback video is available.',
@@ -153,8 +169,9 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
       return;
     }
 
+    const shouldResume = resumePlay !== undefined ? resumePlay : (isPendingPlayRef.current || isPlayingRef.current || (video && !video.paused));
     const sanitizedUrl = activeVideoUrl.split('?')[0];
-    console.log(`[LessonPlayer] Activating progressive MP4 fallback (${reason}):`, sanitizedUrl);
+    console.log(`[LessonPlayer] Activating progressive MP4 fallback (${reason}):`, sanitizedUrl, 'shouldResume:', shouldResume);
     isFallbackToMp4Ref.current = true;
     activeStreamTypeRef.current = 'mp4';
 
@@ -162,6 +179,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
+    clearStallWatchdog();
 
     if (hlsRef.current) {
       try {
@@ -175,11 +193,46 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     setErrorState(null);
     setIsLoading(true);
     setIsBuffering(false);
+
+    if (shouldResume) {
+      isPendingPlayRef.current = true;
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+    }
+
     video.src = activeVideoUrl;
     video.load();
-  }, [activeVideoUrl]);
+
+    // If media is already ready to play synchronously, attempt play immediately;
+    // otherwise, the React onCanPlay handler (handleCanPlay) will safely dispatch playback
+    // when the canplay event fires, preventing duplicate event listeners and play() calls.
+    if (shouldResume && video.readyState >= 2) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+            isPendingPlayRef.current = false;
+            setIsBuffering(false);
+            setIsPlaying(true);
+            isPlayingRef.current = true;
+          })
+          .catch((err: unknown) => {
+            if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+            console.warn('[LessonPlayer] Fallback immediate play attempt failed:', err);
+            isPendingPlayRef.current = false;
+            if (video.paused) {
+              setIsPlaying(false);
+              isPlayingRef.current = false;
+              setIsBuffering(false);
+            }
+          });
+      }
+    }
+  }, [activeVideoUrl, clearStallWatchdog, lesson.id]);
 
   const initMediaStream = useCallback((video: HTMLVideoElement) => {
+    clearStallWatchdog();
     if (hlsRef.current) {
       try {
         hlsRef.current.destroy();
@@ -189,12 +242,24 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
       hlsRef.current = null;
     }
 
-    if (activeHlsPlaylistUrl && !isFallbackToMp4Ref.current) {
+    const canAttemptHls = activeHlsPlaylistUrl && !isFallbackToMp4Ref.current && !isHlsPermanentlyFailedRef.current && !hasBunnyCdnFailedSessionWide;
+    if (canAttemptHls) {
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS support (Safari on macOS/iOS)
         activeStreamTypeRef.current = 'hls';
         video.src = activeHlsPlaylistUrl;
         video.load();
+
+        // Native HLS stall watchdog: if stream hangs on 403 or loading takes > 3.5s, switch to MP4
+        resetStallWatchdog(3500, () => {
+          if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+          if (!isFallbackToMp4Ref.current && activeVideoUrl && videoRef.current) {
+            isHlsPermanentlyFailedRef.current = true;
+            console.warn('[LessonPlayer] Native HLS initial load timed out after 3.5s. Falling back to MP4.');
+            const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (videoRef.current && !videoRef.current.paused);
+            activateMp4Fallback(videoRef.current, 'Native HLS initial load timeout', wasPlaying);
+          }
+        });
       } else if (Hls.isSupported()) {
         // hls.js for Chrome, Firefox, Edge, etc.
         activeStreamTypeRef.current = 'hls';
@@ -211,8 +276,21 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
         hls.loadSource(activeHlsPlaylistUrl);
         hls.attachMedia(video);
 
+        // Watchdog for initial HLS manifest load: 4s limit
+        resetStallWatchdog(4000, () => {
+          if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+          if (!isFallbackToMp4Ref.current && activeVideoUrl && videoRef.current) {
+            isHlsPermanentlyFailedRef.current = true;
+            console.warn('[LessonPlayer] HLS initial manifest load timed out after 4s. Falling back to MP4.');
+            const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (videoRef.current && !videoRef.current.paused);
+            activateMp4Fallback(videoRef.current, 'HLS initial manifest load timeout', wasPlaying);
+          }
+        });
+
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+          if (isFallbackToMp4Ref.current) return;
+          clearStallWatchdog();
           setIsLoading(false);
           setIsBuffering(false);
           setErrorState(null);
@@ -220,31 +298,60 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
 
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+          if (isFallbackToMp4Ref.current) return;
           console.warn('[LessonPlayer] HLS Error event:', data.type, data.details, data.fatal);
+
+          const statusCode = data.response?.code;
+          const isConfirmedFailure =
+            statusCode === 403 ||
+            statusCode === 401 ||
+            statusCode === 404 ||
+            data.details === 'manifestLoadError' ||
+            data.details === 'manifestLoadTimeOut' ||
+            data.details === 'manifestParsingError';
+
+          if (isConfirmedFailure) {
+            isHlsPermanentlyFailedRef.current = true;
+            if (statusCode === 403 || statusCode === 401 || data.details === 'manifestLoadError') {
+              hasBunnyCdnFailedSessionWide = true;
+            }
+            console.warn(`[LessonPlayer] Confirmed HLS failure (${data.details}, HTTP ${statusCode}). Triggering MP4 fallback without retry.`);
+            if (activeVideoUrl) {
+              const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (video && !video.paused);
+              activateMp4Fallback(video, `confirmed HLS failure (code: ${statusCode || data.details})`, wasPlaying);
+            } else {
+              clearStallWatchdog();
+              setIsBuffering(false);
+              setIsLoading(false);
+              setIsPlaying(false);
+              isPlayingRef.current = false;
+              isPendingPlayRef.current = false;
+              setErrorState({
+                hasError: true,
+                message: 'The video stream is temporarily unreachable and no fallback video is available.',
+              });
+            }
+            return;
+          }
+
           if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR: {
-                const isConfirmedManifestFailure =
-                  data.details === 'manifestLoadError' ||
-                  data.details === 'manifestParsingError' ||
-                  data.response?.code === 403 ||
-                  data.response?.code === 404;
-
-                if (!isConfirmedManifestFailure && hlsNetworkRetryRef.current < 2) {
+                if (hlsNetworkRetryRef.current < 2) {
                   hlsNetworkRetryRef.current += 1;
                   console.log(`[LessonPlayer] Recovering from transient HLS network error (retry ${hlsNetworkRetryRef.current}/2)...`);
                   hls.startLoad();
                 } else if (!isFallbackToMp4Ref.current && activeVideoUrl) {
-                  activateMp4Fallback(
-                    video,
-                    isConfirmedManifestFailure
-                      ? `confirmed HLS manifest failure (code: ${data.response?.code || data.details})`
-                      : 'HLS network retries exhausted'
-                  );
+                  isHlsPermanentlyFailedRef.current = true;
+                  const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (video && !video.paused);
+                  activateMp4Fallback(video, 'HLS network retries exhausted', wasPlaying);
                 } else {
+                  clearStallWatchdog();
                   setIsBuffering(false);
                   setIsLoading(false);
                   setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  isPendingPlayRef.current = false;
                   setErrorState({
                     hasError: true,
                     message: 'A network error occurred while streaming the video. Please check your internet connection.',
@@ -258,11 +365,16 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
                   console.log(`[LessonPlayer] Attempting media error recovery (retry ${hlsMediaRetryRef.current}/2)...`);
                   hls.recoverMediaError();
                 } else if (!isFallbackToMp4Ref.current && activeVideoUrl) {
-                  activateMp4Fallback(video, 'HLS media error retries exhausted');
+                  isHlsPermanentlyFailedRef.current = true;
+                  const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (video && !video.paused);
+                  activateMp4Fallback(video, 'HLS media error retries exhausted', wasPlaying);
                 } else {
+                  clearStallWatchdog();
                   setIsBuffering(false);
                   setIsLoading(false);
                   setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  isPendingPlayRef.current = false;
                   setErrorState({
                     hasError: true,
                     message: 'An error occurred while decoding the video stream. Please retry.',
@@ -272,11 +384,16 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               default:
                 console.error('[LessonPlayer] Fatal unrecoverable HLS error:', data.details);
                 if (!isFallbackToMp4Ref.current && activeVideoUrl) {
-                  activateMp4Fallback(video, `fatal HLS error (${data.details})`);
+                  isHlsPermanentlyFailedRef.current = true;
+                  const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (video && !video.paused);
+                  activateMp4Fallback(video, `fatal HLS error (${data.details})`, wasPlaying);
                 } else {
+                  clearStallWatchdog();
                   setIsBuffering(false);
                   setIsLoading(false);
                   setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  isPendingPlayRef.current = false;
                   setErrorState({
                     hasError: true,
                     message: 'An error occurred during video streaming. Please retry.',
@@ -288,19 +405,23 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
         });
       } else if (activeVideoUrl) {
         activeStreamTypeRef.current = 'mp4';
+        isFallbackToMp4Ref.current = true;
         video.src = activeVideoUrl;
         video.load();
       }
     } else if (activeVideoUrl) {
       activeStreamTypeRef.current = 'mp4';
+      isFallbackToMp4Ref.current = true;
       video.src = activeVideoUrl;
       video.load();
     }
-  }, [activeHlsPlaylistUrl, activeVideoUrl, activateMp4Fallback, lesson.id]);
+  }, [activeHlsPlaylistUrl, activeVideoUrl, activateMp4Fallback, clearStallWatchdog, lesson.id, resetStallWatchdog]);
 
   // Sync completion state, mark lesson as last opened, and cleanly reset player lifecycle
   useEffect(() => {
     currentLessonIdRef.current = lesson.id;
+    isHlsPermanentlyFailedRef.current = false;
+    clearStallWatchdog();
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
@@ -310,6 +431,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     academyProgress.setLastLesson(lesson.id);
     setCurrentTime(0);
     setIsPlaying(false);
+    isPlayingRef.current = false;
     setIsBuffering(false);
     setIsLoading(true);
     isPendingPlayRef.current = false;
@@ -328,6 +450,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     }
 
     return () => {
+      clearStallWatchdog();
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
@@ -344,19 +467,22 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
         videoRef.current.pause();
       }
     };
-  }, [lesson.id, selectedLanguage, initMediaStream]);
+  }, [lesson.id, selectedLanguage, initMediaStream, clearStallWatchdog]);
 
   const handleTogglePlay = () => {
     const video = videoRef.current;
     if (video) {
-      if (isPlaying || isPendingPlayRef.current) {
+      if (!video.paused) {
         isPendingPlayRef.current = false;
         setIsBuffering(false);
         setIsPlaying(false);
+        isPlayingRef.current = false;
+        clearStallWatchdog();
         video.pause();
       } else {
         if (errorState) setErrorState(null);
         setIsPlaying(true);
+        isPlayingRef.current = true;
         isPendingPlayRef.current = true;
         const playPromise = video.play();
         if (playPromise !== undefined) {
@@ -366,30 +492,36 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               isPendingPlayRef.current = false;
               setIsBuffering(false);
               setIsPlaying(true);
+              isPlayingRef.current = true;
+              clearStallWatchdog();
             })
             .catch((err: unknown) => {
               if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
-              isPendingPlayRef.current = false;
               console.warn('[LessonPlayer] Playback play attempt failed:', err);
-              if (err instanceof Error && err.name !== 'AbortError') {
+              isPendingPlayRef.current = false;
+              if (video.paused) {
                 setIsPlaying(false);
+                isPlayingRef.current = false;
                 setIsBuffering(false);
               }
+              clearStallWatchdog();
             });
         }
       }
     } else {
       // In placeholder mode, simulate playback
       setIsPlaying(!isPlaying);
+      isPlayingRef.current = !isPlaying;
     }
   };
 
   const handleLoadStart = () => {
     if (currentLessonIdRef.current !== lesson.id) return;
-    const sanitizedUrl = (activeVideoUrl || '').split('?')[0];
+    const v = videoRef.current;
+    const sanitizedUrl = (v?.currentSrc || v?.src || activeVideoUrl || '').split('?')[0];
     console.log(`[LessonPlayer] Video load start: ${sanitizedUrl}`);
     setIsLoading(true);
-    if (isPlaying || isPendingPlayRef.current) {
+    if (isPlayingRef.current || isPendingPlayRef.current) {
       setIsBuffering(true);
     }
     setErrorState(null);
@@ -402,7 +534,10 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     if (v) {
       setDuration(v.duration || lesson.durationSeconds);
       setIsLoading(false);
-      setIsBuffering(false);
+      if (hasEnoughBuffered(v)) {
+        clearStallWatchdog();
+        setIsBuffering(false);
+      }
       setErrorState(null);
     }
   };
@@ -411,8 +546,39 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     if (currentLessonIdRef.current !== lesson.id) return;
     const v = videoRef.current;
     console.log(`[LessonPlayer] Waiting for buffer: readyState=${v?.readyState}, currentTime=${v?.currentTime}s`);
-    if (isPlaying || isPendingPlayRef.current) {
+    if (isPlayingRef.current || isPendingPlayRef.current || (v && !v.paused)) {
       setIsBuffering(true);
+    }
+    // Set bounded stall watchdog
+    if (!isFallbackToMp4Ref.current && activeStreamTypeRef.current === 'hls') {
+      resetStallWatchdog(3000, () => {
+        if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+        if (!isFallbackToMp4Ref.current && activeVideoUrl && videoRef.current) {
+          isHlsPermanentlyFailedRef.current = true;
+          console.warn('[LessonPlayer] HLS stall timeout during waiting (3s). Activating MP4 fallback.');
+          const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (videoRef.current && !videoRef.current.paused);
+          activateMp4Fallback(videoRef.current, 'HLS stall during waiting', wasPlaying);
+        }
+      });
+    } else {
+      resetStallWatchdog(12000, () => {
+        if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+        const video = videoRef.current;
+        if (isBuffering || isPendingPlayRef.current) {
+          console.warn('[LessonPlayer] MP4 buffering timed out after 12s.');
+          clearStallWatchdog();
+          setIsBuffering(false);
+          setIsLoading(false);
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          isPendingPlayRef.current = false;
+          setErrorState({
+            hasError: true,
+            message: 'Video buffering timed out. Please check your connection or retry.',
+            code: video?.error?.code,
+          });
+        }
+      });
     }
   };
 
@@ -420,18 +586,50 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     if (currentLessonIdRef.current !== lesson.id) return;
     const v = videoRef.current;
     console.warn(`[LessonPlayer] Media download stalled: networkState=${v?.networkState}, readyState=${v?.readyState}`);
-    if (isPlaying || isPendingPlayRef.current) {
+    if (isPlayingRef.current || isPendingPlayRef.current || (v && !v.paused)) {
       setIsBuffering(true);
+    }
+    if (!isFallbackToMp4Ref.current && activeStreamTypeRef.current === 'hls') {
+      resetStallWatchdog(3000, () => {
+        if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+        if (!isFallbackToMp4Ref.current && activeVideoUrl && videoRef.current) {
+          isHlsPermanentlyFailedRef.current = true;
+          console.warn('[LessonPlayer] HLS stall timeout during download stall (3s). Activating MP4 fallback.');
+          const wasPlaying = isPendingPlayRef.current || isPlayingRef.current || (videoRef.current && !videoRef.current.paused);
+          activateMp4Fallback(videoRef.current, 'HLS download stalled', wasPlaying);
+        }
+      });
+    } else {
+      resetStallWatchdog(12000, () => {
+        if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+        const video = videoRef.current;
+        if (isBuffering || isPendingPlayRef.current) {
+          console.warn('[LessonPlayer] MP4 download stalled timed out after 12s.');
+          clearStallWatchdog();
+          setIsBuffering(false);
+          setIsLoading(false);
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          isPendingPlayRef.current = false;
+          setErrorState({
+            hasError: true,
+            message: 'Video stream stalled. Please check your network connection and retry.',
+            code: video?.error?.code,
+          });
+        }
+      });
     }
   };
 
   const handlePlaying = () => {
     if (currentLessonIdRef.current !== lesson.id) return;
     console.log('[LessonPlayer] Video playing successfully');
+    clearStallWatchdog();
     isPendingPlayRef.current = false;
     setIsLoading(false);
     setIsBuffering(false);
     setIsPlaying(true);
+    isPlayingRef.current = true;
     setErrorState(null);
   };
 
@@ -439,15 +637,40 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     if (currentLessonIdRef.current !== lesson.id) return;
     const v = videoRef.current;
     console.log(`[LessonPlayer] Can play: readyState=${v?.readyState}`);
+    clearStallWatchdog();
     setIsLoading(false);
     setIsBuffering(false);
     setErrorState(null);
+    if (isPendingPlayRef.current && v && v.paused) {
+      const playPromise = v.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+            isPendingPlayRef.current = false;
+            setIsBuffering(false);
+            setIsPlaying(true);
+            isPlayingRef.current = true;
+          })
+          .catch((err) => {
+            if (!isMountedRef.current || currentLessonIdRef.current !== lesson.id) return;
+            console.warn('[LessonPlayer] CanPlay play attempt caught:', err);
+              isPendingPlayRef.current = false;
+              if (v.paused) {
+                setIsPlaying(false);
+                isPlayingRef.current = false;
+                setIsBuffering(false);
+              }
+          });
+      }
+    }
   };
 
   const handleCanPlayThrough = () => {
     if (currentLessonIdRef.current !== lesson.id) return;
     const v = videoRef.current;
     console.log(`[LessonPlayer] Can play through: readyState=${v?.readyState}`);
+    clearStallWatchdog();
     setIsLoading(false);
     setIsBuffering(false);
     setErrorState(null);
@@ -455,8 +678,10 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
 
   const handleProgress = () => {
     if (currentLessonIdRef.current !== lesson.id) return;
-    if (isBuffering && videoRef.current && hasEnoughBuffered(videoRef.current)) {
+    const v = videoRef.current;
+    if (v && hasEnoughBuffered(v)) {
       setIsBuffering(false);
+      clearStallWatchdog();
     }
   };
 
@@ -481,24 +706,26 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
     });
 
     // Handle MEDIA_ERR_ABORTED (code 1)
-    // Abort errors occur normally during lesson unmounting or when Chrome aborts
-    // initial byte range to fetch tail metadata. Do not trigger error overlays or retries.
     if (errCode === 1 || errCode === (typeof MediaError !== 'undefined' ? MediaError.MEDIA_ERR_ABORTED : 1)) {
       console.warn('[LessonPlayer] Media operation aborted (MEDIA_ERR_ABORTED). Ignoring non-fatal abort.');
       return;
     }
 
+    const wasPlaying = isPlayingRef.current || isPendingPlayRef.current;
+
+    clearStallWatchdog();
     setIsBuffering(false);
     setIsLoading(false);
     setIsPlaying(false);
+    isPlayingRef.current = false;
     isPendingPlayRef.current = false;
 
     // Confirm that HLS was actually the active playback source before using the HLS fallback path.
-    // A direct MP4 playback failure must NOT trigger the HLS fallback path.
     const wasHlsActive = activeStreamTypeRef.current === 'hls' && !isFallbackToMp4Ref.current;
     if (wasHlsActive && activeVideoUrl && video) {
+      isHlsPermanentlyFailedRef.current = true;
       console.log('[LessonPlayer] HLS playback failed on video element. Activating MP4 fallback.');
-      activateMp4Fallback(video, 'video element error during HLS stream');
+      activateMp4Fallback(video, 'video element error during HLS stream', wasPlaying);
       return;
     }
 
@@ -534,25 +761,37 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
       setIsLoading(false);
       setIsBuffering(false);
       setIsPlaying(false);
+      isPlayingRef.current = false;
     }
   };
 
   const handleManualRetry = () => {
     console.log('[LessonPlayer] Manual retry requested by user');
+    hasBunnyCdnFailedSessionWide = false;
+    clearStallWatchdog();
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
     setErrorState(null);
     setRetryCount(0);
-    isFallbackToMp4Ref.current = false;
-    activeStreamTypeRef.current = 'none';
     hlsNetworkRetryRef.current = 0;
     hlsMediaRetryRef.current = 0;
+    isPendingPlayRef.current = true;
     setIsLoading(true);
     setIsBuffering(false);
     if (videoRef.current) {
-      initMediaStream(videoRef.current);
+      if (isHlsPermanentlyFailedRef.current && activeVideoUrl) {
+        // Do not repeatedly restart permanently failing HLS
+        isFallbackToMp4Ref.current = true;
+        activeStreamTypeRef.current = 'mp4';
+        videoRef.current.src = activeVideoUrl;
+        videoRef.current.load();
+      } else {
+        isFallbackToMp4Ref.current = false;
+        activeStreamTypeRef.current = 'none';
+        initMediaStream(videoRef.current);
+      }
       const p = videoRef.current.play();
       if (p !== undefined) {
         p.catch((err) => {
@@ -689,18 +928,24 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               onTimeUpdate={() => {
                 if (videoRef.current) {
                   setCurrentTime(videoRef.current.currentTime);
-                  if (isBuffering && hasEnoughBuffered(videoRef.current)) {
+                  if (hasEnoughBuffered(videoRef.current)) {
                     setIsBuffering(false);
+                    clearStallWatchdog();
                   }
                 }
               }}
               onLoadedMetadata={handleLoadedMetadata}
               onPlay={() => {
                 setIsPlaying(true);
+                isPlayingRef.current = true;
               }}
               onPause={() => {
                 if (!isPendingPlayRef.current) {
                   setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  setIsBuffering(false);
+                  clearStallWatchdog();
+                } else if (videoRef.current?.paused) {
                   setIsBuffering(false);
                 }
               }}
@@ -718,11 +963,14 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
               }}
               onSeeked={() => {
                 setIsBuffering(false);
+                clearStallWatchdog();
               }}
               onEnded={() => {
                 setIsPlaying(false);
+                isPlayingRef.current = false;
                 setIsBuffering(false);
                 isPendingPlayRef.current = false;
+                clearStallWatchdog();
                 if (!isCompleted) {
                   academyProgress.markLessonComplete(lesson.id);
                   setIsCompleted(true);
