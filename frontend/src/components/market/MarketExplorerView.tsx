@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Search, 
   Bookmark, 
@@ -24,6 +24,7 @@ import {
   type MarketCoverageResponse 
 } from '../../services/marketApi';
 import { InstrumentDetailModal } from './InstrumentDetailModal';
+import { InstrumentLogo } from './InstrumentLogo';
 import { Badge } from '../common/Badge';
 import { Skeleton } from '../common/Skeleton';
 import { EmptyState } from '../common/EmptyState';
@@ -78,8 +79,10 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
   const [watchlistIds, setWatchlistIds] = useState<Set<string>>(new Set());
   const [overview, setOverview] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activeRequestIdRef = useRef(0);
 
   // Selected Instrument Detail Terminal
   const [selectedInstrument, setSelectedInstrument] = useState<MarketInstrument | null>(null);
@@ -171,11 +174,13 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
 
   // Fetch Instruments Directory
   const fetchInstruments = useCallback(async () => {
+    const requestId = ++activeRequestIdRef.current;
     setIsLoading(true);
     setError(null);
     try {
       if (selectedCategory === 'WATCHLIST') {
         const list = await marketApi.getWatchlist();
+        if (requestId !== activeRequestIdRef.current) return;
         let filtered = list;
         if (debouncedQuery.trim()) {
           const q = debouncedQuery.toLowerCase();
@@ -230,12 +235,22 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
         }
 
         const data = await marketApi.getInstruments(queryParams);
-        setInstrumentsData(data);
+        if (requestId !== activeRequestIdRef.current) return;
+        if (data.error && (!data.items || data.items.length === 0)) {
+          setError(data.error);
+          setInstrumentsData(null);
+        } else {
+          setInstrumentsData(data);
+        }
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to load market directory.');
+      if (requestId === activeRequestIdRef.current) {
+        setError(err?.message || 'Failed to load market directory.');
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === activeRequestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [debouncedQuery, selectedCategory, selectedExchange, selectedCountry, selectedCurrency, page]);
 
@@ -250,6 +265,47 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
   useEffect(() => {
     fetchInstruments();
   }, [fetchInstruments]);
+
+  // Non-blocking background quote hydration for visible catalog items
+  useEffect(() => {
+    if (!instrumentsData?.items || instrumentsData.items.length === 0) return;
+    const itemsNeedingQuotes = instrumentsData.items.filter(
+      (item) => item.quote?.price === null || item.quote?.price === undefined
+    );
+    if (itemsNeedingQuotes.length === 0) return;
+
+    let cancelled = false;
+    const symbols = itemsNeedingQuotes.slice(0, 16).map((item) => item.symbol);
+
+    marketApi.getQuotes(symbols).then((quotesMap) => {
+      if (cancelled || !quotesMap || Object.keys(quotesMap).length === 0) return;
+      setInstrumentsData((prev) => {
+        if (!prev || !prev.items) return prev;
+        let changed = false;
+        const updatedItems = prev.items.map((it) => {
+          const q = quotesMap[it.symbol] || quotesMap[it.symbol.toUpperCase()];
+          if (q && q.price !== null && q.price !== undefined && q.freshness !== 'UNAVAILABLE') {
+            changed = true;
+            return {
+              ...it,
+              price: q.price,
+              change: q.change,
+              changePct: q.changePct,
+              quote: q
+            };
+          }
+          return it;
+        });
+        return changed ? { ...prev, items: updatedItems } : prev;
+      });
+    }).catch(() => {
+      // Non-fatal: items remain with authentic fallback values
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [instrumentsData?.page, instrumentsData?.total, selectedCategory, selectedExchange]);
 
   // Toggle watchlist
   const handleToggleWatchlist = async (canonicalId: string) => {
@@ -339,6 +395,21 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
   const startItem = totalResults === 0 ? 0 : (page - 1) * limit + 1;
   const endItem = Math.min(page * limit, totalResults);
 
+  // Coordinated Refresh Feed handler preventing race conditions and duplicate concurrent calls
+  const handleRefreshFeed = useCallback(async () => {
+    if (isRefreshing || isLoading) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.allSettled([
+        fetchCoverage(),
+        fetchOverview(),
+        fetchInstruments()
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, isLoading, fetchCoverage, fetchOverview, fetchInstruments]);
+
   return (
     <div className="space-y-8 pb-12 font-sans">
       
@@ -378,15 +449,11 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
 
             <button
               type="button"
-              onClick={() => {
-                fetchCoverage();
-                fetchOverview();
-                fetchInstruments();
-              }}
-              disabled={isLoading}
-              className="px-3.5 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              onClick={handleRefreshFeed}
+              disabled={isLoading || isRefreshing}
+              className="px-3.5 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-3)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[var(--color-accent-strong)] ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[var(--color-accent-strong)] ${(isLoading || isRefreshing) ? 'animate-spin' : ''}`} />
               <span>Refresh Feed</span>
             </button>
           </div>
@@ -795,8 +862,9 @@ export const MarketExplorerView: React.FC<MarketExplorerViewProps> = ({ onOpenVe
                       className="hover:bg-[var(--color-surface-soft)]/60 cursor-pointer transition-colors group"
                     >
                       {/* 1. Instrument / Identifier */}
-                      <td className="py-3 px-3.5 max-w-[280px]">
-                        <div className="flex items-center gap-2">
+                      <td className="py-3 px-3.5 max-w-[300px]">
+                        <div className="flex items-center gap-2.5">
+                          <InstrumentLogo instrument={item} size="md" />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors font-mono text-xs sm:text-sm">

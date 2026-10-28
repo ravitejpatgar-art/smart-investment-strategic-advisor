@@ -150,8 +150,8 @@ describe('Market API & Fallback Resilience (P1.2)', () => {
     const stockResponse = await marketApi.getInstruments({ asset_type: 'STOCK' });
     expect(stockResponse).toBeDefined();
     expect(Array.isArray(stockResponse.items)).toBe(true);
-    expect(stockResponse.items.length).toBe(0);
-    expect(stockResponse.total).toBe(0);
+    expect(stockResponse.items.length).toBeGreaterThan(0);
+    expect(stockResponse.items.every(i => i.assetType === 'STOCK')).toBe(true);
   });
 
   // 8. Missing benchmark does not break the remaining benchmarks

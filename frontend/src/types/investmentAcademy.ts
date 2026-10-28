@@ -30,6 +30,7 @@ export type SupportedAcademyLanguage =
 
 export interface LocalizedLessonContent {
   videoUrl?: string;
+  hlsPlaylistUrl?: string;
   thumbnailUrl?: string;
   captionUrl?: string;
   transcript: string;
@@ -45,6 +46,7 @@ export interface InvestmentLesson {
   durationSeconds: number;
   description: string;
   videoUrl?: string;
+  hlsPlaylistUrl?: string;
   thumbnailUrl?: string;
   aiVideoPrompt?: string;
   transcript: string;

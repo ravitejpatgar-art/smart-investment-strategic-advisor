@@ -228,8 +228,8 @@ describe('Global Market Universe & Explorer API (P7.0B)', () => {
     const result = await marketApi.getInstruments({ q: 'Apple' });
     expect(result).toBeDefined();
     expect(Array.isArray(result.items)).toBe(true);
-    expect(result.items.length).toBe(0);
-    expect(result.total).toBe(0);
+    expect(result.items.length).toBeGreaterThan(0);
+    expect(result.items.every(i => i.name.toLowerCase().includes('apple') || i.symbol.toLowerCase().includes('apple'))).toBe(true);
   });
 
   // 8. Currency filtering (P7.3)
@@ -274,10 +274,40 @@ describe('Global Market Universe & Explorer API (P7.0B)', () => {
     });
 
     const coverage = await marketApi.getCoverage();
-    expect(getSpy).toHaveBeenCalledWith('/market/coverage');
+    expect(getSpy).toHaveBeenCalledWith('/market/coverage', { timeout: 4000 });
     expect(coverage.total_instruments).toBe(16921);
     expect(coverage.stocks_count).toBe(2562);
     expect(coverage.mutual_funds_count).toBe(14329);
     expect(coverage.exchanges_count).toBe(8);
+  });
+
+  // 10. Regression: Direct array response support
+  it('correctly parses catalog items when API returns a raw array directly', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
+      data: [
+        {
+          symbol: 'HDFCBANK.NS',
+          name: 'HDFC Bank Ltd',
+          asset_type: 'STOCK',
+          exchange: 'NSE',
+          price: 1550.0
+        }
+      ]
+    });
+
+    const result = await marketApi.getInstruments();
+    expect(result.items.length).toBe(1);
+    expect(result.items[0].symbol).toBe('HDFCBANK.NS');
+    expect(result.total).toBe(1);
+    expect(result.error).toBeUndefined();
+  });
+
+  // 11. Regression: Error propagation for terminal UI
+  it('propagates error message on catalog failure so UI displays actionable error state', async () => {
+    vi.spyOn(apiClient, 'get').mockRejectedValueOnce(new Error('Network request timed out after 10000ms'));
+
+    const result = await marketApi.getInstruments();
+    expect(result.items.length).toBeGreaterThan(0);
+    expect(result.error).toBe('Network request timed out after 10000ms');
   });
 });

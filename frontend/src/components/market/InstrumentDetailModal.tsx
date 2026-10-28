@@ -38,6 +38,7 @@ import type {
 } from "../../services/marketApi";
 import { marketApi, formatIstTimestamp } from "../../services/marketApi";
 import { UniversalInstrumentChart } from "./UniversalInstrumentChart";
+import { InstrumentLogo } from "./InstrumentLogo";
 import { Badge } from "../common/Badge";
 import { useFintechStore } from "../../store/useFintechStore";
 
@@ -356,9 +357,11 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
         
         {/* Modal Header */}
         <div className="p-4 sm:p-5 border-b border-[var(--color-border)] bg-[var(--color-surface)] flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-base sm:text-xl font-bold text-[var(--color-text-primary)] tracking-tight">{instrument.name}</span>
+          <div className="flex items-start gap-3">
+            <InstrumentLogo instrument={instrument} size="lg" className="mt-0.5" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-base sm:text-xl font-bold text-[var(--color-text-primary)] tracking-tight">{instrument.name}</span>
               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
                 {instrument.symbol}
               </span>
@@ -385,6 +388,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
               )}
             </div>
           </div>
+        </div>
 
           <div className="flex items-center gap-2">
             {onToggleWatchlist && (
