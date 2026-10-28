@@ -28,7 +28,7 @@ export const INVESTMENT_LESSONS: InvestmentLesson[] = [
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/investment-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20Investment_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/100f4a7f-d903-4b1f-8e8c-5f2054e1effb/playlist.m3u8',
     thumbnailUrl: '/academy/investment.webp',
     description: 'Learn the difference between saving and investing, and how putting capital to work in productive assets helps outpace inflation over time.',
@@ -75,7 +75,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     vestiqPrompt: 'Explain the difference between saving and investing using a simple real-world example.',
     languages: {
       en: {
-        videoUrl: '/academy/en/investment-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20Investment_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/100f4a7f-d903-4b1f-8e8c-5f2054e1effb/playlist.m3u8',
         thumbnailUrl: '/academy/en/investment.webp',
         captionUrl: '/academy/en/investment.vtt',
@@ -173,7 +173,7 @@ If, instead, you invest that ₹10,000 into productive businesses or diversified
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/stock-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20a%20Stock_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8e064de4-e645-4491-a0fc-8afbc7c7ef02/playlist.m3u8',
     thumbnailUrl: '/academy/stock.webp',
     description: 'Understand what owning a company stock actually means, how equity works, and how shareholders participate in corporate growth.',
@@ -222,7 +222,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     vestiqPrompt: 'How does buying a stock make me a fractional owner of a business?',
     languages: {
       en: {
-        videoUrl: '/academy/en/stock-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20a%20Stock_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8e064de4-e645-4491-a0fc-8afbc7c7ef02/playlist.m3u8',
         thumbnailUrl: '/academy/en/stock.webp',
         captionUrl: '/academy/en/stock.vtt',
@@ -336,7 +336,7 @@ Second, through Dividends: when the company generates surplus profits, its board
     category: 'Fundamentals',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/shares-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20are%20Shares_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/825b0fac-734a-4cdb-900b-b57a137122bd/playlist.m3u8',
     thumbnailUrl: '/academy/shares.webp',
     description: 'Learn the distinction between stock and shares, the pizza slice analogy, market capitalization, and stock split mechanics.',
@@ -386,7 +386,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     vestiqPrompt: 'Explain the difference between stock, shares, and market capitalization.',
     languages: {
       en: {
-        videoUrl: '/academy/en/shares-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20are%20Shares_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/825b0fac-734a-4cdb-900b-b57a137122bd/playlist.m3u8',
         thumbnailUrl: '/academy/en/shares.webp',
         captionUrl: '/academy/en/shares.vtt',
@@ -508,7 +508,7 @@ Now, suppose the company announces a 2-for-1 stock split to make its shares more
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/etf-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20an%20ETF_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/3d810bb4-e710-4ece-9796-9de5a640b78f/playlist.m3u8',
     thumbnailUrl: '/academy/etf.webp',
     description: 'Explore Exchange-Traded Funds (ETFs), instant basket diversification, real-time exchange liquidity, and low expense ratios.',
@@ -559,7 +559,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     vestiqPrompt: 'How does an ETF like NIFTY 50 give me instant diversification?',
     languages: {
       en: {
-        videoUrl: '/academy/en/etf-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20an%20ETF_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/3d810bb4-e710-4ece-9796-9de5a640b78f/playlist.m3u8',
         thumbnailUrl: '/academy/en/etf.webp',
         captionUrl: '/academy/en/etf.vtt',
@@ -689,7 +689,7 @@ Third, ultra-low cost: because most index ETFs passively track an index without 
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/mutual-fund-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20a%20Mutual%20Fund_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/751561c4-c037-4ae5-8ed8-389ef8424de2/playlist.m3u8',
     thumbnailUrl: '/academy/mutual-fund.webp',
     description: 'Discover how mutual funds pool investor capital for professional management, NAV calculation, and diversified investing.',
@@ -738,7 +738,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     vestiqPrompt: 'How does a mutual fund pool money, and what does NAV mean?',
     languages: {
       en: {
-        videoUrl: '/academy/en/mutual-fund-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20a%20Mutual%20Fund_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/751561c4-c037-4ae5-8ed8-389ef8424de2/playlist.m3u8',
         thumbnailUrl: '/academy/en/mutual-fund.webp',
         captionUrl: '/academy/en/mutual-fund.vtt',
@@ -852,7 +852,7 @@ Mutual funds come in diverse categories: Equity Funds for long-term growth, Debt
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/long-term-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/Vedio%206.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8dafd07a-c1b5-41ef-8da3-cb6714f51116/playlist.m3u8',
     thumbnailUrl: '/academy/long-term.webp',
     description: 'Why time in the market beats timing the market, historical return probabilities, and the power of patience over daily noise.',
@@ -899,7 +899,7 @@ Long-term investing also offers massive structural advantages: you save signific
     vestiqPrompt: 'Why does time in the market beat timing the market?',
     languages: {
       en: {
-        videoUrl: '/academy/en/long-term-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/Vedio%206.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8dafd07a-c1b5-41ef-8da3-cb6714f51116/playlist.m3u8',
         thumbnailUrl: '/academy/en/long-term.webp',
         captionUrl: '/academy/en/long-term.vtt',
@@ -997,7 +997,7 @@ Long-term investing also offers massive structural advantages: you save signific
     category: 'Investing Strategy',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/compounding-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20Compounding_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/ef3b3a20-9d19-48a2-8080-d04355308c80/playlist.m3u8',
     thumbnailUrl: '/academy/compounding.webp',
     description: 'The mathematical force of exponential growth: initial principal plus accumulated returns creating momentum over time.',
@@ -1047,7 +1047,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
     vestiqPrompt: 'Show me a numerical example of compounding with ₹5,000 monthly.',
     languages: {
       en: {
-        videoUrl: '/academy/en/compounding-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20Compounding_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/ef3b3a20-9d19-48a2-8080-d04355308c80/playlist.m3u8',
         thumbnailUrl: '/academy/en/compounding.webp',
         captionUrl: '/academy/en/compounding.vtt',
@@ -1169,7 +1169,7 @@ And by Year 30, it surges past ₹17.44 Lakhs! Over 90% of your ultimate wealth 
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/sip-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20Is%20SIP_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/7c6494f6-56f1-403e-9abd-8ab2e70bdd20/playlist.m3u8',
     thumbnailUrl: '/academy/sip.webp',
     description: 'Systematic Investment Plans in India: automating monthly discipline and leveraging Rupee Cost Averaging across market cycles.',
@@ -1218,7 +1218,7 @@ Over time, this automatically lowers your average purchase price per unit withou
     vestiqPrompt: 'Explain Rupee Cost Averaging in SIP when markets fall and rise.',
     languages: {
       en: {
-        videoUrl: '/academy/en/sip-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20Is%20SIP_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/7c6494f6-56f1-403e-9abd-8ab2e70bdd20/playlist.m3u8',
         thumbnailUrl: '/academy/en/sip.webp',
         captionUrl: '/academy/en/sip.vtt',
@@ -1326,7 +1326,7 @@ Over time, this automatically lowers your average purchase price per unit withou
     category: 'India Investing',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/swp-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20SWP_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/27462b82-4635-4a0f-975d-78282a6da663/playlist.m3u8',
     thumbnailUrl: '/academy/swp.webp',
     description: 'Systematic Withdrawal Plans: generating predictable, tax-efficient retirement cash flow while keeping capital invested.',
@@ -1374,7 +1374,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
     vestiqPrompt: 'How does an SWP provide monthly income for retirement tax-efficiently?',
     languages: {
       en: {
-        videoUrl: '/academy/en/swp-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20is%20SWP_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/27462b82-4635-4a0f-975d-78282a6da663/playlist.m3u8',
         thumbnailUrl: '/academy/en/swp.webp',
         captionUrl: '/academy/en/swp.vtt',
@@ -1480,7 +1480,7 @@ SWPs also offer significant tax advantages in India compared to traditional fixe
     category: 'Investment Products',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/hedge-fund-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/What%20Is%20a%20Hedge%20Fund_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8499a715-1fba-4a9b-8c9c-84fcd06db919/playlist.m3u8',
     thumbnailUrl: '/academy/hedge-fund.webp',
     description: 'Alternative investment funds (Category III AIFs), long/short strategies, leverage, derivatives, and suitability considerations.',
@@ -1530,7 +1530,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
     vestiqPrompt: 'Why are hedge funds restricted to institutional and accredited investors?',
     languages: {
       en: {
-        videoUrl: '/academy/en/hedge-fund-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/What%20Is%20a%20Hedge%20Fund_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/8499a715-1fba-4a9b-8c9c-84fcd06db919/playlist.m3u8',
         thumbnailUrl: '/academy/en/hedge-fund.webp',
         captionUrl: '/academy/en/hedge-fund.vtt',
@@ -1652,7 +1652,7 @@ Because of their complexity and risk profile, hedge funds require high minimum i
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/diversification-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/Risk%2C%20Return%20%26%20Diversification_.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/610ce9ff-aba0-4952-bdd3-9f9038455595/playlist.m3u8',
     thumbnailUrl: '/academy/diversification.webp',
     description: 'The inescapable link between risk and return, concentration danger, and multi-asset diversification as a risk management shield.',
@@ -1703,7 +1703,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
     vestiqPrompt: 'How should a beginner balance equities, debt, and gold across their portfolio?',
     languages: {
       en: {
-        videoUrl: '/academy/en/diversification-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/Risk%2C%20Return%20%26%20Diversification_.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/610ce9ff-aba0-4952-bdd3-9f9038455595/playlist.m3u8',
         thumbnailUrl: '/academy/en/diversification.webp',
         captionUrl: '/academy/en/diversification.vtt',
@@ -1833,7 +1833,7 @@ Third, Geographic Diversification: investing in both Indian and international ma
     category: 'Core Principles',
     level: 'Beginner',
     durationSeconds: 150,
-    videoUrl: '/academy/en/getting-started-optimized.mp4',
+    videoUrl: 'https://smartvestacademy.b-cdn.net/How%20to%20start%20investing.mp4',
     hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/f3a99f71-d59b-4816-8de8-ce19a9dbb5ca/playlist.m3u8',
     thumbnailUrl: '/academy/getting-started.webp',
     description: 'A practical 5-step roadmap: emergency funds, goal horizons, risk profiling, digital KYC, and starting small automated SIPs.',
@@ -1891,7 +1891,7 @@ Begin with an automated monthly SIP of ₹1,000 or ₹2,000 in a broad market in
     vestiqPrompt: 'What is the recommended 5-step checklist for a beginner starting with ₹1,000/month?',
     languages: {
       en: {
-        videoUrl: '/academy/en/getting-started-optimized.mp4',
+        videoUrl: 'https://smartvestacademy.b-cdn.net/How%20to%20start%20investing.mp4',
         hlsPlaylistUrl: 'https://vz-e4ce0b1e-34e.b-cdn.net/f3a99f71-d59b-4816-8de8-ce19a9dbb5ca/playlist.m3u8',
         thumbnailUrl: '/academy/en/getting-started.webp',
         captionUrl: '/academy/en/getting-started.vtt',

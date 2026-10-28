@@ -34,6 +34,21 @@ describe('SmartVest Academy — Full Catalog Video & Playback Integrity', () => 
     'how-to-start-investing': 'getting-started',
   };
 
+  const EXPECTED_BUNNY_URLS: Record<string, string> = {
+    'what-is-investment': 'https://smartvestacademy.b-cdn.net/What%20is%20Investment_.mp4',
+    'what-is-a-stock': 'https://smartvestacademy.b-cdn.net/What%20is%20a%20Stock_.mp4',
+    'what-are-shares': 'https://smartvestacademy.b-cdn.net/What%20are%20Shares_.mp4',
+    'what-is-an-etf': 'https://smartvestacademy.b-cdn.net/What%20is%20an%20ETF_.mp4',
+    'what-is-a-mutual-fund': 'https://smartvestacademy.b-cdn.net/What%20is%20a%20Mutual%20Fund_.mp4',
+    'why-long-term-investing': 'https://smartvestacademy.b-cdn.net/Vedio%206.mp4',
+    'what-is-compounding': 'https://smartvestacademy.b-cdn.net/What%20is%20Compounding_.mp4',
+    'what-is-sip': 'https://smartvestacademy.b-cdn.net/What%20Is%20SIP_.mp4',
+    'what-is-swp': 'https://smartvestacademy.b-cdn.net/What%20is%20SWP_.mp4',
+    'what-is-a-hedge-fund': 'https://smartvestacademy.b-cdn.net/What%20Is%20a%20Hedge%20Fund_.mp4',
+    'risk-return-diversification': 'https://smartvestacademy.b-cdn.net/Risk%2C%20Return%20%26%20Diversification_.mp4',
+    'how-to-start-investing': 'https://smartvestacademy.b-cdn.net/How%20to%20start%20investing.mp4',
+  };
+
   it('1. contains all 12 lessons with unique IDs and titles', () => {
     expect(INVESTMENT_LESSONS).toHaveLength(12);
     const ids = INVESTMENT_LESSONS.map((l) => l.id);
@@ -49,8 +64,7 @@ describe('SmartVest Academy — Full Catalog Video & Playback Integrity', () => 
     expect(new Set(enUrls).size).toBe(12);
 
     for (const lesson of INVESTMENT_LESSONS) {
-      const base = EXPECTED_BASES[lesson.id];
-      expect(lesson.videoUrl).toBe(`/academy/en/${base}-optimized.mp4`);
+      expect(lesson.videoUrl).toBe(EXPECTED_BUNNY_URLS[lesson.id]);
     }
   });
 
@@ -62,7 +76,11 @@ describe('SmartVest Academy — Full Catalog Video & Playback Integrity', () => 
       for (const lang of ALL_LANGUAGES) {
         const langContent = lesson.languages?.[lang];
         expect(langContent).toBeDefined();
-        expect(langContent?.videoUrl).toBe(`/academy/${lang}/${base}-optimized.mp4`);
+        if (lang === 'en') {
+          expect(langContent?.videoUrl).toBe(EXPECTED_BUNNY_URLS[lesson.id]);
+        } else {
+          expect(langContent?.videoUrl).toBe(`/academy/${lang}/${base}-optimized.mp4`);
+        }
         expect(langContent?.transcript).toBeDefined();
         expect((langContent?.transcript || '').length).toBeGreaterThan(50);
         if (langContent?.keyTakeaway) {
@@ -77,17 +95,20 @@ describe('SmartVest Academy — Full Catalog Video & Playback Integrity', () => 
       const base = EXPECTED_BASES[lesson.id];
       for (const lang of ALL_LANGUAGES) {
         const langUrl = lesson.languages?.[lang]?.videoUrl;
-        expect(langUrl).toBe(`/academy/${lang}/${base}-optimized.mp4`);
+        if (lang === 'en') {
+          expect(langUrl).toBe(EXPECTED_BUNNY_URLS[lesson.id]);
+        } else {
+          expect(langUrl).toBe(`/academy/${lang}/${base}-optimized.mp4`);
+        }
       }
     }
   });
 
   it('5. verifies HLS playlists are mapped per-lesson and fallback MP4 matches the exact same lesson', () => {
     for (const lesson of INVESTMENT_LESSONS) {
-      const base = EXPECTED_BASES[lesson.id];
       expect(lesson.hlsPlaylistUrl).toBeDefined();
       expect(lesson.hlsPlaylistUrl).toContain('.m3u8');
-      expect(lesson.videoUrl).toContain(`${base}-optimized.mp4`);
+      expect(lesson.videoUrl).toBe(EXPECTED_BUNNY_URLS[lesson.id]);
     }
   });
 
